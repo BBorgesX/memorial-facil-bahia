@@ -453,14 +453,69 @@ Responsável Técnico - CREA/CAU: [CREA/CAU]`;
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="uso">Uso, divisão e descrição</Label>
-            <Textarea
-              id="uso"
-              value={formData.uso}
-              onChange={(e) => updateFormData('uso', e.target.value)}
-              placeholder="Ex: Residencial A-2, Comercial C-1, Industrial I-2, etc., conforme Tabela 1 do Decreto Estadual nº 16.302/2015"
-              rows={3}
-            />
+            <Label htmlFor="uso">Classificação de Ocupação</Label>
+            <Select value={formData.uso} onValueChange={(value) => updateFormData('uso', value)}>
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione a classificação de ocupação" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="A-1">A-1 - Habitação unifamiliar</SelectItem>
+                <SelectItem value="A-2">A-2 - Habitação multifamiliar</SelectItem>
+                <SelectItem value="A-3">A-3 - Habitação coletiva</SelectItem>
+                <SelectItem value="B-1">B-1 - Hotel e pousada</SelectItem>
+                <SelectItem value="B-2">B-2 - Hotel residencial e dormitório</SelectItem>
+                <SelectItem value="C-1">C-1 - Comércio com baixa carga de incêndio</SelectItem>
+                <SelectItem value="C-2">C-2 - Comércio com média e alta carga de incêndio</SelectItem>
+                <SelectItem value="C-3">C-3 - Shoppings centers</SelectItem>
+                <SelectItem value="D-1">D-1 - Serviços profissionais, pessoais e técnicos</SelectItem>
+                <SelectItem value="D-2">D-2 - Agências bancárias e assemelhados</SelectItem>
+                <SelectItem value="D-3">D-3 - Serviços de reparação</SelectItem>
+                <SelectItem value="D-4">D-4 - Lavanderias e assemelhados</SelectItem>
+                <SelectItem value="E-1">E-1 - Escola em geral</SelectItem>
+                <SelectItem value="E-2">E-2 - Escola especial</SelectItem>
+                <SelectItem value="E-3">E-3 - Espaço para cultura física</SelectItem>
+                <SelectItem value="E-4">E-4 - Casas de diversões, clubes sociais</SelectItem>
+                <SelectItem value="E-5">E-5 - Arte cênica e auditório</SelectItem>
+                <SelectItem value="E-6">E-6 - Clubes noturnos</SelectItem>
+                <SelectItem value="F-1">F-1 - Locais de reunião de público</SelectItem>
+                <SelectItem value="F-2">F-2 - Locais de reunião de público em geral</SelectItem>
+                <SelectItem value="F-3">F-3 - Centros esportivos</SelectItem>
+                <SelectItem value="F-4">F-4 - Estações e terminais de passageiros</SelectItem>
+                <SelectItem value="F-5">F-5 - Arenas e estádios</SelectItem>
+                <SelectItem value="F-6">F-6 - Locais dotados de arquibancadas</SelectItem>
+                <SelectItem value="F-7">F-7 - Construções provisórias</SelectItem>
+                <SelectItem value="F-8">F-8 - Locais para refeição</SelectItem>
+                <SelectItem value="F-9">F-9 - Recreação pública</SelectItem>
+                <SelectItem value="F-10">F-10 - Exposições</SelectItem>
+                <SelectItem value="G-1">G-1 - Garagens sem acesso de público e sem abastecimento</SelectItem>
+                <SelectItem value="G-2">G-2 - Garagens com acesso de público e sem abastecimento</SelectItem>
+                <SelectItem value="G-3">G-3 - Locais dotados de abastecimento de combustível</SelectItem>
+                <SelectItem value="G-4">G-4 - Serviços de conservação, manutenção e reparo</SelectItem>
+                <SelectItem value="G-5">G-5 - Hangares</SelectItem>
+                <SelectItem value="H-1">H-1 - Hospital e casa de saúde</SelectItem>
+                <SelectItem value="H-2">H-2 - Hospital veterinário</SelectItem>
+                <SelectItem value="H-3">H-3 - Pronto-socorro</SelectItem>
+                <SelectItem value="H-4">H-4 - Consultório médico e dentário</SelectItem>
+                <SelectItem value="H-5">H-5 - Outros locais destinados a prestação de cuidados com a saúde</SelectItem>
+                <SelectItem value="H-6">H-6 - Clínica e laboratório de análise clínica sem internação</SelectItem>
+                <SelectItem value="I-1">I-1 - Creche</SelectItem>
+                <SelectItem value="I-2">I-2 - Escola para portadores de deficiências</SelectItem>
+                <SelectItem value="I-3">I-3 - Orfanato, asilo e assemelhados</SelectItem>
+                <SelectItem value="J-1">J-1 - Museu e biblioteca</SelectItem>
+                <SelectItem value="J-2">J-2 - Centro de processamento de dados</SelectItem>
+                <SelectItem value="J-3">J-3 - Depósito sem comércio</SelectItem>
+                <SelectItem value="J-4">J-4 - Indústria e depósito de baixo risco de incêndio</SelectItem>
+                <SelectItem value="L-1">L-1 - Explosivos</SelectItem>
+                <SelectItem value="L-2">L-2 - Líquidos e gases inflamáveis e combustíveis</SelectItem>
+                <SelectItem value="L-3">L-3 - Usinas, refinarias e destilarias</SelectItem>
+                <SelectItem value="M-1">M-1 - Depósito de baixo risco</SelectItem>
+                <SelectItem value="M-2">M-2 - Depósito de médio risco</SelectItem>
+                <SelectItem value="M-3">M-3 - Depósito de alto risco</SelectItem>
+                <SelectItem value="M-4">M-4 - Indústria de baixo risco de incêndio</SelectItem>
+                <SelectItem value="M-5">M-5 - Indústria de médio risco de incêndio</SelectItem>
+                <SelectItem value="M-6">M-6 - Indústria de alto risco de incêndio</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </div>
       </CardContent>
