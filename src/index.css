@@ -17,8 +17,10 @@ All colors MUST be HSL.
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
 
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
+    /* Fire department professional colors */
+    --primary: 220 100% 25%;  /* Deep blue */
+    --primary-foreground: 0 0% 98%;
+    --primary-hover: 220 100% 20%;
 
     --secondary: 210 40% 96.1%;
     --secondary-foreground: 222.2 47.4% 11.2%;
@@ -26,15 +28,24 @@ All colors MUST be HSL.
     --muted: 210 40% 96.1%;
     --muted-foreground: 215.4 16.3% 46.9%;
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --accent: 0 84% 55%;  /* Fire red */
+    --accent-foreground: 0 0% 98%;
 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
 
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    --ring: 220 100% 25%;
+
+    /* Professional gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(220 100% 25%), hsl(220 100% 35%));
+    --gradient-accent: linear-gradient(135deg, hsl(0 84% 55%), hsl(0 84% 65%));
+    --gradient-professional: linear-gradient(135deg, hsl(220 100% 25%), hsl(0 84% 55%));
+    
+    /* Professional shadows */
+    --shadow-professional: 0 10px 30px -10px hsl(220 100% 25% / 0.3);
+    --shadow-card: 0 4px 20px -4px hsl(220 30% 20% / 0.1);
 
     --radius: 0.5rem;
 
