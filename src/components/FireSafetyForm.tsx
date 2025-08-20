@@ -28,6 +28,7 @@ interface FormData {
   pavimentos: string;
   subsolo: string;
   uso: string;
+  classificacaoAltura: string;
   risco: string;
   ocupantes: string;
   apresentacao: string;
@@ -99,6 +100,7 @@ export const FireSafetyForm: React.FC = () => {
     pavimentos: '',
     subsolo: '',
     uso: '',
+    classificacaoAltura: '',
     risco: '',
     ocupantes: '',
     apresentacao: '',
@@ -514,6 +516,23 @@ Responsável Técnico - CREA/CAU: [CREA/CAU]`;
                 <SelectItem value="M-4">M-4 - Indústria de baixo risco de incêndio</SelectItem>
                 <SelectItem value="M-5">M-5 - Indústria de médio risco de incêndio</SelectItem>
                 <SelectItem value="M-6">M-6 - Indústria de alto risco de incêndio</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="classificacaoAltura">Classificação de Altura</Label>
+            <Select value={formData.classificacaoAltura} onValueChange={(value) => updateFormData('classificacaoAltura', value)}>
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione a classificação de altura" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="I">Tipo I - Edificação Térrea (Um pavimento)</SelectItem>
+                <SelectItem value="II">Tipo II - Edificação Baixa (H ≤ 6,00 m)</SelectItem>
+                <SelectItem value="III">Tipo III - Edificação de Baixa-Média Altura (6,00 m &lt; H ≤ 12,00 m)</SelectItem>
+                <SelectItem value="IV">Tipo IV - Edificação de Média Altura (12,00 m &lt; H ≤ 23,00 m)</SelectItem>
+                <SelectItem value="V">Tipo V - Edificação Mediamente Alta (23,00 m &lt; H ≤ 30,00 m)</SelectItem>
+                <SelectItem value="VI">Tipo VI - Edificação Alta (Acima de 30,00 m)</SelectItem>
               </SelectContent>
             </Select>
           </div>
