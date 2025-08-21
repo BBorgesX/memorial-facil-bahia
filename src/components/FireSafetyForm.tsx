@@ -29,6 +29,7 @@ interface FormData {
   subsolo: string;
   uso: string;
   classificacaoAltura: string;
+  cargaIncendio: string;
   risco: string;
   ocupantes: string;
   apresentacao: string;
@@ -101,6 +102,7 @@ export const FireSafetyForm: React.FC = () => {
     subsolo: '',
     uso: '',
     classificacaoAltura: '',
+    cargaIncendio: '',
     risco: '',
     ocupantes: '',
     apresentacao: '',
@@ -533,6 +535,20 @@ Responsável Técnico - CREA/CAU: [CREA/CAU]`;
                 <SelectItem value="IV">Tipo IV - Edificação de Média Altura (12,00 m &lt; H ≤ 23,00 m)</SelectItem>
                 <SelectItem value="V">Tipo V - Edificação Mediamente Alta (23,00 m &lt; H ≤ 30,00 m)</SelectItem>
                 <SelectItem value="VI">Tipo VI - Edificação Alta (Acima de 30,00 m)</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="cargaIncendio">Classificação de Carga de Incêndio</Label>
+            <Select value={formData.cargaIncendio} onValueChange={(value) => updateFormData('cargaIncendio', value)}>
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione a classificação de carga de incêndio" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="baixo">Baixo - até 300MJ/m²</SelectItem>
+                <SelectItem value="medio">Médio - Entre 300 e 1.200MJ/m²</SelectItem>
+                <SelectItem value="alto">Alto - Acima de 1.200MJ/m²</SelectItem>
               </SelectContent>
             </Select>
           </div>
