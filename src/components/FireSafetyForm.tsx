@@ -474,12 +474,24 @@ Responsável Técnico - CREA/CAU: [CREA/CAU]</p>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="subsolo">Ocupação do subsolo (se houver)</Label>
-              <Input
-                id="subsolo"
-                value={formData.subsolo}
-                onChange={(e) => updateFormData('subsolo', e.target.value)}
-                placeholder="Garagem, depósito, etc."
-              />
+              <Select value={formData.subsolo} onValueChange={(value) => updateFormData('subsolo', value)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione a ocupação do subsolo" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="nao-ha">Não há subsolo</SelectItem>
+                  <SelectItem value="garagem">Garagem/Estacionamento (G-1)</SelectItem>
+                  <SelectItem value="garagem-publica">Garagem com acesso público (G-2)</SelectItem>
+                  <SelectItem value="deposito">Depósito (J-3)</SelectItem>
+                  <SelectItem value="area-tecnica">Área técnica/Instalações prediais</SelectItem>
+                  <SelectItem value="comercio">Comércio (C-1/C-2)</SelectItem>
+                  <SelectItem value="servicos">Serviços (D-1)</SelectItem>
+                  <SelectItem value="lazer">Área de lazer/Recreação</SelectItem>
+                  <SelectItem value="auditorio">Auditório/Sala de reuniões (F-1)</SelectItem>
+                  <SelectItem value="restaurante">Restaurante/Lanchonete (F-8)</SelectItem>
+                  <SelectItem value="outro">Outro (especificar em observações)</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <div className="space-y-2">
               <Label htmlFor="risco">Risco (MJ/m²)</Label>
