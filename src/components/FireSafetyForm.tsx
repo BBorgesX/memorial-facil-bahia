@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -88,6 +88,230 @@ const riscosEspeciais = [
   { id: 'hidrante_urbano', nome: 'Hidrante Urbano', referencia: 'IT 34/2021' }
 ];
 
+// Fire safety tables from Decree 16.302/2015 - Bahia
+const getApplicableSafetyMeasures = (
+  occupationClass: string, 
+  heightClass: string, 
+  area: number
+): { [key: string]: boolean } => {
+  const measures: { [key: string]: boolean } = {};
+  
+  // Initialize all measures as false
+  medidasSeguranca.forEach(medida => {
+    measures[medida.id] = false;
+  });
+
+  // Get occupation group (first letter)
+  const group = occupationClass.charAt(0);
+  
+  // Common measures for all groups
+  measures['acesso_viatura'] = true;
+  measures['seguranca_estrutural'] = true;
+  measures['brigada_incendio'] = true;
+  measures['iluminacao_emergencia'] = true;
+  measures['sinalizacao_emergencia'] = true;
+  measures['extintores'] = true;
+  measures['hidrantes'] = true;
+  measures['saidas_emergencia'] = true;
+
+  // Group A - RESIDENTIAL
+  if (group === 'A') {
+    if (['IV', 'V', 'VI'].includes(heightClass)) {
+      measures['compartimentacao_vertical'] = true;
+      measures['controle_materiais'] = true;
+    }
+    if (heightClass === 'VI') {
+      measures['elevador_emergencia'] = true;
+    }
+    // Alarm can be substituted by intercom with 24h center
+    measures['alarme_incendio'] = true;
+  }
+
+  // Group B - HOSPITALITY SERVICES
+  if (group === 'B') {
+    measures['controle_materiais'] = true;
+    measures['alarme_incendio'] = true;
+    
+    if (['II', 'III'].includes(heightClass)) {
+      measures['compartimentacao_horizontal'] = true;
+      measures['deteccao_incendio'] = true;
+    }
+    if (['IV', 'V'].includes(heightClass)) {
+      measures['compartimentacao_horizontal'] = true;
+      measures['compartimentacao_vertical'] = true;
+      measures['deteccao_incendio'] = true;
+      measures['chuveiros_automaticos'] = true;
+      measures['plano_emergencia'] = true;
+    }
+    if (heightClass === 'VI') {
+      measures['compartimentacao_horizontal'] = true;
+      measures['compartimentacao_vertical'] = true;
+      measures['deteccao_incendio'] = true;
+      measures['chuveiros_automaticos'] = true;
+      measures['controle_fumaca'] = true;
+      measures['plano_emergencia'] = true;
+      measures['elevador_emergencia'] = true;
+    }
+  }
+
+  // Group C - COMMERCIAL
+  if (group === 'C') {
+    measures['compartimentacao_horizontal'] = true;
+    measures['controle_materiais'] = true;
+    measures['deteccao_incendio'] = true;
+    measures['alarme_incendio'] = true;
+    
+    if (['IV', 'V'].includes(heightClass)) {
+      measures['compartimentacao_vertical'] = true;
+      measures['chuveiros_automaticos'] = true;
+    }
+    if (heightClass === 'VI') {
+      measures['compartimentacao_vertical'] = true;
+      measures['chuveiros_automaticos'] = true;
+      measures['controle_fumaca'] = true;
+      measures['elevador_emergencia'] = true;
+    }
+    
+    // C-3 (Shopping Centers) require emergency plan
+    if (occupationClass === 'C-3') {
+      measures['plano_emergencia'] = true;
+    }
+  }
+
+  // Group D - PROFESSIONAL SERVICES
+  if (group === 'D') {
+    measures['compartimentacao_horizontal'] = true;
+    measures['controle_materiais'] = true;
+    measures['alarme_incendio'] = true;
+    
+    if (['IV', 'V'].includes(heightClass)) {
+      measures['compartimentacao_vertical'] = true;
+    }
+    if (heightClass === 'VI') {
+      measures['compartimentacao_vertical'] = true;
+      measures['deteccao_incendio'] = true;
+      measures['chuveiros_automaticos'] = true;
+      measures['controle_fumaca'] = true;
+      measures['plano_emergencia'] = true;
+      measures['elevador_emergencia'] = true;
+    }
+  }
+
+  // Group E - EDUCATIONAL AND CULTURAL
+  if (group === 'E') {
+    measures['controle_materiais'] = true;
+    measures['alarme_incendio'] = true;
+    
+    if (['IV', 'V'].includes(heightClass)) {
+      measures['compartimentacao_vertical'] = true;
+      measures['deteccao_incendio'] = true;
+      measures['plano_emergencia'] = true;
+    }
+    if (heightClass === 'VI') {
+      measures['compartimentacao_vertical'] = true;
+      measures['deteccao_incendio'] = true;
+      measures['chuveiros_automaticos'] = true;
+      measures['controle_fumaca'] = true;
+      measures['plano_emergencia'] = true;
+      measures['elevador_emergencia'] = true;
+    }
+  }
+
+  // Group F - PUBLIC ASSEMBLY
+  if (group === 'F') {
+    measures['compartimentacao_vertical'] = true;
+    measures['controle_materiais'] = true;
+    measures['alarme_incendio'] = true;
+    measures['controle_fumaca'] = true;
+    
+    // F-1, F-2 require detection
+    if (['F-1', 'F-2'].includes(occupationClass)) {
+      measures['deteccao_incendio'] = true;
+    }
+    
+    // Emergency plan for public > 1000 people
+    measures['plano_emergencia'] = true;
+    
+    if (heightClass === 'VI') {
+      measures['chuveiros_automaticos'] = true;
+      measures['elevador_emergencia'] = true;
+    }
+  }
+
+  // Group G - AUTOMOTIVE SERVICES
+  if (group === 'G') {
+    measures['controle_materiais'] = true;
+    measures['alarme_incendio'] = true;
+    
+    if (['IV', 'V'].includes(heightClass)) {
+      measures['compartimentacao_vertical'] = true;
+    }
+    if (['V', 'VI'].includes(heightClass)) {
+      measures['chuveiros_automaticos'] = true;
+    }
+    if (heightClass === 'VI') {
+      measures['compartimentacao_vertical'] = true;
+      measures['deteccao_incendio'] = true;
+      measures['controle_fumaca'] = true;
+      measures['elevador_emergencia'] = true;
+    }
+    
+    // G-5 (Hangars) have special requirements
+    if (occupationClass === 'G-5') {
+      measures['compartimentacao_vertical'] = true;
+      measures['deteccao_incendio'] = true;
+      measures['plano_emergencia'] = true;
+      
+      if (area > 5000) {
+        measures['plano_emergencia'] = true;
+      }
+    }
+  }
+
+  // Group H - HEALTH SERVICES
+  if (group === 'H') {
+    measures['controle_materiais'] = true;
+    measures['alarme_incendio'] = true;
+    measures['compartimentacao_vertical'] = true;
+    
+    // H-2, H-3 require detection in specific areas
+    if (['H-2', 'H-3', 'H-5'].includes(occupationClass)) {
+      measures['deteccao_incendio'] = true;
+      measures['plano_emergencia'] = true;
+    }
+    
+    if (heightClass === 'VI') {
+      measures['chuveiros_automaticos'] = true;
+      measures['controle_fumaca'] = true;
+      measures['elevador_emergencia'] = true;
+    }
+  }
+
+  // Groups I, J, K, L, M (Industrial, Storage, Special Services, Special Risks)
+  if (['I', 'J', 'K', 'L', 'M'].includes(group)) {
+    measures['compartimentacao_horizontal'] = true;
+    measures['controle_materiais'] = true;
+    measures['deteccao_incendio'] = true;
+    measures['alarme_incendio'] = true;
+    measures['chuveiros_automaticos'] = true;
+    
+    if (['IV', 'V'].includes(heightClass)) {
+      measures['compartimentacao_vertical'] = true;
+    }
+    if (heightClass === 'VI') {
+      measures['compartimentacao_vertical'] = true;
+      measures['controle_fumaca'] = true;
+      measures['elevador_emergencia'] = true;
+    }
+    
+    if (area > 10000) {
+      measures['plano_emergencia'] = true;
+    }
+  }
+
+  return measures;
+};
+
 export const FireSafetyForm: React.FC = () => {
   const { toast } = useToast();
   const [currentStep, setCurrentStep] = useState(1);
@@ -124,6 +348,40 @@ export const FireSafetyForm: React.FC = () => {
   const updateFormData = (field: string, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
+
+  // Auto-classify safety measures when key data changes
+  useEffect(() => {
+    const { uso, classificacaoAltura, areaExistente, areaConstruir } = formData;
+    
+    if (uso && classificacaoAltura && (areaExistente || areaConstruir)) {
+      const totalArea = parseFloat(areaExistente || '0') + parseFloat(areaConstruir || '0');
+      const applicableMeasures = getApplicableSafetyMeasures(uso, classificacaoAltura, totalArea);
+      
+      // Update measures with automatic classification
+      const newMedidas: { [key: string]: { aplicavel: boolean; detalhes: string } } = {};
+      
+      medidasSeguranca.forEach(medida => {
+        const isApplicable = applicableMeasures[medida.id] || false;
+        newMedidas[medida.id] = {
+          aplicavel: isApplicable,
+          detalhes: formData.medidas[medida.id]?.detalhes || 
+                   (isApplicable ? 'Medida determinada automaticamente conforme Decreto 16.302/2015 - detalhes a serem especificados.' : '')
+        };
+      });
+      
+      setFormData(prev => ({
+        ...prev,
+        medidas: newMedidas
+      }));
+      
+      if (totalArea > 0) {
+        toast({
+          title: "Classificação Automática Realizada!",
+          description: `Medidas de segurança foram determinadas automaticamente para ${uso} - ${classificacaoAltura} com ${totalArea}m².`,
+        });
+      }
+    }
+  }, [formData.uso, formData.classificacaoAltura, formData.areaExistente, formData.areaConstruir]);
 
   const updateMedida = (id: string, field: 'aplicavel' | 'detalhes', value: any) => {
     setFormData(prev => ({
@@ -617,10 +875,57 @@ Responsável Técnico - CREA/CAU: [CREA/CAU]</p>
           Medidas de Segurança Contra Incêndio e Pânico
         </CardTitle>
         <CardDescription>
-          Marque as medidas de segurança aplicáveis ao seu projeto e descreva detalhadamente como elas serão implementadas
+          Medidas determinadas automaticamente conforme Decreto 16.302/2015. Você pode ajustar conforme necessário.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
+        {formData.uso && formData.classificacaoAltura && (
+          <div className="p-4 bg-accent/10 border border-accent rounded-lg">
+            <div className="flex items-center gap-2 mb-2">
+              <Shield className="w-4 h-4 text-accent" />
+              <span className="font-medium text-sm">Classificação Automática Ativa</span>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              Medidas determinadas para: <strong>{formData.uso}</strong> - <strong>{formData.classificacaoAltura}</strong>
+            </p>
+            <Button 
+              onClick={() => {
+                const { uso, classificacaoAltura, areaExistente, areaConstruir } = formData;
+                if (uso && classificacaoAltura && (areaExistente || areaConstruir)) {
+                  const totalArea = parseFloat(areaExistente || '0') + parseFloat(areaConstruir || '0');
+                  const applicableMeasures = getApplicableSafetyMeasures(uso, classificacaoAltura, totalArea);
+                  
+                  const newMedidas: { [key: string]: { aplicavel: boolean; detalhes: string } } = {};
+                  
+                  medidasSeguranca.forEach(medida => {
+                    const isApplicable = applicableMeasures[medida.id] || false;
+                    newMedidas[medida.id] = {
+                      aplicavel: isApplicable,
+                      detalhes: formData.medidas[medida.id]?.detalhes || 
+                               (isApplicable ? 'Medida determinada automaticamente conforme Decreto 16.302/2015 - detalhes a serem especificados.' : '')
+                    };
+                  });
+                  
+                  setFormData(prev => ({
+                    ...prev,
+                    medidas: newMedidas
+                  }));
+                  
+                  toast({
+                    title: "Reclassificação Realizada!",
+                    description: "As medidas foram atualizadas conforme os dados atuais.",
+                  });
+                }
+              }}
+              variant="outline"
+              size="sm"
+              className="mt-2"
+            >
+              Reclassificar Agora
+            </Button>
+          </div>
+        )}
+        
         {medidasSeguranca.map((medida) => (
           <div key={medida.id} className="space-y-3 p-4 border rounded-lg">
             <div className="flex items-start space-x-3">
@@ -630,9 +935,16 @@ Responsável Técnico - CREA/CAU: [CREA/CAU]</p>
                 onCheckedChange={(checked) => updateMedida(medida.id, 'aplicavel', checked)}
               />
               <div className="flex-1">
-                <Label htmlFor={medida.id} className="text-sm font-medium leading-relaxed">
-                  {medida.nome}
-                </Label>
+                <div className="flex items-center gap-2">
+                  <Label htmlFor={medida.id} className="text-sm font-medium leading-relaxed">
+                    {medida.nome}
+                  </Label>
+                  {formData.medidas[medida.id]?.aplicavel && formData.medidas[medida.id]?.detalhes?.includes('determinada automaticamente') && (
+                    <span className="px-2 py-1 bg-accent/20 text-accent text-xs rounded-full">
+                      Auto
+                    </span>
+                  )}
+                </div>
                 <p className="text-xs text-muted-foreground mt-1">
                   Referência: {medida.referencia}
                 </p>
