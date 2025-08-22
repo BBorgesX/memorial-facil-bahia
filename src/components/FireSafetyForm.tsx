@@ -37,6 +37,12 @@ interface FormData {
   // Medidas de segurança
   medidas: { [key: string]: { aplicavel: boolean; detalhes: string } };
   
+  // Acesso de viaturas
+  textoAcessoViaturas: string;
+  portaoAplicavel: boolean;
+  portaoLargura: string;
+  portaoAltura: string;
+  
   // Riscos especiais
   riscosEspeciais: { [key: string]: { aplicavel: boolean; detalhes: string } };
   
@@ -107,6 +113,10 @@ export const FireSafetyForm: React.FC = () => {
     ocupantes: '',
     apresentacao: '',
     medidas: {},
+    textoAcessoViaturas: 'O uso das viaturas dos bombeiros segue regras para buscas, salvamentos e combate a incêndios, conforme as condições estabelecidas.\n\nCaracterísticas da via de Acesso\n• Largura mínima: 6m.\n• Peso a Suportar: Viaturas com peso de 25.000kg.\n• Altura livre mínima: 4,50m.',
+    portaoAplicavel: false,
+    portaoLargura: '',
+    portaoAltura: '',
     riscosEspeciais: {},
     termoAceito: false
   });
@@ -192,6 +202,12 @@ Número de Ocupantes (População): ${formData.ocupantes}
 O presente projeto é apresentado como: ${formData.apresentacao}
 
 3. MEDIDAS DE SEGURANÇA CONTRA INCÊNDIO E PÂNICO
+
+${formData.textoAcessoViaturas}
+
+${formData.portaoAplicavel ? `Medida Aplicável Portão: Largura ${formData.portaoLargura}m / Altura ${formData.portaoAltura}m.` : ''}
+
+Acesso das viaturas do corpo de bombeiros será pela ${formData.logradouro}, ${formData.numero}${formData.complemento ? `, ${formData.complemento}` : ''}, ${formData.bairro}, ${formData.municipio}, BA.
 
 As seguintes medidas de segurança contra incêndio e pânico serão implementadas/atendidas na edificação, conforme as Instruções Técnicas (ITs) do CBMBA e o Decreto Estadual nº 16.302/2015:
 
@@ -611,6 +627,83 @@ Responsável Técnico - CREA/CAU: [CREA/CAU]`;
     <Card className="shadow-card">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
+          <Shield className="w-5 h-5" />
+          Medidas de Segurança Contra Incêndio e Pânico - Acesso de Viaturas
+        </CardTitle>
+        <CardDescription>
+          Configure as informações sobre o acesso das viaturas do Corpo de Bombeiros
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="textoAcessoViaturas">Descrição do Acesso (editável)</Label>
+            <Textarea
+              id="textoAcessoViaturas"
+              value={formData.textoAcessoViaturas}
+              onChange={(e) => updateFormData('textoAcessoViaturas', e.target.value)}
+              rows={8}
+              className="font-mono text-sm"
+            />
+          </div>
+
+          <div className="space-y-4">
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="portaoAplicavel"
+                checked={formData.portaoAplicavel}
+                onCheckedChange={(checked) => updateFormData('portaoAplicavel', checked)}
+              />
+              <Label htmlFor="portaoAplicavel" className="text-sm font-medium">
+                Medida Aplicável Portão (quando houver)
+              </Label>
+            </div>
+
+            {formData.portaoAplicavel && (
+              <div className="grid grid-cols-2 gap-4 ml-6">
+                <div className="space-y-2">
+                  <Label htmlFor="portaoLargura">Largura do Portão (m)</Label>
+                  <Input
+                    id="portaoLargura"
+                    type="number"
+                    step="0.1"
+                    value={formData.portaoLargura}
+                    onChange={(e) => updateFormData('portaoLargura', e.target.value)}
+                    placeholder="0.0"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="portaoAltura">Altura do Portão (m)</Label>
+                  <Input
+                    id="portaoAltura"
+                    type="number"
+                    step="0.1"
+                    value={formData.portaoAltura}
+                    onChange={(e) => updateFormData('portaoAltura', e.target.value)}
+                    placeholder="0.0"
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div className="space-y-2">
+            <Label className="text-sm font-medium">Acesso das viaturas do corpo de bombeiros</Label>
+            <div className="p-3 bg-muted rounded-md">
+              <p className="text-sm">
+                Acesso das viaturas do corpo de bombeiros será pela {formData.logradouro || '[Logradouro]'}, {formData.numero || '[Número]'}{formData.complemento ? `, ${formData.complemento}` : ''}, {formData.bairro || '[Bairro]'}, {formData.municipio || '[Município]'}, BA
+              </p>
+            </div>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+
+  const renderStep4 = () => (
+    <Card className="shadow-card">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
           <AlertTriangle className="w-5 h-5" />
           Riscos Especiais
         </CardTitle>
@@ -669,7 +762,7 @@ Responsável Técnico - CREA/CAU: [CREA/CAU]`;
     </Card>
   );
 
-  const renderStep4 = () => (
+  const renderStep5 = () => (
     <Card className="shadow-card">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
@@ -734,8 +827,9 @@ Responsável Técnico - CREA/CAU: [CREA/CAU]`;
   const steps = [
     { title: 'Identificação', component: renderStep1 },
     { title: 'Medidas de Segurança', component: renderStep2 },
-    { title: 'Riscos Especiais', component: renderStep3 },
-    { title: 'Finalização', component: renderStep4 }
+    { title: 'Acesso de Viaturas', component: renderStep3 },
+    { title: 'Riscos Especiais', component: renderStep4 },
+    { title: 'Finalização', component: renderStep5 }
   ];
 
   return (
