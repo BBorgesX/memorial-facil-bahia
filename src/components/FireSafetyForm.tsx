@@ -155,7 +155,20 @@ export const FireSafetyForm: React.FC = () => {
     const doc = generateMemorialText();
     
     if (format === 'word') {
-      const blob = new Blob([doc], { type: 'application/msword' });
+      // Create HTML content with styling for Word document
+      const htmlContent = `
+        <html>
+          <head>
+            <style>
+              body { font-family: Arial, sans-serif; font-size: 11pt; }
+              .title { font-weight: bold; font-size: 13pt; font-family: Arial, sans-serif; }
+              .content { font-family: Arial, sans-serif; font-size: 11pt; }
+            </style>
+          </head>
+          <body>${doc}</body>
+        </html>
+      `;
+      const blob = new Blob([htmlContent], { type: 'application/msword' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
@@ -164,7 +177,7 @@ export const FireSafetyForm: React.FC = () => {
       URL.revokeObjectURL(url);
     } else {
       // For PDF, we would need a PDF generation library
-      // For now, we'll copy to clipboard
+      // For now, we'll copy HTML content to clipboard
       navigator.clipboard.writeText(doc);
       toast({
         title: "Documento gerado!",
@@ -176,40 +189,45 @@ export const FireSafetyForm: React.FC = () => {
   const generateMemorialText = (): string => {
     const areaTotal = (parseFloat(formData.areaExistente || '0') + parseFloat(formData.areaConstruir || '0')).toString();
     
-    let doc = `MEMORIAL DESCRITIVO DO PROJETO DE SEGURANÇA CONTRA INCÊNDIO E PÂNICO
+    let doc = `<p class="title">MEMORIAL DESCRITIVO DO PROJETO DE SEGURANÇA CONTRA INCÊNDIO E PÂNICO</p>
 
-1. DADOS DE IDENTIFICAÇÃO DO PROJETO/EDIFICAÇÃO
+<p class="title">1. DADOS DE IDENTIFICAÇÃO DO PROJETO/EDIFICAÇÃO</p>
 
-Empresa/Órgão: ${formData.empresa}
-CNPJ: ${formData.cnpj}
-Endereço: ${formData.logradouro}, ${formData.numero}, ${formData.complemento}, ${formData.bairro}, ${formData.municipio}, BA, ${formData.cep}
+<div class="content">
+<p>Empresa/Órgão: ${formData.empresa}<br>
+CNPJ: ${formData.cnpj}<br>
+Endereço: ${formData.logradouro}, ${formData.numero}, ${formData.complemento}, ${formData.bairro}, ${formData.municipio}, BA, ${formData.cep}</p>
 
-Informações da Edificação:
-Status: ${formData.status}
-Decreto Estadual adotado: 16.302/2015
-Área Existente: ${formData.areaExistente} m²
-Área a Construir: ${formData.areaConstruir} m²
-Área Total: ${areaTotal} m²
-Altura: ${formData.altura} m
-Nº de Pavimentos: ${formData.pavimentos}
-Ocupação do Subsolo: ${formData.subsolo}
-Uso, Divisão e Descrição: ${formData.uso}
-Risco (Carga de Incêndio): ${formData.risco} MJ/m²
-Número de Ocupantes (População): ${formData.ocupantes}
+<p>Informações da Edificação:<br>
+Status: ${formData.status}<br>
+Decreto Estadual adotado: 16.302/2015<br>
+Área Existente: ${formData.areaExistente} m²<br>
+Área a Construir: ${formData.areaConstruir} m²<br>
+Área Total: ${areaTotal} m²<br>
+Altura: ${formData.altura} m<br>
+Nº de Pavimentos: ${formData.pavimentos}<br>
+Ocupação do Subsolo: ${formData.subsolo}<br>
+Uso, Divisão e Descrição: ${formData.uso}<br>
+Risco (Carga de Incêndio): ${formData.risco} MJ/m²<br>
+Número de Ocupantes (População): ${formData.ocupantes}</p>
+</div>
 
-2. FORMA DE APRESENTAÇÃO DO PROJETO
+<p class="title">2. FORMA DE APRESENTAÇÃO DO PROJETO</p>
 
-O presente projeto é apresentado como: ${formData.apresentacao}
+<div class="content">
+<p>O presente projeto é apresentado como: ${formData.apresentacao}</p>
+</div>
 
-3. MEDIDAS DE SEGURANÇA CONTRA INCÊNDIO E PÂNICO
+<p class="title">3. MEDIDAS DE SEGURANÇA CONTRA INCÊNDIO E PÂNICO</p>
 
-${formData.textoAcessoViaturas}
+<div class="content">
+<p>${formData.textoAcessoViaturas.replace(/\n/g, '<br>')}</p>
 
-${formData.portaoAplicavel ? `Medida Aplicável Portão: Largura ${formData.portaoLargura}m / Altura ${formData.portaoAltura}m.` : ''}
+${formData.portaoAplicavel ? `<p>Medida Aplicável Portão: Largura ${formData.portaoLargura}m / Altura ${formData.portaoAltura}m.</p>` : ''}
 
-Acesso das viaturas do corpo de bombeiros será pela ${formData.logradouro}, ${formData.numero}${formData.complemento ? `, ${formData.complemento}` : ''}, ${formData.bairro}, ${formData.municipio}, BA.
+<p>Acesso das viaturas do corpo de bombeiros será pela ${formData.logradouro}, ${formData.numero}${formData.complemento ? `, ${formData.complemento}` : ''}, ${formData.bairro}, ${formData.municipio}, BA.</p>
 
-As seguintes medidas de segurança contra incêndio e pânico serão implementadas/atendidas na edificação, conforme as Instruções Técnicas (ITs) do CBMBA e o Decreto Estadual nº 16.302/2015:
+<p>As seguintes medidas de segurança contra incêndio e pânico serão implementadas/atendidas na edificação, conforme as Instruções Técnicas (ITs) do CBMBA e o Decreto Estadual nº 16.302/2015:</p>
 
 `;
 
@@ -217,36 +235,42 @@ As seguintes medidas de segurança contra incêndio e pânico serão implementad
     medidasSeguranca.forEach(medida => {
       const medidaData = formData.medidas[medida.id];
       if (medidaData?.aplicavel) {
-        doc += `- ${medida.nome} (${medida.referencia}):\n`;
-        doc += `  ${medidaData.detalhes || 'Detalhes a serem especificados.'}\n\n`;
+        doc += `<p>- ${medida.nome} (${medida.referencia}):<br>`;
+        doc += `&nbsp;&nbsp;${medidaData.detalhes || 'Detalhes a serem especificados.'}</p>`;
       }
     });
 
-    doc += `4. RISCOS ESPECIAIS
+    doc += `</div>
 
-Os seguintes riscos especiais são presentes na edificação e suas respectivas medidas de segurança serão implementadas/atendidas:
+<p class="title">4. RISCOS ESPECIAIS</p>
 
+<div class="content">
+<p>Os seguintes riscos especiais são presentes na edificação e suas respectivas medidas de segurança serão implementadas/atendidas:</p>
 `;
 
     // Add selected special risks
     riscosEspeciais.forEach(risco => {
       const riscoData = formData.riscosEspeciais[risco.id];
       if (riscoData?.aplicavel) {
-        doc += `- ${risco.nome} (${risco.referencia}):\n`;
-        doc += `  ${riscoData.detalhes || 'Detalhes a serem especificados.'}\n\n`;
+        doc += `<p>- ${risco.nome} (${risco.referencia}):<br>`;
+        doc += `&nbsp;&nbsp;${riscoData.detalhes || 'Detalhes a serem especificados.'}</p>`;
       }
     });
 
     const currentDate = new Date().toLocaleDateString('pt-BR');
-    doc += `\n${formData.municipio}, ${currentDate}.
+    doc += `</div>
 
-___________________________________________
-[Nome Completo do Proprietário/Responsável pelo Uso]
-Proprietário / Responsável pelo Uso
+<div class="content">
+<p><br>${formData.municipio}, ${currentDate}.</p>
 
-___________________________________________
-[Nome Completo do Responsável Técnico]
-Responsável Técnico - CREA/CAU: [CREA/CAU]`;
+<p><br>___________________________________________<br>
+[Nome Completo do Proprietário/Responsável pelo Uso]<br>
+Proprietário / Responsável pelo Uso</p>
+
+<p><br>___________________________________________<br>
+[Nome Completo do Responsável Técnico]<br>
+Responsável Técnico - CREA/CAU: [CREA/CAU]</p>
+</div>`;
 
     return doc;
   };
