@@ -447,6 +447,39 @@ export const FireSafetyForm: React.FC = () => {
   const generateMemorialText = (): string => {
     const areaTotal = (parseFloat(formData.areaExistente || '0') + parseFloat(formData.areaConstruir || '0')).toString();
     
+    // Parse occupation classification to extract detailed information
+    const getOccupationDetails = (uso: string) => {
+      const occupationGroups: { [key: string]: string } = {
+        'A': 'GRUPO A - RESIDENCIAL',
+        'B': 'GRUPO B - SERVIÇOS DE HOSPEDAGEM', 
+        'C': 'GRUPO C - COMERCIAL',
+        'D': 'GRUPO D - SERVIÇOS PROFISSIONAIS',
+        'E': 'GRUPO E - EDUCACIONAL E CULTURAL',
+        'F': 'GRUPO F - LOCAIS DE REUNIÃO DE PÚBLICO',
+        'G': 'GRUPO G - SERVIÇOS AUTOMOTIVOS',
+        'H': 'GRUPO H - SERVIÇOS DE SAÚDE',
+        'I': 'GRUPO I - SERVIÇOS ESPECIAIS',
+        'J': 'GRUPO J - ARMAZENAMENTO',
+        'L': 'GRUPO L - EXPLOSIVOS E INFLAMÁVEIS',
+        'M': 'GRUPO M - INDÚSTRIA E DEPÓSITO'
+      };
+
+      if (!uso) return { grupo: '', divisao: '', descricao: '' };
+      
+      const [codigo, ...descricaoArray] = uso.split(' - ');
+      const grupo = codigo ? codigo.charAt(0) : '';
+      const divisao = codigo || '';
+      const descricao = descricaoArray.join(' - ') || '';
+      
+      return {
+        grupo: occupationGroups[grupo] || `GRUPO ${grupo}`,
+        divisao: divisao,
+        descricao: descricao
+      };
+    };
+
+    const occupationInfo = getOccupationDetails(formData.uso);
+    
     let doc = `<p class="title">MEMORIAL DESCRITIVO DO PROJETO DE SEGURANÇA CONTRA INCÊNDIO E PÂNICO</p>
 
 <p class="title">1. DADOS DE IDENTIFICAÇÃO DO PROJETO/EDIFICAÇÃO</p>
@@ -465,7 +498,10 @@ Decreto Estadual adotado: 16.302/2015<br>
 Altura: ${formData.altura} m<br>
 Nº de Pavimentos: ${formData.pavimentos}<br>
 Ocupação do Subsolo: ${formData.subsolo}<br>
-Uso, Divisão e Descrição: ${formData.uso}<br>
+Uso: ${occupationInfo.grupo}<br>
+Divisão: ${occupationInfo.divisao}<br>
+Descrição: ${occupationInfo.descricao}<br>
+Classificação de Altura: ${formData.classificacaoAltura}<br>
 Risco (Carga de Incêndio): ${formData.risco} MJ/m²<br>
 Número de Ocupantes (População): ${formData.ocupantes}</p>
 </div>
