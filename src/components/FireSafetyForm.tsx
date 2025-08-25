@@ -955,14 +955,78 @@ Responsável Técnico - CREA/CAU: [CREA/CAU]</p>
                 <Label htmlFor={`${medida.id}-detalhes`} className="text-sm">
                   Detalhes da implementação:
                 </Label>
-                <Textarea
-                  id={`${medida.id}-detalhes`}
-                  value={formData.medidas[medida.id]?.detalhes || ''}
-                  onChange={(e) => updateMedida(medida.id, 'detalhes', e.target.value)}
-                  placeholder="Descreva detalhadamente como esta medida será implementada..."
-                  rows={3}
-                  className="mt-1"
-                />
+                {medida.id === 'acesso_viatura' ? (
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="textoAcessoViaturas">Descrição do Acesso (editável)</Label>
+                      <Textarea
+                        id="textoAcessoViaturas"
+                        value={formData.textoAcessoViaturas}
+                        onChange={(e) => updateFormData('textoAcessoViaturas', e.target.value)}
+                        rows={8}
+                        className="font-mono text-sm"
+                      />
+                    </div>
+
+                    <div className="space-y-4">
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id="portaoAplicavel"
+                          checked={formData.portaoAplicavel}
+                          onCheckedChange={(checked) => updateFormData('portaoAplicavel', checked)}
+                        />
+                        <Label htmlFor="portaoAplicavel" className="text-sm font-medium">
+                          Medida Aplicável Portão (quando houver)
+                        </Label>
+                      </div>
+
+                      {formData.portaoAplicavel && (
+                        <div className="grid grid-cols-2 gap-4 ml-6">
+                          <div className="space-y-2">
+                            <Label htmlFor="portaoLargura">Largura do Portão (m)</Label>
+                            <Input
+                              id="portaoLargura"
+                              type="number"
+                              step="0.1"
+                              value={formData.portaoLargura}
+                              onChange={(e) => updateFormData('portaoLargura', e.target.value)}
+                              placeholder="0.0"
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="portaoAltura">Altura do Portão (m)</Label>
+                            <Input
+                              id="portaoAltura"
+                              type="number"
+                              step="0.1"
+                              value={formData.portaoAltura}
+                              onChange={(e) => updateFormData('portaoAltura', e.target.value)}
+                              placeholder="0.0"
+                            />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium">Acesso das viaturas do corpo de bombeiros</Label>
+                      <div className="p-3 bg-muted rounded-md">
+                        <p className="text-sm">
+                          Acesso das viaturas do corpo de bombeiros será pela {formData.logradouro || '[Logradouro]'}, {formData.numero || '[Número]'}{formData.complemento ? `, ${formData.complemento}` : ''}, {formData.bairro || '[Bairro]'}, {formData.municipio || '[Município]'}, BA
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <Textarea
+                    id={`${medida.id}-detalhes`}
+                    value={formData.medidas[medida.id]?.detalhes || ''}
+                    onChange={(e) => updateMedida(medida.id, 'detalhes', e.target.value)}
+                    placeholder="Descreva detalhadamente como esta medida será implementada..."
+                    rows={3}
+                    className="mt-1"
+                  />
+                )}
               </div>
             )}
           </div>
@@ -971,82 +1035,6 @@ Responsável Técnico - CREA/CAU: [CREA/CAU]</p>
     </Card>
   );
 
-  const renderStep3 = () => (
-    <Card className="shadow-card">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Shield className="w-5 h-5" />
-          Medidas de Segurança Contra Incêndio e Pânico - Acesso de Viaturas
-        </CardTitle>
-        <CardDescription>
-          Configure as informações sobre o acesso das viaturas do Corpo de Bombeiros
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        <div className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="textoAcessoViaturas">Descrição do Acesso (editável)</Label>
-            <Textarea
-              id="textoAcessoViaturas"
-              value={formData.textoAcessoViaturas}
-              onChange={(e) => updateFormData('textoAcessoViaturas', e.target.value)}
-              rows={8}
-              className="font-mono text-sm"
-            />
-          </div>
-
-          <div className="space-y-4">
-            <div className="flex items-center space-x-2">
-              <Checkbox
-                id="portaoAplicavel"
-                checked={formData.portaoAplicavel}
-                onCheckedChange={(checked) => updateFormData('portaoAplicavel', checked)}
-              />
-              <Label htmlFor="portaoAplicavel" className="text-sm font-medium">
-                Medida Aplicável Portão (quando houver)
-              </Label>
-            </div>
-
-            {formData.portaoAplicavel && (
-              <div className="grid grid-cols-2 gap-4 ml-6">
-                <div className="space-y-2">
-                  <Label htmlFor="portaoLargura">Largura do Portão (m)</Label>
-                  <Input
-                    id="portaoLargura"
-                    type="number"
-                    step="0.1"
-                    value={formData.portaoLargura}
-                    onChange={(e) => updateFormData('portaoLargura', e.target.value)}
-                    placeholder="0.0"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="portaoAltura">Altura do Portão (m)</Label>
-                  <Input
-                    id="portaoAltura"
-                    type="number"
-                    step="0.1"
-                    value={formData.portaoAltura}
-                    onChange={(e) => updateFormData('portaoAltura', e.target.value)}
-                    placeholder="0.0"
-                  />
-                </div>
-              </div>
-            )}
-          </div>
-
-          <div className="space-y-2">
-            <Label className="text-sm font-medium">Acesso das viaturas do corpo de bombeiros</Label>
-            <div className="p-3 bg-muted rounded-md">
-              <p className="text-sm">
-                Acesso das viaturas do corpo de bombeiros será pela {formData.logradouro || '[Logradouro]'}, {formData.numero || '[Número]'}{formData.complemento ? `, ${formData.complemento}` : ''}, {formData.bairro || '[Bairro]'}, {formData.municipio || '[Município]'}, BA
-              </p>
-            </div>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
-  );
 
   const renderStep4 = () => (
     <Card className="shadow-card">
@@ -1175,7 +1163,6 @@ Responsável Técnico - CREA/CAU: [CREA/CAU]</p>
   const steps = [
     { title: 'Identificação', component: renderStep1 },
     { title: 'Medidas de Segurança', component: renderStep2 },
-    { title: 'Acesso de Viaturas', component: renderStep3 },
     { title: 'Riscos Especiais', component: renderStep4 },
     { title: 'Finalização', component: renderStep5 }
   ];
