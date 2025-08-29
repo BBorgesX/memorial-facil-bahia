@@ -506,13 +506,66 @@ Risco (Carga de Incêndio): ${formData.risco} MJ/m²<br>
 Número de Ocupantes (População): ${formData.ocupantes}</p>
 </div>
 
-<p class="title">2. FORMA DE APRESENTAÇÃO DO PROJETO</p>
+<p class="title">2. NORMAS TÉCNICAS</p>
+
+<div class="content">
+<p><strong>Diretrizes Gerais</strong></p>
+<p>Os equipamentos e serviços objeto desta especificação deverão estar em plena conformidade com a legislação vigente do Estado da Bahia, as regulamentações do Corpo de Bombeiros Militar do Estado da Bahia (CBMBA), as normas da Associação Brasileira de Normas Técnicas (ABNT) e demais diretrizes técnicas aplicáveis.</p>
+
+<p><strong>Normas de Referência Obrigatórias</strong></p>
+<p>Todas as normas relacionadas abaixo deverão ser observadas em sua versão mais atualizada e vigente na data de execução dos serviços:</p>
+
+<p><strong>Legislação Federal</strong></p>
+<p>• Lei Federal nº 13.425/2017 - Estabelece diretrizes gerais sobre medidas de prevenção e combate a incêndio e desastres em estabelecimentos, edificações e áreas de reunião de público</p>
+
+<p><strong>Instruções Técnicas do CBMBA</strong></p>
+<p>• IT-01 a IT-43 - Instruções Técnicas do Corpo de Bombeiros Militar do Estado da Bahia</p>
+
+<p><strong>Normas Técnicas ABNT</strong></p>
+
+<p><strong>Estruturas e Componentes Construtivos</strong></p>
+<p>• ABNT NBR 5628 - Componentes construtivos estruturais - Determinação da resistência ao fogo</p>
+
+<p><strong>Acessibilidade e Circulação</strong></p>
+<p>• ABNT NBR 9050 - Acessibilidade a edificações, mobiliário, espaços e equipamentos urbanos<br>
+• ABNT NBR 9077 - Saídas de emergência em edifícios</p>
+
+<p><strong>Sistemas de Emergência e Sinalização</strong></p>
+<p>• ABNT NBR 10898 - Sistema de iluminação de emergência<br>
+• ABNT NBR 13434 - Sinalização de segurança contra incêndio e pânico - Princípios de projeto<br>
+• ABNT NBR 16820 - Sistemas de sinalização de emergência</p>
+
+<p><strong>Equipamentos de Proteção Passiva</strong></p>
+<p>• ABNT NBR 11742 - Porta corta-fogo para saída de emergência - Especificação<br>
+• ABNT NBR 11785 - Barra antipânico - Requisitos</p>
+
+<p><strong>Sistemas de Combate a Incêndio</strong></p>
+<p>• ABNT NBR 12693 - Sistemas de proteção por extintores de incêndio<br>
+• ABNT NBR 13714 - Sistemas de hidrantes e de mangotinhos para combate a incêndio</p>
+
+<p><strong>Legislação Estadual da Bahia</strong></p>
+<p>• Lei nº 12.929/2013 - Lei de Prevenção e Proteção Contra Incêndio do Estado da Bahia<br>
+• Decreto nº 16.302/2015 - Regulamentação da Lei nº 12.929/2013</p>
+
+<p><strong>Estabelecimentos Específicos</strong></p>
+<p>• ABNT NBR 16651 - Proteção contra incêndio em estabelecimentos assistenciais de saúde (EAS) - Requisitos</p>
+
+<p><strong>Normas Internacionais</strong></p>
+<p>• NFPA 20 - Standard for the Installation of Stationary Pumps for Fire Protection (Norma para instalação de bombas estacionárias para proteção contra incêndio)</p>
+
+<p><strong>Observações Importantes</strong></p>
+<p>1. Atualização Normativa: Deverão sempre ser aplicadas as versões mais recentes das normas mencionadas, vigentes na data de execução dos serviços.<br>
+2. Prevalência: Em caso de conflito entre normas, prevalecerá a mais restritiva, respeitando-se a hierarquia da legislação brasileira.<br>
+3. Normas Complementares: Outras normas técnicas pertinentes ao objeto, mesmo que não explicitamente mencionadas, deverão ser observadas quando aplicáveis.</p>
+</div>
+
+<p class="title">3. FORMA DE APRESENTAÇÃO DO PROJETO</p>
 
 <div class="content">
 <p>O presente projeto é apresentado como: ${formData.apresentacao}</p>
 </div>
 
-<p class="title">3. MEDIDAS DE SEGURANÇA CONTRA INCÊNDIO E PÂNICO</p>
+<p class="title">4. MEDIDAS DE SEGURANÇA CONTRA INCÊNDIO E PÂNICO</p>
 
 <div class="content">
 <p>${formData.textoAcessoViaturas.replace(/\n/g, '<br>')}</p>
