@@ -1131,28 +1131,22 @@ Responsável Técnico - CREA/CAU: [CREA/CAU]</p>
                       <Textarea
                         id={`${medida.id}-detalhes`}
                         value={formData.medidas[medida.id]?.detalhes || `<p style="font-family: Arial; font-size: 14px; font-weight: bold;">Iluminação de Emergência</p>
-
 <p style="font-family: Arial; font-size: 12px;">O projeto do sistema de iluminação de emergência fundamenta-se na ABNT NBR 10898:2023 (3ª edição, publicada em 14 de fevereiro de 2023), bem como nas demais normas e legislações vigentes aplicáveis:</p>
-
 • Instruções Técnicas do CBMBA aplicáveis
 • NBR 10898:2023
 
 <p style="font-family: Arial; font-size: 12px; font-weight: bold;">CLASSIFICAÇÃO DO SISTEMA</p>
-
-<p style="font-family: Arial; font-size: 12px; font-weight: bold;">Tipos de Iluminação de Emergência</p>
+Tipos de Iluminação de Emergência
 O sistema será composto pelos seguintes tipos de iluminação:
-
 a) Iluminação de Aclaramento
 • Destinada a iluminar e permitir a utilização segura das rotas de fuga e áreas comuns
 • Proporciona visibilidade adequada para evacuação segura dos ocupantes
-
 b) Iluminação de Balizamento
 • Destinada a demarcar claramente as rotas de fuga
 • Sinalização visual das saídas e caminhos de evacuação
 • Orientação direcional para as rotas de escape
 
 <p style="font-family: Arial; font-size: 12px; font-weight: bold;">REQUISITOS TÉCNICOS PRINCIPAIS</p>
-
 Autonomia do Sistema
 O sistema de iluminação de emergência deverá possuir autonomia mínima de 2 (duas) horas, conforme atualização da NBR 10898:2023, ou o tempo superior de autonomia determinado pela autoridade local competente.
 
@@ -1171,7 +1165,6 @@ Distanciamento entre Pontos de Iluminação
 A distância máxima entre os pontos de iluminação de emergência de aclaramento não deve ultrapassar 15 m, e entre o ponto de iluminação e a parede 7,5 m. Distanciamentos diferentes podem ser adotados desde que atendam aos parâmetros estabelecidos na NBR 10898:2023.
 
 <p style="font-family: Arial; font-size: 12px; font-weight: bold;">ESPECIFICAÇÕES DOS COMPONENTES</p>
-
 Luminárias de Emergência
 Características Técnicas:
 • Grau de proteção mínimo IP20 para uso interno
