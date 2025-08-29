@@ -43,6 +43,9 @@ interface FormData {
   portaoLargura: string;
   portaoAltura: string;
   
+  // Iluminação de emergência
+  iluminacaoSistemasCentralizados: boolean;
+  
   // Riscos especiais
   riscosEspeciais: { [key: string]: { aplicavel: boolean; detalhes: string } };
   
@@ -341,6 +344,7 @@ export const FireSafetyForm: React.FC = () => {
     portaoAplicavel: false,
     portaoLargura: '',
     portaoAltura: '',
+    iluminacaoSistemasCentralizados: false,
     riscosEspeciais: {},
     termoAceito: false
   });
@@ -583,7 +587,21 @@ ${formData.portaoAplicavel ? `<p>Medida Aplicável Portão: Largura ${formData.p
       const medidaData = formData.medidas[medida.id];
       if (medidaData?.aplicavel) {
         doc += `<p>- ${medida.nome} (${medida.referencia}):<br>`;
-        doc += `&nbsp;&nbsp;${medidaData.detalhes || 'Detalhes a serem especificados.'}</p>`;
+        if (medida.id === 'iluminacao_emergencia') {
+          doc += `${medidaData.detalhes || 'Detalhes a serem especificados.'}`;
+          if (formData.iluminacaoSistemasCentralizados) {
+            doc += `<br><br><strong>SISTEMAS CENTRALIZADOS (QUANDO APLICÁVEL)</strong><br>
+Características:<br>
+• Central de bateria com sistema de carregamento inteligente<br>
+• Monitoramento individual dos circuitos<br>
+• Sinalização de falhas e alarmes<br>
+• Teste automático programável<br>
+• Interface para supervisão remota`;
+          }
+          doc += `</p>`;
+        } else {
+          doc += `&nbsp;&nbsp;${medidaData.detalhes || 'Detalhes a serem especificados.'}</p>`;
+        }
       }
     });
 
@@ -1104,6 +1122,134 @@ Responsável Técnico - CREA/CAU: [CREA/CAU]</p>
                           Acesso das viaturas do corpo de bombeiros será pela {formData.logradouro || '[Logradouro]'}, {formData.numero || '[Número]'}{formData.complemento ? `, ${formData.complemento}` : ''}, {formData.bairro || '[Bairro]'}, {formData.municipio || '[Município]'}, BA
                         </p>
                       </div>
+                    </div>
+                  </div>
+                ) : medida.id === 'iluminacao_emergencia' ? (
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor={`${medida.id}-detalhes`}>Especificações Técnicas (editável)</Label>
+                      <Textarea
+                        id={`${medida.id}-detalhes`}
+                        value={formData.medidas[medida.id]?.detalhes || `<p style="font-family: Arial; font-size: 14px; font-weight: bold;">Iluminação de Emergência</p>
+
+<p style="font-family: Arial; font-size: 12px;">O projeto do sistema de iluminação de emergência fundamenta-se na ABNT NBR 10898:2023 (3ª edição, publicada em 14 de fevereiro de 2023), bem como nas demais normas e legislações vigentes aplicáveis:</p>
+
+• Instruções Técnicas do CBMBA aplicáveis
+• NBR 10898:2023
+
+<p style="font-family: Arial; font-size: 12px; font-weight: bold;">CLASSIFICAÇÃO DO SISTEMA</p>
+
+<p style="font-family: Arial; font-size: 12px; font-weight: bold;">Tipos de Iluminação de Emergência</p>
+O sistema será composto pelos seguintes tipos de iluminação:
+
+a) Iluminação de Aclaramento
+• Destinada a iluminar e permitir a utilização segura das rotas de fuga e áreas comuns
+• Proporciona visibilidade adequada para evacuação segura dos ocupantes
+
+b) Iluminação de Balizamento
+• Destinada a demarcar claramente as rotas de fuga
+• Sinalização visual das saídas e caminhos de evacuação
+• Orientação direcional para as rotas de escape
+
+<p style="font-family: Arial; font-size: 12px; font-weight: bold;">REQUISITOS TÉCNICOS PRINCIPAIS</p>
+
+Autonomia do Sistema
+O sistema de iluminação de emergência deverá possuir autonomia mínima de 2 (duas) horas, conforme atualização da NBR 10898:2023, ou o tempo superior de autonomia determinado pela autoridade local competente.
+
+Níveis de Iluminância
+Iluminação de Aclaramento:
+• Nível mínimo de 5 lux no piso das rotas de fuga
+• Uniformidade adequada, evitando contrastes excessivos
+• Tempo máximo de 15 segundos para atingir 50% da iluminância requerida
+
+Iluminação de Balizamento:
+• Luminância adequada para visualização eficaz da sinalização
+• Contraste suficiente entre a sinalização e o ambiente circundante
+• Visibilidade mantida durante toda a autonomia do sistema
+
+Distanciamento entre Pontos de Iluminação
+A distância máxima entre os pontos de iluminação de emergência de aclaramento não deve ultrapassar 15 m, e entre o ponto de iluminação e a parede 7,5 m. Distanciamentos diferentes podem ser adotados desde que atendam aos parâmetros estabelecidos na NBR 10898:2023.
+
+<p style="font-family: Arial; font-size: 12px; font-weight: bold;">ESPECIFICAÇÕES DOS COMPONENTES</p>
+
+Luminárias de Emergência
+Características Técnicas:
+• Grau de proteção mínimo IP20 para uso interno
+• Grau de proteção mínimo IP54 para áreas molhadas ou externas
+• Corpo fabricado em material resistente ao fogo e autoextinguível
+• Sistema óptico com proteção adequada
+• Indicador visual de funcionamento normal/emergência
+• Teste automático mensal
+
+Alimentação:
+• Fonte de alimentação normal através da rede elétrica
+• Fonte de alimentação de emergência através de bateria incorporada
+• Sistema de carregamento automático da bateria
+• Chaveamento automático entre as fontes
+
+Baterias
+Especificações:
+• Tecnologia de bateria selada, livre de manutenção
+• Vida útil mínima de 4 anos
+• Capacidade adequada para garantir a autonomia especificada
+• Resistência a ciclos de carga e descarga
+• Operação em temperatura ambiente de -5°C a +40°C
+
+Critérios de Instalação
+Posicionamento das Luminárias
+Localizações Obrigatórias:
+• Saídas de emergência e saídas de andares
+• Mudanças de direção e interseção de corredores
+• Mudanças de nível (escadas, rampas)
+• Próximo a equipamentos de segurança (extintores, hidrantes)
+• Áreas de refúgio temporário
+
+Altura de Instalação:
+• Altura mínima de 2,0 m do piso acabado
+• Instalação que evite ofuscamento direto
+• Distribuição que garanta uniformidade adequada
+
+Circuitos Elétricos
+Alimentação Normal:
+• Circuitos independentes para alimentação das luminárias
+• Proteção individual por circuito
+• Cabeamento em eletrodutos rígidos ou eletrocalhas
+• Condutores com isolação mínima 750V
+
+Circuitos de Emergência:
+• Fiação específica para sinalização de emergência
+• Condutores resistentes ao fogo quando exigido
+• Separação física dos circuitos normais`}
+                        onChange={(e) => updateMedida(medida.id, 'detalhes', e.target.value)}
+                        rows={15}
+                        className="font-mono text-sm"
+                      />
+                    </div>
+
+                    <div className="space-y-4">
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id="iluminacaoSistemasCentralizados"
+                          checked={formData.iluminacaoSistemasCentralizados}
+                          onCheckedChange={(checked) => updateFormData('iluminacaoSistemasCentralizados', checked)}
+                        />
+                        <Label htmlFor="iluminacaoSistemasCentralizados" className="text-sm font-medium">
+                          SISTEMAS CENTRALIZADOS (QUANDO APLICÁVEL)
+                        </Label>
+                      </div>
+
+                      {formData.iluminacaoSistemasCentralizados && (
+                        <div className="p-4 bg-muted rounded-md ml-6">
+                          <p className="text-sm">
+                            <strong>Características:</strong><br/>
+                            • Central de bateria com sistema de carregamento inteligente<br/>
+                            • Monitoramento individual dos circuitos<br/>
+                            • Sinalização de falhas e alarmes<br/>
+                            • Teste automático programável<br/>
+                            • Interface para supervisão remota
+                          </p>
+                        </div>
+                      )}
                     </div>
                   </div>
                 ) : (
