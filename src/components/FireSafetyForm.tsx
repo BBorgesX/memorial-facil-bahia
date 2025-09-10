@@ -462,8 +462,9 @@ export const FireSafetyForm: React.FC = () => {
         [medidaId]: {
           ...prev.medidas[medidaId],
           sistema: {
-            ...prev.medidas[medidaId]?.sistema,
-            [sistemaType]: typeof value === 'boolean' ? value : Boolean(value)
+            // Reset both to false, then set the selected one to true (radio button behavior)
+            enderecavel: sistemaType === 'enderecavel' && Boolean(value),
+            convencional: sistemaType === 'convencional' && Boolean(value)
           }
         }
       }
@@ -1494,7 +1495,11 @@ Circuitos de Emergência:
                             <div>
                               <p className="text-sm font-medium">Central de Alarme de Incêndio</p>
                               <ul className="text-xs text-muted-foreground ml-4 mt-1 space-y-1">
-                                <li>• Tipo: (convencional) ou (endereçável), com display digital, capacidade de expansão e registro de eventos em memória não volátil.</li>
+                                <li>• Tipo: {
+                                  formData.medidas[medida.id]?.sistema?.enderecavel ? '(endereçável)' :
+                                  formData.medidas[medida.id]?.sistema?.convencional ? '(convencional)' :
+                                  '(convencional) ou (endereçável)'
+                                }, com display digital, capacidade de expansão e registro de eventos em memória não volátil.</li>
                                 <li>• Funções: supervisão contínua do sistema, indicação de falhas, registro de alarmes, acionamento automático de sirenes, possibilidade de intertravamento com sistemas auxiliares.</li>
                                 <li>• Fonte de alimentação: rede elétrica de 220 Vca, com carregador automático de baterias.</li>
                               </ul>
