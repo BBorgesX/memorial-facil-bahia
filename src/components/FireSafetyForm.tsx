@@ -35,7 +35,32 @@ interface FormData {
   apresentacao: string;
   
   // Medidas de segurança
-  medidas: { [key: string]: { aplicavel: boolean; detalhes: string } };
+  medidas: { 
+    [key: string]: { 
+      aplicavel: boolean; 
+      detalhes: string;
+      detectores?: {
+        pontual?: boolean;
+        linear?: boolean;
+        chama?: boolean;
+        termico?: boolean;
+        gases?: boolean;
+        outros?: string;
+      };
+      sistema?: {
+        enderecavel?: boolean;
+        convencional?: boolean;
+      };
+      sinalizadores?: {
+        sirenes?: boolean;
+        visuais?: boolean;
+      };
+      auxiliares?: {
+        doorHolders?: boolean;
+        controleAcesso?: boolean;
+      };
+    } 
+  };
   
   // Acesso de viaturas
   textoAcessoViaturas: string;
@@ -408,6 +433,70 @@ export const FireSafetyForm: React.FC = () => {
         [id]: {
           ...prev.riscosEspeciais[id],
           [field]: value
+        }
+      }
+    }));
+  };
+
+  const handleDetectorChange = (medidaId: string, detectorType: string, value: boolean | string) => {
+    setFormData(prev => ({
+      ...prev,
+      medidas: {
+        ...prev.medidas,
+        [medidaId]: {
+          ...prev.medidas[medidaId],
+          detectores: {
+            ...prev.medidas[medidaId]?.detectores,
+            [detectorType]: value
+          }
+        }
+      }
+    }));
+  };
+
+  const handleSistemaChange = (medidaId: string, sistemaType: string, value: boolean | string) => {
+    setFormData(prev => ({
+      ...prev,
+      medidas: {
+        ...prev.medidas,
+        [medidaId]: {
+          ...prev.medidas[medidaId],
+          sistema: {
+            ...prev.medidas[medidaId]?.sistema,
+            [sistemaType]: typeof value === 'boolean' ? value : Boolean(value)
+          }
+        }
+      }
+    }));
+  };
+
+  const handleSinalizadorChange = (medidaId: string, sinalizadorType: string, value: boolean | string) => {
+    setFormData(prev => ({
+      ...prev,
+      medidas: {
+        ...prev.medidas,
+        [medidaId]: {
+          ...prev.medidas[medidaId],
+          sinalizadores: {
+            ...prev.medidas[medidaId]?.sinalizadores,
+            [sinalizadorType]: typeof value === 'boolean' ? value : Boolean(value)
+          }
+        }
+      }
+    }));
+  };
+
+  const handleAuxiliarChange = (medidaId: string, auxiliarType: string, value: boolean | string) => {
+    setFormData(prev => ({
+      ...prev,
+      medidas: {
+        ...prev.medidas,
+        [medidaId]: {
+          ...prev.medidas[medidaId],
+          auxiliares: {
+            ...prev.medidas[medidaId]?.auxiliares,
+            [auxiliarType]: typeof value === 'boolean' ? value : Boolean(value)
+          }
         }
       }
     }));
@@ -1243,6 +1332,284 @@ Circuitos de Emergência:
                           </p>
                         </div>
                       )}
+                    </div>
+                  </div>
+                ) : medida.id === 'deteccao_incendio' ? (
+                  <div className="mt-4 space-y-3">
+                    <div className="p-4 border rounded-lg bg-muted/50">
+                      <p className="text-sm text-muted-foreground mb-3">
+                        Sistema integrado de detecção precoce de incêndios projetado para identificar automaticamente sinais de combustão em ambientes internos e externos, proporcionando resposta rápida e eficaz para proteção de vidas e patrimônio.
+                      </p>
+                      <Label className="text-sm font-medium">Marcar o que é aplicável:</Label>
+                      <div className="space-y-3 mt-3">
+                        <div className="flex items-start space-x-2">
+                          <Checkbox
+                            id="detector-fumaca-pontual"
+                            checked={formData.medidas[medida.id]?.detectores?.pontual || false}
+                            onCheckedChange={(checked) =>
+                              handleDetectorChange(medida.id, 'pontual', !!checked)
+                            }
+                          />
+                          <div className="flex-1">
+                            <Label htmlFor="detector-fumaca-pontual" className="text-sm font-medium">
+                              Detectores de Fumaça Pontuais
+                            </Label>
+                            <p className="text-xs text-muted-foreground mt-1">
+                              tecnologia fotoelétrica, sensibilidade ajustável, indicados para áreas administrativas, corredores e salas técnicas.
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-start space-x-2">
+                          <Checkbox
+                            id="detector-fumaca-linear"
+                            checked={formData.medidas[medida.id]?.detectores?.linear || false}
+                            onCheckedChange={(checked) =>
+                              handleDetectorChange(medida.id, 'linear', checked)
+                            }
+                          />
+                          <div className="flex-1">
+                            <Label htmlFor="detector-fumaca-linear" className="text-sm font-medium">
+                              Detectores de Fumaça Lineares
+                            </Label>
+                            <p className="text-xs text-muted-foreground mt-1">
+                              feixe infravermelho, alcance até 100 m, aplicados em áreas amplas como galpões e auditórios.
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-start space-x-2">
+                          <Checkbox
+                            id="detector-chama"
+                            checked={formData.medidas[medida.id]?.detectores?.chama || false}
+                            onCheckedChange={(checked) =>
+                              handleDetectorChange(medida.id, 'chama', checked)
+                            }
+                          />
+                          <div className="flex-1">
+                            <Label htmlFor="detector-chama" className="text-sm font-medium">
+                              Detectores de Chama
+                            </Label>
+                            <p className="text-xs text-muted-foreground mt-1">
+                              baseados em radiação ultravioleta/infravermelha, destinados a áreas com risco de combustíveis líquidos e inflamáveis.
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-start space-x-2">
+                          <Checkbox
+                            id="detector-termico"
+                            checked={formData.medidas[medida.id]?.detectores?.termico || false}
+                            onCheckedChange={(checked) =>
+                              handleDetectorChange(medida.id, 'termico', checked)
+                            }
+                          />
+                          <div className="flex-1">
+                            <Label htmlFor="detector-termico" className="text-sm font-medium">
+                              Detectores Termovelocimétricos (Térmicos e Velocímetros)
+                            </Label>
+                            <p className="text-xs text-muted-foreground mt-1">
+                              acionados por elevação brusca ou crítica de temperatura, instalados em cozinhas, áreas técnicas e depósitos.
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-start space-x-2">
+                          <Checkbox
+                            id="detector-gases"
+                            checked={formData.medidas[medida.id]?.detectores?.gases || false}
+                            onCheckedChange={(checked) =>
+                              handleDetectorChange(medida.id, 'gases', checked)
+                            }
+                          />
+                          <div className="flex-1">
+                            <Label htmlFor="detector-gases" className="text-sm font-medium">
+                              Detectores de Gases Combustíveis
+                            </Label>
+                            <p className="text-xs text-muted-foreground mt-1">
+                              sensores específicos para metano, GLP ou outros, aplicados em centrais de GLP e salas de geradores.
+                            </p>
+                          </div>
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="outros-detectores" className="text-sm font-medium">
+                            Outros:
+                          </Label>
+                          <Textarea
+                            id="outros-detectores"
+                            placeholder="Ex: Localização dos detectores, central do sistema, fonte alternativa de energia"
+                            value={formData.medidas[medida.id]?.detectores?.outros || ''}
+                            onChange={(e) =>
+                              handleDetectorChange(medida.id, 'outros', e.target.value)
+                            }
+                            className="min-h-[80px]"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ) : medida.id === 'alarme_incendio' ? (
+                  <div className="mt-4 space-y-4">
+                    <div className="p-4 border rounded-lg bg-muted/50">
+                      <h4 className="font-medium text-sm mb-3">Sistema de Detecção e Alarme de Incêndio</h4>
+                      
+                      <div className="space-y-4">
+                        <div>
+                          <h5 className="font-medium text-sm mb-2">DESCRIÇÃO GERAL DO SISTEMA</h5>
+                          <p className="text-sm text-muted-foreground mb-3">
+                            O sistema projetado será do tipo:
+                          </p>
+                          <div className="flex gap-4 mb-3">
+                            <div className="flex items-center space-x-2">
+                              <Checkbox
+                                id="sistema-enderecavel"
+                                checked={formData.medidas[medida.id]?.sistema?.enderecavel || false}
+                                onCheckedChange={(checked) =>
+                                  handleSistemaChange(medida.id, 'enderecavel', checked)
+                                }
+                              />
+                              <Label htmlFor="sistema-enderecavel" className="text-sm">
+                                1) Endereçável
+                              </Label>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <Checkbox
+                                id="sistema-convencional"
+                                checked={formData.medidas[medida.id]?.sistema?.convencional || false}
+                                onCheckedChange={(checked) =>
+                                  handleSistemaChange(medida.id, 'convencional', checked)
+                                }
+                              />
+                              <Label htmlFor="sistema-convencional" className="text-sm">
+                                2) Convencional
+                              </Label>
+                            </div>
+                          </div>
+                          <p className="text-sm text-muted-foreground">
+                            composto por central de alarme de incêndio, detectores automáticos, acionadores manuais, sinalizadores audiovisuais, módulos de interface, dispositivos auxiliares e cabeamento específico, devidamente setorizado de acordo com a compartimentação da edificação.
+                            A arquitetura do sistema prevê a identificação rápida e precisa do ponto de atuação, a emissão imediata de alarme sonoro e visual, e a transmissão de informações à central, possibilitando pronta resposta em situações de emergência.
+                          </p>
+                        </div>
+
+                        <div>
+                          <h5 className="font-medium text-sm mb-2">COMPONENTES DO SISTEMA</h5>
+                          
+                          <div className="space-y-3">
+                            <div>
+                              <p className="text-sm font-medium">Central de Alarme de Incêndio</p>
+                              <ul className="text-xs text-muted-foreground ml-4 mt-1 space-y-1">
+                                <li>• Tipo: (convencional) ou (endereçável), com display digital, capacidade de expansão e registro de eventos em memória não volátil.</li>
+                                <li>• Funções: supervisão contínua do sistema, indicação de falhas, registro de alarmes, acionamento automático de sirenes, possibilidade de intertravamento com sistemas auxiliares.</li>
+                                <li>• Fonte de alimentação: rede elétrica de 220 Vca, com carregador automático de baterias.</li>
+                              </ul>
+                            </div>
+
+                            <div>
+                              <p className="text-sm font-medium">Acionadores Manuais</p>
+                              <p className="text-xs text-muted-foreground ml-4 mt-1">
+                                também conhecidos como botoeiras, são dispositivos acionados manualmente por pessoas que identificam um princípio de incêndio. Uma pessoa pressiona, puxa ou quebra uma cobertura de vidro (que não se estilhaça perigosamente) para ativar o acionador. cor vermelha, instalados em rotas de fuga, corredores e acessos, com espaçamento máximo de 30 m, conforme NBR 17240.
+                              </p>
+                            </div>
+
+                            <div>
+                              <p className="text-sm font-medium mb-2">Sinalizadores Audiovisuais</p>
+                              <div className="space-y-2">
+                                <div className="flex items-start space-x-2">
+                                  <Checkbox
+                                    id="sirenes"
+                                    checked={formData.medidas[medida.id]?.sinalizadores?.sirenes || false}
+                                    onCheckedChange={(checked) =>
+                                      handleSinalizadorChange(medida.id, 'sirenes', checked)
+                                    }
+                                  />
+                                  <div className="flex-1">
+                                    <Label htmlFor="sirenes" className="text-xs">
+                                      Sirenes: alta potência sonora (&gt; 85 dB a 3 m), padrão intermitente, instaladas de forma a garantir audibilidade em todos os ambientes ocupados.
+                                    </Label>
+                                  </div>
+                                </div>
+                                <div className="flex items-start space-x-2">
+                                  <Checkbox
+                                    id="sinalizadores-visuais"
+                                    checked={formData.medidas[medida.id]?.sinalizadores?.visuais || false}
+                                    onCheckedChange={(checked) =>
+                                      handleSinalizadorChange(medida.id, 'visuais', checked)
+                                    }
+                                  />
+                                  <div className="flex-1">
+                                    <Label htmlFor="sinalizadores-visuais" className="text-xs">
+                                      Sinalizadores Visuais: lâmpadas LED estroboscópicas, utilizadas em locais com alto nível de ruído e em áreas acessíveis a pessoas com deficiência auditiva.
+                                    </Label>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+
+                            <div>
+                              <p className="text-sm font-medium mb-2">Equipamentos Auxiliares</p>
+                              <div className="space-y-2">
+                                <div className="flex items-start space-x-2">
+                                  <Checkbox
+                                    id="door-holders"
+                                    checked={formData.medidas[medida.id]?.auxiliares?.doorHolders || false}
+                                    onCheckedChange={(checked) =>
+                                      handleAuxiliarChange(medida.id, 'doorHolders', checked)
+                                    }
+                                  />
+                                  <div className="flex-1">
+                                    <Label htmlFor="door-holders" className="text-xs">
+                                      Door Holders -Eletroímãs Retentores de Porta-: mantêm portas corta-fogo abertas em uso normal e liberam o fechamento automático em caso de alarme.
+                                    </Label>
+                                  </div>
+                                </div>
+                                <div className="ml-6">
+                                  <p className="text-xs text-muted-foreground">
+                                    Flow Switches: sensores de fluxo instalados em ramais de sprinkler, enviando sinal à central de alarme em caso de descarga de água.
+                                  </p>
+                                </div>
+                                <div className="flex items-start space-x-2">
+                                  <Checkbox
+                                    id="controle-acesso"
+                                    checked={formData.medidas[medida.id]?.auxiliares?.controleAcesso || false}
+                                    onCheckedChange={(checked) =>
+                                      handleAuxiliarChange(medida.id, 'controleAcesso', checked)
+                                    }
+                                  />
+                                  <div className="flex-1">
+                                    <Label htmlFor="controle-acesso" className="text-xs">
+                                      Equipamentos de Controle de Acesso: programados para destravar portas em caso de alarme, garantindo a evacuação.
+                                    </Label>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="text-xs text-muted-foreground space-y-2">
+                          <div>
+                            <p className="font-medium">Alimentação Elétrica e Baterias</p>
+                            <p>• O sistema será alimentado pela rede elétrica da edificação, com fornecimento de energia estabilizada.</p>
+                            <p>• Serão utilizadas baterias seladas de chumbo-ácido, autonomia mínima de 24 horas em supervisão + 15 minutos em alarme geral, conforme NBR 17240.</p>
+                          </div>
+                          
+                          <div>
+                            <p className="font-medium">Condutores e Fiação</p>
+                            <p>• Cabos com isolação em material antichama, baixa emissão de fumaça e gases tóxicos, seção dimensionada conforme corrente do circuito.</p>
+                            <p>• Identificação por cores e etiquetas de setor, atendendo aos requisitos de rastreabilidade e manutenção.</p>
+                          </div>
+
+                          <div>
+                            <p className="font-medium">FUNCIONALIDADES DO SISTEMA</p>
+                            <p>• Monitoramento contínuo de falhas (curto-circuito, circuito aberto, perda de alimentação).</p>
+                            <p>• Registro cronológico de eventos (alarme, falha, restauração).</p>
+                            <p>• Identificação do ponto de origem do alarme.</p>
+                            <p>• Integração com sistemas de combate e de segurança predial.</p>
+                            <p>• Operação em conformidade com os critérios de confiabilidade e redundância estabelecidos pela NBR 17240.</p>
+                          </div>
+
+                          <div>
+                            <p className="font-medium">CONFORMIDADE NORMATIVA</p>
+                            <p>O sistema, seus componentes e sua instalação atenderão integralmente às disposições da ABNT NBR 17240, da NBR 5410 (Instalações Elétricas de Baixa Tensão) e às Instruções Técnicas do Corpo de Bombeiros do Estado, especialmente no que concerne a setorização, espaçamentos, redundância e manutenção preventiva.</p>
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 ) : (
