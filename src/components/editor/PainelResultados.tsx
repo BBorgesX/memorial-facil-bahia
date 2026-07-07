@@ -136,42 +136,126 @@ export const PainelResultados = ({ projeto, resultado: r }: Props) => {
           </CardContent>
         </Card>
 
-        {/* Saídas */}
-        {r.saidas && (
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-base flex items-center gap-2">
-                <DoorOpen className="w-4 h-4 text-primary" /> Saídas de Emergência (IT 11)
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2 text-sm">
-              <div className="flex justify-between border-b pb-1">
-                <span className="flex items-center gap-1"><Users className="w-3 h-3" /> População adotada</span>
-                <strong>{fmt(r.saidas.populacaoAdotada)} pessoas</strong>
+      </div>
+
+      {/* Memorial de cálculo — Saídas de Emergência (IT 11, Anexo A) */}
+      {r.saidas && (
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base flex items-center gap-2">
+              <DoorOpen className="w-4 h-4 text-primary" /> Dimensionamento de Saídas de Emergência
+            </CardTitle>
+            <CardDescription>Memorial de Cálculo Técnico — IT 11/2016 (Anexo A)</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-5 text-sm">
+            {/* 1. Dados normativos */}
+            <div>
+              <p className="font-semibold mb-2">1. Dados Normativos da Ocupação</p>
+              <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-2">
+                <div className="p-2 bg-muted rounded"><span className="text-muted-foreground block text-xs">Divisão</span><strong>{r.saidas.divisao}</strong></div>
+                <div className="p-2 bg-muted rounded lg:col-span-2"><span className="text-muted-foreground block text-xs">Descrição</span><strong>{r.saidas.descricaoOcupacao}</strong></div>
+                <div className="p-2 bg-muted rounded"><span className="text-muted-foreground block text-xs">Cap. AD / ER / Portas</span><strong>{r.saidas.capacidadeUP.acessos} / {r.saidas.capacidadeUP.escadas} / {r.saidas.capacidadeUP.portas}</strong></div>
+                <div className="p-2 bg-muted rounded"><span className="text-muted-foreground block text-xs">Coeficiente</span><strong className="text-xs">{r.saidas.coeficiente}</strong></div>
               </div>
-              <div className="flex justify-between border-b pb-1">
-                <span>Acessos</span>
-                <strong>{r.saidas.unidadesPassagem.acessos} UP · {fmt(r.saidas.larguraMinima.acessosM, 2)} m</strong>
+            </div>
+
+            {/* 2. População por pavimento */}
+            <div>
+              <p className="font-semibold mb-2">2. Cálculo de População por Pavimento (P)</p>
+              <div className="space-y-1">
+                {r.saidas.pavimentos.map((pav, i) => (
+                  <div key={i} className="flex flex-wrap justify-between gap-2 border-b pb-1">
+                    <span className="font-medium">{pav.nome}</span>
+                    <span className="text-muted-foreground">{pav.memoria}</span>
+                  </div>
+                ))}
               </div>
-              <div className="flex justify-between border-b pb-1">
-                <span>Escadas/rampas</span>
-                <strong>{r.saidas.unidadesPassagem.escadas} UP · {fmt(r.saidas.larguraMinima.escadasM, 2)} m</strong>
+              <div className="mt-2 p-2 bg-accent/10 border border-accent rounded flex flex-wrap justify-between gap-2">
+                <span className="font-medium">População Crítica (Máxima)</span>
+                <strong>{fmt(r.saidas.populacaoCritica)} pessoas ({r.saidas.pavimentoCritico})</strong>
               </div>
-              <div className="flex justify-between border-b pb-1">
-                <span>Portas</span>
-                <strong>{r.saidas.unidadesPassagem.portas} UP · {fmt(r.saidas.larguraMinima.portasM, 2)} m</strong>
+              <div className="flex justify-between mt-1 px-2">
+                <span className="text-muted-foreground">População total da edificação</span>
+                <strong>{fmt(r.saidas.populacaoTotal)} pessoas</strong>
               </div>
-              <div className="flex justify-between border-b pb-1">
-                <span>Dist. máx. (térreo / demais)</span>
-                <strong>{fmt(r.saidas.distanciaMaxima.pisoDescargaM)} m / {fmt(r.saidas.distanciaMaxima.demaisPavimentosM)} m</strong>
+            </div>
+
+            {/* 3. Dimensionamento */}
+            <div>
+              <p className="font-semibold mb-2">3. Dimensionamento das Saídas (W = N × 0,55)</p>
+              <p className="text-muted-foreground text-xs mb-1">Acessos (dimensionados por pavimento):</p>
+              <div className="space-y-1 mb-3">
+                {r.saidas.pavimentos.map((pav, i) => (
+                  <div key={i} className="flex flex-wrap justify-between gap-2 border-b pb-1">
+                    <span className="font-medium">{pav.nome}</span>
+                    <span className="text-muted-foreground">{pav.acessos.memoria}</span>
+                  </div>
+                ))}
               </div>
-              <div className="flex justify-between">
-                <span>Nº mínimo de saídas</span>
-                <strong>{r.saidas.numeroMinimoSaidas}</strong>
+              <p className="text-muted-foreground text-xs mb-1">Escadas, rampas, descargas e portas (dimensionados pela população crítica = {fmt(r.saidas.populacaoCritica)}):</p>
+              <div className="space-y-1">
+                <div className="flex flex-wrap justify-between gap-2 border-b pb-1"><span className="font-medium">E (Escadas)</span><span className="text-muted-foreground">{r.saidas.dimensionamento.escadas.memoria}</span></div>
+                <div className="flex flex-wrap justify-between gap-2 border-b pb-1"><span className="font-medium">R (Rampas)</span><span className="text-muted-foreground">{r.saidas.dimensionamento.rampas.memoria}</span></div>
+                <div className="flex flex-wrap justify-between gap-2 border-b pb-1"><span className="font-medium">D (Descargas)</span><span className="text-muted-foreground">{r.saidas.dimensionamento.descargas.memoria}</span></div>
+                <div className="flex flex-wrap justify-between gap-2"><span className="font-medium">P (Portas)</span><span className="text-muted-foreground">{r.saidas.dimensionamento.portas.memoria}</span></div>
               </div>
-            </CardContent>
-          </Card>
-        )}
+            </div>
+
+            {/* 4. Tipo de escada */}
+            <div>
+              <p className="font-semibold mb-2">4. Tipo de Escada (Anexo C, Tabela 3)</p>
+              <div className="grid sm:grid-cols-3 gap-2">
+                <div className="p-2 bg-muted rounded"><span className="text-muted-foreground block text-xs">Altura da edificação</span><strong>{fmt(projeto.alturaM, 2)} m</strong></div>
+                <div className="p-2 bg-muted rounded"><span className="text-muted-foreground block text-xs">Classificação</span><strong>{r.saidas.tipoEscada.sigla}</strong></div>
+                <div className="p-2 bg-muted rounded"><span className="text-muted-foreground block text-xs">Descrição</span><strong>{r.saidas.tipoEscada.descricao}</strong></div>
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">Base: {r.saidas.tipoEscada.base}</p>
+            </div>
+
+            {/* 5. Veredito */}
+            <div>
+              <p className="font-semibold mb-2">5. Veredito de Conformidade</p>
+              <div className="space-y-2">
+                <div className="p-2 border rounded">
+                  <p className="font-medium">Tipo de escada exigido</p>
+                  <p className="text-muted-foreground">Classificação: {r.saidas.tipoEscada.sigla} | {r.saidas.tipoEscada.descricao} (baseado na altura: {fmt(projeto.alturaM, 2)} m)</p>
+                </div>
+                <div className={`p-2 border rounded ${r.saidas.conformidade.distanciaTerreo.conforme === false ? 'border-destructive bg-destructive/10' : r.saidas.conformidade.distanciaTerreo.conforme ? 'border-green-500 bg-green-500/10' : ''}`}>
+                  <p className="font-medium">De saída da edificação (piso de descarga)
+                    {r.saidas.conformidade.distanciaTerreo.conforme === true && <Badge className="ml-2 bg-green-600">Conforme</Badge>}
+                    {r.saidas.conformidade.distanciaTerreo.conforme === false && <Badge variant="destructive" className="ml-2">Não conforme</Badge>}
+                  </p>
+                  <p className="text-muted-foreground">
+                    Real: {r.saidas.conformidade.distanciaTerreo.realM > 0 ? `${fmt(r.saidas.conformidade.distanciaTerreo.realM, 1)} m` : 'não informado'} | Permitido: {r.saidas.conformidade.distanciaTerreo.permitidoM ? `${r.saidas.conformidade.distanciaTerreo.permitidoM} m` : 'consultar CBMBA'}
+                  </p>
+                </div>
+                <div className={`p-2 border rounded ${r.saidas.conformidade.distanciaDemais.conforme === false ? 'border-destructive bg-destructive/10' : r.saidas.conformidade.distanciaDemais.conforme ? 'border-green-500 bg-green-500/10' : ''}`}>
+                  <p className="font-medium">Demais andares
+                    {r.saidas.conformidade.distanciaDemais.conforme === true && <Badge className="ml-2 bg-green-600">Conforme</Badge>}
+                    {r.saidas.conformidade.distanciaDemais.conforme === false && <Badge variant="destructive" className="ml-2">Não conforme</Badge>}
+                  </p>
+                  <p className="text-muted-foreground">
+                    Real: {r.saidas.conformidade.distanciaDemais.realM > 0 ? `${fmt(r.saidas.conformidade.distanciaDemais.realM, 1)} m` : 'não informado'} | Permitido: {r.saidas.conformidade.distanciaDemais.permitidoM ? `${r.saidas.conformidade.distanciaDemais.permitidoM} m` : 'consultar CBMBA'}
+                  </p>
+                </div>
+                <div className={`p-2 border rounded ${!r.saidas.conformidade.saidas.conforme ? 'border-destructive bg-destructive/10' : 'border-green-500 bg-green-500/10'}`}>
+                  <p className="font-medium">Quantitativo de saídas
+                    {r.saidas.conformidade.saidas.conforme
+                      ? <Badge className="ml-2 bg-green-600">Conforme</Badge>
+                      : <Badge variant="destructive" className="ml-2">Não conforme</Badge>}
+                  </p>
+                  <p className="text-muted-foreground">
+                    Existente: {r.saidas.conformidade.saidas.existente} | Mínimo: {r.saidas.conformidade.saidas.minimo} saída(s) ({r.saidas.conformidade.saidas.criterio})
+                  </p>
+                </div>
+              </div>
+            </div>
+            <p className="text-xs text-muted-foreground">{r.saidas.distanciaMaxima.consideracoes}</p>
+          </CardContent>
+        </Card>
+      )}
+
+      <div className="grid md:grid-cols-2 gap-6">
 
         {/* Hidrantes */}
         {r.hidrantes && (

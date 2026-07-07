@@ -23,7 +23,7 @@ import {
 import { calcularTRRF, ResultadoTRRF } from './calculos/trrf';
 import { calcularHidrantes, ResultadoHidrantes } from './calculos/hidrantes';
 import { calcularExtintores, ResultadoExtintores } from './calculos/extintores';
-import { calcularSaidas, ResultadoSaidas } from './calculos/saidas';
+import { calcularSaidas, PavimentoEntrada, ResultadoSaidas } from './calculos/saidas';
 import { calcularBrigada, ResultadoBrigada } from './calculos/brigada';
 import { calcularIluminacao, ResultadoIluminacao } from './calculos/iluminacao';
 
@@ -57,6 +57,38 @@ export interface ResultadoTecnico {
   saidas?: ResultadoSaidas;
   brigada?: ResultadoBrigada;
   iluminacao?: ResultadoIluminacao;
+}
+
+/** Nome padrão de um pavimento pelo índice (0 = Térreo). */
+export function nomePavimento(indice: number): string {
+  return indice === 0 ? 'Térreo' : `${indice}º Pavimento`;
+}
+
+/**
+ * Monta a lista efetiva de pavimentos para o cálculo da IT 11: usa os dados
+ * informados pelo usuário e completa os que faltam com nome padrão e área
+ * distribuída uniformemente.
+ */
+export function montarPavimentos(p: DadosProjeto, areaTotal: number): PavimentoEntrada[] {
+  const qtd = Math.max(1, p.pavimentos);
+  const informados = p.pavimentosDetalhados ?? [];
+  // Área restante distribuída entre os pavimentos sem área informada
+  const areaInformada = informados
+    .slice(0, qtd)
+    .reduce((s, pav) => s + (pav?.areaM2 > 0 ? pav.areaM2 : 0), 0);
+  const semArea = Array.from({ length: qtd }, (_, i) => informados[i]?.areaM2 > 0 ? 0 : 1)
+    .reduce((a, b) => a + b, 0);
+  const areaPadrao = semArea > 0 ? Math.max(0, areaTotal - areaInformada) / semArea : 0;
+
+  return Array.from({ length: qtd }, (_, i) => {
+    const dado = informados[i];
+    return {
+      nome: dado?.nome?.trim() || nomePavimento(i),
+      areaM2: dado?.areaM2 > 0 ? dado.areaM2 : areaPadrao,
+      dormitorios: dado?.dormitorios,
+      populacaoManual: dado?.populacaoManual,
+    };
+  });
 }
 
 export function validarProjeto(p: DadosProjeto): ErroValidacao[] {
@@ -151,6 +183,7 @@ export function processarProjeto(p: DadosProjeto): ResultadoTecnico {
       divisao: ocup.divisao.cod,
       cargaNivel: carga.nivel,
       areaTotal,
+      tipoManual: p.hidranteTipoManual,
     });
   }
 
@@ -163,12 +196,16 @@ export function processarProjeto(p: DadosProjeto): ResultadoTecnico {
   resultado.saidas = calcularSaidas({
     grupo: ocup.grupo.codigo,
     divisao: ocup.divisao.cod,
+    descricaoOcupacao: ocup.divisao.desc,
     areaTotal,
-    pavimentos: p.pavimentos,
+    alturaM: p.alturaM,
+    pavimentosEntrada: montarPavimentos(p, areaTotal),
     populacaoInformada: p.ocupantes,
     temSprinklers: aplicavel('chuveiros_automaticos'),
     temDeteccao: aplicavel('deteccao_incendio'),
     saidaUnica: p.saidaUnica,
+    distanciaRealTerreoM: p.distanciaRealTerreoM,
+    distanciaRealDemaisM: p.distanciaRealDemaisM,
   });
 
   resultado.brigada = calcularBrigada({

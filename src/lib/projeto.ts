@@ -10,6 +10,16 @@ export interface DetalhesMedida {
   nota?: string;
 }
 
+/** Dados informados pelo usuário para cada pavimento (cálculo da IT 11). */
+export interface PavimentoProjeto {
+  nome: string;
+  areaM2: number;
+  /** Nº de dormitórios (grupos A e H-2 — população = dormitórios × 2) */
+  dormitorios?: number;
+  /** População informada manualmente para o pavimento (prevalece) */
+  populacaoManual?: number;
+}
+
 export interface DadosProjeto {
   id: string;
   nome: string;
@@ -53,6 +63,16 @@ export interface DadosProjeto {
   cargaIncendioMJm2: number;
   garagemAberta: boolean;
   saidaUnica: boolean;
+
+  // Saídas de emergência — dados por pavimento e verificação (IT 11)
+  pavimentosDetalhados: PavimentoProjeto[];
+  /** Distância real a percorrer no piso de descarga (m) — para o veredito */
+  distanciaRealTerreoM: number;
+  /** Distância real a percorrer nos demais pavimentos (m) */
+  distanciaRealDemaisM: number;
+
+  /** Tipo de sistema de hidrantes selecionado manualmente (1–5); 0 = automático (mín. Tipo 2) */
+  hidranteTipoManual: number;
 
   // Medidas de segurança (ajustes do usuário sobre a classificação automática)
   medidas: Record<string, DetalhesMedida>;
@@ -102,6 +122,10 @@ export function novoProjeto(nome = 'Novo Projeto'): DadosProjeto {
     cargaIncendioMJm2: 0,
     garagemAberta: false,
     saidaUnica: false,
+    pavimentosDetalhados: [],
+    distanciaRealTerreoM: 0,
+    distanciaRealDemaisM: 0,
+    hidranteTipoManual: 0,
     medidas: {},
     riscosEspeciais: {},
     respTecnicoNome: '',

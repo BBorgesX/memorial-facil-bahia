@@ -165,54 +165,199 @@ const DIST: (number | null)[][][][][] = [
   ],
 ];
 
+// ---------------------------------------------------------------------------
+// Tipo de escada — Anexo C (Tabela 3) da IT 11
+// ---------------------------------------------------------------------------
+
+export interface TipoEscada {
+  sigla: 'NE' | 'EP' | 'PF';
+  descricao: string;
+  base: string;
+}
+
+/**
+ * Classificação simplificada do tipo de escada exigido (Anexo C da IT 11 /
+ * Tabela 9 da NBR 9077), em função do grupo de ocupação e da altura:
+ * - NE: escada comum (não enclausurada);
+ * - EP: escada protegida (enclausurada protegida);
+ * - PF: escada enclausurada à prova de fumaça.
+ */
+export function classificarTipoEscada(grupo: string, divisao: string, alturaM: number): TipoEscada {
+  const nomes: Record<TipoEscada['sigla'], string> = {
+    NE: 'Escada Comum (Não Enclausurada)',
+    EP: 'Escada Protegida (Enclausurada Protegida)',
+    PF: 'Escada Enclausurada à Prova de Fumaça',
+  };
+  const montar = (sigla: TipoEscada['sigla'], base: string): TipoEscada =>
+    ({ sigla, descricao: nomes[sigla], base });
+
+  // Habitação unifamiliar: sempre escada comum
+  if (divisao === 'A-1') return montar('NE', 'Habitação unifamiliar (A-1) — escada comum em qualquer altura');
+
+  // Ocupações com maior exigência (saúde/institucional e explosivos):
+  // protegida a partir de 6 m e à prova de fumaça acima de 23 m
+  if (grupo === 'H' || grupo === 'L') {
+    if (alturaM > 23) return montar('PF', `Grupo ${grupo} com H > 23 m`);
+    if (alturaM > 6) return montar('EP', `Grupo ${grupo} com 6 m < H ≤ 23 m`);
+    return montar('NE', `Grupo ${grupo} com H ≤ 6 m`);
+  }
+
+  // Regra geral das demais ocupações
+  if (alturaM > 30) return montar('PF', 'H > 30 m');
+  if (alturaM > 12) return montar('EP', '12 m < H ≤ 30 m');
+  return montar('NE', 'H ≤ 12 m');
+}
+
+// ---------------------------------------------------------------------------
+// Cálculo por pavimento
+// ---------------------------------------------------------------------------
+
+/** Dados de entrada de um pavimento (informados pelo usuário). */
+export interface PavimentoEntrada {
+  nome: string;
+  areaM2: number;
+  /** Nº de dormitórios (grupos A e H-2 — população = dormitórios × 2) */
+  dormitorios?: number;
+  /** População informada manualmente (prevalece sobre o cálculo) */
+  populacaoManual?: number;
+}
+
+export interface PavimentoCalculado {
+  nome: string;
+  areaM2: number;
+  populacao: number;
+  /** Memória de cálculo da população do pavimento (ex.: "P = 120 m² / 7 = 18") */
+  memoria: string;
+  /** Acessos dimensionados por pavimento: N = P/C (mínimo 2 UP) */
+  acessos: { unidades: number; larguraM: number; memoria: string };
+}
+
 export interface ResultadoSaidas {
-  populacaoCalculada: number;
-  populacaoAdotada: number;
+  divisao: string;
+  descricaoOcupacao: string;
   coeficiente: string;
-  /** Capacidade de uma unidade de passagem (pessoas) usada no cálculo */
+  usaDormitorios: boolean;
+  /** Capacidade de uma unidade de passagem (pessoas) — Anexo A da IT 11 */
   capacidadeUP: { acessos: number; escadas: number; portas: number };
-  unidadesPassagem: { acessos: number; escadas: number; portas: number };
-  larguraMinima: { acessosM: number; escadasM: number; portasM: number };
+  /** Cálculo detalhado por pavimento */
+  pavimentos: PavimentoCalculado[];
+  /** População crítica (máxima entre os pavimentos) — dimensiona escadas/descargas */
+  populacaoCritica: number;
+  pavimentoCritico: string;
+  /** População total da edificação (soma dos pavimentos) */
+  populacaoTotal: number;
+  /** População adotada (informada pelo usuário ou total calculada) */
+  populacaoAdotada: number;
+  populacaoCalculada: number;
+  /** Dimensionados pela população crítica (mínimo 2 UP = 1,10 m) */
+  dimensionamento: {
+    escadas: { unidades: number; larguraM: number; memoria: string };
+    rampas: { unidades: number; larguraM: number; memoria: string };
+    descargas: { unidades: number; larguraM: number; memoria: string };
+    portas: { unidades: number; larguraM: number; memoria: string };
+  };
+  tipoEscada: TipoEscada;
   distanciaMaxima: {
     pisoDescargaM: number | null;
     demaisPavimentosM: number | null;
     consideracoes: string;
   };
+  /** Veredito de conformidade (real informado × permitido pela IT 11) */
+  conformidade: {
+    distanciaTerreo: { realM: number; permitidoM: number | null; conforme: boolean | null };
+    distanciaDemais: { realM: number; permitidoM: number | null; conforme: boolean | null };
+    saidas: { existente: string; minimo: number; criterio: string; conforme: boolean };
+  };
   numeroMinimoSaidas: number;
+}
+
+const MIN_UP = 2; // largura mínima normativa de 1,10 m (2 unidades de passagem)
+
+function dimensionar(populacao: number, capacidade: number, rotulo: string) {
+  const calculado = Math.ceil(populacao / capacidade);
+  const unidades = Math.max(MIN_UP, calculado);
+  return {
+    unidades,
+    larguraM: unidades * LARGURA_UP_M,
+    memoria: `N = ${populacao} / ${capacidade} = ${calculado} → adotado ${unidades} U.P. · W = ${unidades} × 0,55 = ${(unidades * LARGURA_UP_M).toFixed(2).replace('.', ',')} m (${rotulo})`,
+  };
 }
 
 export function calcularSaidas(params: {
   grupo: string;
   divisao: string;
+  descricaoOcupacao?: string;
   areaTotal: number;
-  pavimentos: number;
+  alturaM: number;
+  pavimentosEntrada: PavimentoEntrada[];
   populacaoInformada?: number;
   temSprinklers: boolean;
   temDeteccao: boolean;
   saidaUnica: boolean;
+  distanciaRealTerreoM?: number;
+  distanciaRealDemaisM?: number;
 }): ResultadoSaidas {
   // Busca por divisão primeiro (linha específica da planilha da IT 11);
   // se não houver, usa a linha do grupo.
   const coef = COEFICIENTES_POPULACAO[params.divisao]
     ?? COEFICIENTES_POPULACAO[params.grupo]
     ?? COEFICIENTES_POPULACAO.M;
-  const populacaoCalculada = Math.ceil(params.areaTotal / coef.m2PorPessoa);
-  const populacaoAdotada = params.populacaoInformada && params.populacaoInformada > 0
-    ? params.populacaoInformada
-    : populacaoCalculada;
-
   const capacidade = CAPACIDADE_UP[params.divisao]
     ?? CAPACIDADE_UP[params.grupo]
     ?? CAPACIDADE_UP.M;
 
-  // População por pavimento (distribuição uniforme — conservador usar o total
-  // quando térrea/um pavimento)
-  const populacaoPavimento = Math.ceil(populacaoAdotada / Math.max(1, params.pavimentos));
+  // Divisões cuja população se calcula por dormitórios (duas pessoas por dormitório)
+  const usaDormitorios = ['A-1', 'A-2', 'A-3', 'H-2'].includes(params.divisao);
 
-  const nAcessos = Math.max(1, Math.ceil(populacaoPavimento / capacidade.acessos));
-  const nEscadas = Math.max(1, Math.ceil(populacaoPavimento / capacidade.escadas));
-  const nPortas = Math.max(1, Math.ceil(populacaoPavimento / capacidade.portas));
+  // ---- 2. População por pavimento (P) ----
+  const pavimentos: PavimentoCalculado[] = params.pavimentosEntrada.map((pav) => {
+    let populacao: number;
+    let memoria: string;
+    if (pav.populacaoManual && pav.populacaoManual > 0) {
+      populacao = Math.ceil(pav.populacaoManual);
+      memoria = `P = ${populacao} pessoas (população informada pelo responsável)`;
+    } else if (usaDormitorios && pav.dormitorios !== undefined && pav.dormitorios >= 0) {
+      populacao = pav.dormitorios * 2;
+      memoria = `P = ${pav.dormitorios} dormitório(s) × 2 = ${populacao} pessoas`;
+    } else {
+      populacao = Math.ceil(pav.areaM2 / coef.m2PorPessoa);
+      const coefTxt = coef.m2PorPessoa < 1
+        ? `× ${(1 / coef.m2PorPessoa).toLocaleString('pt-BR', { maximumFractionDigits: 1 })} pessoas/m²`
+        : `/ ${coef.m2PorPessoa.toLocaleString('pt-BR', { maximumFractionDigits: 2 })} m²/pessoa`;
+      memoria = `P = ${pav.areaM2.toLocaleString('pt-BR', { maximumFractionDigits: 2 })} m² ${coefTxt} = ${populacao} pessoas`;
+    }
+    // 3. Acessos: dimensionados pavimento a pavimento
+    return {
+      nome: pav.nome,
+      areaM2: pav.areaM2,
+      populacao,
+      memoria,
+      acessos: dimensionar(populacao, capacidade.acessos, 'acessos'),
+    };
+  });
 
+  const populacaoTotal = pavimentos.reduce((s, pav) => s + pav.populacao, 0);
+  const critico = pavimentos.reduce(
+    (max, pav) => (pav.populacao > max.populacao ? pav : max),
+    pavimentos[0] ?? { nome: '—', populacao: 0 } as PavimentoCalculado,
+  );
+  const populacaoCritica = critico?.populacao ?? 0;
+  const populacaoAdotada = params.populacaoInformada && params.populacaoInformada > 0
+    ? params.populacaoInformada
+    : populacaoTotal;
+
+  // ---- 3. Escadas, rampas, descargas e portas: pela população crítica ----
+  const dimensionamento = {
+    escadas: dimensionar(populacaoCritica, capacidade.escadas, 'escadas'),
+    rampas: dimensionar(populacaoCritica, capacidade.escadas, 'rampas'),
+    descargas: dimensionar(populacaoCritica, capacidade.acessos, 'descargas'),
+    portas: dimensionar(populacaoCritica, capacidade.portas, 'portas'),
+  };
+
+  // ---- 4. Tipo de escada (Anexo C, Tabela 3) ----
+  const tipoEscada = classificarTipoEscada(params.grupo, params.divisao, params.alturaM);
+
+  // ---- Distâncias máximas permitidas (tabela da IT 11) ----
   const cat = categoriaDistancia(params.grupo, params.divisao);
   const sp = params.temSprinklers ? 1 : 0;
   const su = params.saidaUnica ? 0 : 1;
@@ -220,21 +365,48 @@ export function calcularSaidas(params: {
   const distTerreo = DIST[cat - 1][0][sp][su][det];
   const distSuperior = DIST[cat - 1][1][sp][su][det];
 
-  // Número mínimo de saídas: 2 quando população > 100 ou distância excedida —
-  // regra geral simplificada da IT 11 (varia por ocupação)
-  const numeroMinimoSaidas = populacaoAdotada > 100 || params.pavimentos > 3 ? 2 : 1;
+  // ---- Quantitativo mínimo de saídas ----
+  const numeroMinimoSaidas = populacaoCritica >= 50 ? 2 : 1;
+  const criterioSaidas = populacaoCritica >= 50
+    ? `P ≥ 50 pessoas no pavimento crítico`
+    : `P < 50 e Grupo ${params.grupo}`;
+
+  // ---- 5. Veredito de conformidade ----
+  const realTerreo = params.distanciaRealTerreoM ?? 0;
+  const realDemais = params.distanciaRealDemaisM ?? 0;
+  const conformidade = {
+    distanciaTerreo: {
+      realM: realTerreo,
+      permitidoM: distTerreo,
+      conforme: distTerreo === null ? null : realTerreo <= 0 ? null : realTerreo <= distTerreo,
+    },
+    distanciaDemais: {
+      realM: realDemais,
+      permitidoM: distSuperior,
+      conforme: distSuperior === null ? null : realDemais <= 0 ? null : realDemais <= distSuperior,
+    },
+    saidas: {
+      existente: params.saidaUnica ? 'Saída única' : 'Mais de uma saída',
+      minimo: numeroMinimoSaidas,
+      criterio: criterioSaidas,
+      conforme: params.saidaUnica ? numeroMinimoSaidas <= 1 : true,
+    },
+  };
 
   return {
-    populacaoCalculada,
-    populacaoAdotada,
+    divisao: params.divisao,
+    descricaoOcupacao: params.descricaoOcupacao ?? '',
     coeficiente: coef.descricao,
+    usaDormitorios,
     capacidadeUP: { ...capacidade },
-    unidadesPassagem: { acessos: nAcessos, escadas: nEscadas, portas: nPortas },
-    larguraMinima: {
-      acessosM: Math.max(1.1, nAcessos * LARGURA_UP_M),
-      escadasM: Math.max(1.1, nEscadas * LARGURA_UP_M),
-      portasM: Math.max(0.8, nPortas * LARGURA_UP_M),
-    },
+    pavimentos,
+    populacaoCritica,
+    pavimentoCritico: critico?.nome ?? '—',
+    populacaoTotal,
+    populacaoAdotada,
+    populacaoCalculada: populacaoTotal,
+    dimensionamento,
+    tipoEscada,
     distanciaMaxima: {
       pisoDescargaM: distTerreo,
       demaisPavimentosM: distSuperior,
@@ -242,6 +414,7 @@ export function calcularSaidas(params: {
         ? 'Combinação não tabelada na IT 11 para esta ocupação — consultar o CBMBA.'
         : `Valores considerando ${params.temSprinklers ? 'presença' : 'ausência'} de chuveiros automáticos, ${params.temDeteccao ? 'com' : 'sem'} detecção automática de fumaça e ${params.saidaUnica ? 'saída única' : 'mais de uma saída'}.`,
     },
+    conformidade,
     numeroMinimoSaidas,
   };
 }
