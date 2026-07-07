@@ -418,27 +418,24 @@ export const DadosGerais = ({ projeto, resultado, atualizar }: Props) => {
           </div>
 
           <Separator />
-          <div className="grid md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>Sistema de hidrantes — tipo (IT 22)</Label>
-              <Select
-                value={String(projeto.hidranteTipoManual || 0)}
-                onValueChange={(v) => atualizar({ hidranteTipoManual: parseInt(v, 10) })}
-              >
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="0">Automático (mínimo Tipo 2)</SelectItem>
-                  <SelectItem value="1">Tipo 1 — mangotinho (seleção manual)</SelectItem>
-                  <SelectItem value="2">Tipo 2 — hidrante DN 40, expedição simples</SelectItem>
-                  <SelectItem value="3">Tipo 3 — hidrante DN 40, expedição dupla</SelectItem>
-                  <SelectItem value="4">Tipo 4 — hidrante DN 40/65, expedição dupla</SelectItem>
-                  <SelectItem value="5">Tipo 5 — hidrante DN 65, expedição dupla</SelectItem>
-                </SelectContent>
-              </Select>
-              <p className="text-xs text-muted-foreground">
-                O dimensionamento automático adota no mínimo o Tipo 2; o Tipo 1 (mangotinho) só é aplicado quando
-                selecionado manualmente pelo responsável técnico.
-              </p>
+          <div className="space-y-2">
+            <h4 className="font-medium text-sm">Sistema de hidrantes (IT 22)</h4>
+            <div className="flex items-start space-x-2">
+              <Checkbox
+                id="hidranteTipo1"
+                checked={projeto.hidranteTipoManual === 1}
+                onCheckedChange={(c) => atualizar({ hidranteTipoManual: c ? 1 : 0 })}
+                className="mt-0.5"
+              />
+              <div>
+                <Label htmlFor="hidranteTipo1" className="text-sm font-medium">
+                  Adotar sistema Tipo 1 — mangotinho (seleção manual do responsável técnico)
+                </Label>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Sem esta opção marcada, o tipo do sistema segue a classificação automática da IT 22, sempre com o
+                  mínimo de projeto Tipo 2.
+                </p>
+              </div>
             </div>
           </div>
         </CardContent>

@@ -7,7 +7,7 @@
  * com a classificação e os cálculos das ITs do CBMBA.
  */
 
-import { DadosProjeto } from './projeto';
+import { alarmePadrao, DadosProjeto } from './projeto';
 import { medidaAplicavel, ResultadoTecnico } from './engine';
 import { MEDIDAS_SEGURANCA, RISCOS_ESPECIAIS } from './normas/exigencias';
 
@@ -533,24 +533,75 @@ export function gerarMemorialHTML(p: DadosProjeto, r: ResultadoTecnico): string 
   }
 
   if (aplicavel('deteccao_incendio') || aplicavel('alarme_incendio')) {
-    sec('ALARME DE INCÊNDIO E DETECTORES AUTOMÁTICOS (IT 19 / NBR 17240)', `
+    const alm = p.alarme ?? alarmePadrao();
+    const tipoTxt = alm.tipoSistema === 'enderecavel'
+      ? '<strong>endereçável</strong>'
+      : alm.tipoSistema === 'convencional'
+        ? '<strong>convencional</strong>'
+        : '<strong>endereçável ou convencional</strong> (a definir no projeto executivo)';
+    const localCentral = alm.centralLocalizacao.trim() || 'entrada principal (recepção/portaria)';
+    const sinalizadores: string[] = [];
+    if (alm.sirenes) {
+      sinalizadores.push('<li><strong>Sirenes:</strong> alta potência sonora, padrão intermitente, instaladas de forma a garantir audibilidade em todos os ambientes ocupados;</li>');
+    }
+    if (alm.sinalizadoresVisuais) {
+      sinalizadores.push('<li><strong>Sinalizadores visuais:</strong> lâmpadas LED estroboscópicas, utilizadas em locais com alto nível de ruído e em áreas acessíveis a pessoas com deficiência auditiva;</li>');
+    }
+    if (!sinalizadores.length) {
+      sinalizadores.push('<li>Sinalizadores audiovisuais conforme lançamento em projeto, garantindo audibilidade e visibilidade em toda a edificação;</li>');
+    }
+    const auxiliares: string[] = [];
+    if (alm.doorHolders) {
+      auxiliares.push('<li><strong>Door holders (eletroímãs retentores de porta):</strong> mantêm as portas corta-fogo abertas em uso normal e liberam o fechamento automático em caso de alarme;</li>');
+    }
+    auxiliares.push('<li><strong>Flow switches:</strong> sensores de fluxo instalados em ramais de sprinklers e hidrantes, enviando sinal à central de alarme em caso de descarga de água e permitindo identificar o ponto de atuação;</li>');
+    if (alm.controleAcesso) {
+      auxiliares.push('<li><strong>Equipamentos de controle de acesso:</strong> catracas, portas automáticas e elevadores programados para destravar/liberar em caso de alarme, garantindo a evacuação (elevadores transferidos ao pavimento de descarga, exceto o de emergência);</li>');
+    }
+    sec('SISTEMA DE DETECÇÃO E ALARME DE INCÊNDIO (IT 19 / NBR 17240)', `
+      <h3>Descrição geral do sistema</h3>
+      <p>O sistema projetado será do tipo ${tipoTxt}, composto por central de alarme de incêndio,
+      ${aplicavel('deteccao_incendio') ? 'detectores automáticos, ' : ''}acionadores manuais, sinalizadores
+      audiovisuais, módulos de interface, dispositivos auxiliares e cabeamento específico, devidamente setorizado de
+      acordo com a compartimentação da edificação.</p>
+      <p>A arquitetura do sistema prevê a identificação rápida e precisa do ponto de atuação, a emissão imediata de
+      alarme sonoro e visual, e a transmissão de informações à central, possibilitando pronta resposta em situações de
+      emergência.</p>
       <p>Nenhum equipamento de alarme e detecção de incêndio poderá ser instalado no empreendimento caso não possua,
       nesta ordem de preferência, certificação FM (Factory Mutual), UL (Underwriters Laboratories) ou CE (Comunidade
-      Europeia). O sistema cobrirá as áreas indicadas em projeto e será compostos por:</p>
-      <h3>Central de alarme</h3>
+      Europeia).</p>
+      <h3>Componentes do sistema</h3>
+      ${alm.central ? `
+      <p><strong>Central de Alarme de Incêndio</strong></p>
       <ul>
-        <li>Tipo analógico ${aplicavel('deteccao_incendio') ? 'endereçável' : 'endereçável ou convencional'}, com número de
-        laços conforme projeto e capacidade para atender toda a edificação;</li>
-        <li>Localizada na entrada principal (recepção/portaria), com monitoramento 24 horas por operadores treinados,
-        protegida contra vandalismo e com fácil visualização e audição pela brigada;</li>
-        <li>Elementos de teste dos indicadores luminosos e sinalizadores acústicos, locais e remotos;</li>
-        <li>Registro de eventos em memória não volátil e supervisão contínua de falhas (curto-circuito, circuito aberto, perda de alimentação).</li>
+        <li><strong>Tipo:</strong> ${alm.tipoSistema === 'convencional' ? 'convencional' : alm.tipoSistema === 'enderecavel' ? 'analógica endereçável' : 'convencional ou endereçável'}, com display digital,
+        capacidade de expansão e registro de eventos em memória não volátil;</li>
+        <li><strong>Funções:</strong> supervisão contínua do sistema, indicação de falhas (curto-circuito, circuito aberto,
+        perda de alimentação), registro de alarmes, acionamento automático de sirenes e possibilidade de
+        intertravamento com sistemas auxiliares;</li>
+        <li><strong>Localização:</strong> ${esc(localCentral)}, com monitoramento 24 horas por operadores treinados, protegida
+        contra vandalismo e com fácil visualização e audição pela brigada;</li>
+        ${alm.fonte220 ? '<li><strong>Fonte de alimentação:</strong> rede elétrica de 220 Vca, com carregador automático de baterias;</li>' : ''}
+        <li>Elementos de teste dos indicadores luminosos e sinalizadores acústicos, locais e remotos.</li>
+      </ul>` : ''}
+      <p><strong>Acionadores manuais</strong></p>
+      <p>Também conhecidos como botoeiras, são dispositivos acionados manualmente por pessoas que identificam um
+      princípio de incêndio — pressiona-se, puxa-se ou quebra-se a cobertura de vidro (que não se estilhaça
+      perigosamente) para ativar o acionador. Na cor vermelha, instalados em rotas de fuga, corredores e acessos,
+      entre 0,90 m e 1,35 m do piso acabado, com espaçamento máximo de 30 m, conforme NBR 17240. Recomenda-se a
+      instalação de acionador manual próximo aos postos de hidrante.</p>
+      <p><strong>Sinalizadores audiovisuais</strong></p>
+      <ul>${sinalizadores.join('')}</ul>
+      <p>Instalados entre 2,20 m e 3,50 m, embutidos ou sobrepostos, com volume mínimo de 90 dB.</p>
+      <p><strong>Equipamentos auxiliares</strong></p>
+      <ul>${auxiliares.join('')}</ul>
+      <h3>Alimentação elétrica e baterias</h3>
+      <ul>
+        <li>O sistema será alimentado pela rede elétrica da edificação, com fornecimento de energia estabilizada;</li>
+        <li>Serão utilizadas baterias seladas de chumbo-ácido (máx. 24 Vcc), com autonomia mínima de <strong>24 horas em
+        regime de supervisão + 15 minutos em alarme geral</strong>, conforme NBR 17240 — a alimentação por grupo gerador
+        terá apenas a finalidade de recarregar as baterias internas.</li>
       </ul>
-      <h3>Suprimento de energia</h3>
-      <p>Duas fontes de alimentação: rede elétrica da edificação (principal) e baterias/nobreak/gerador (auxiliar).
-      O fornecimento por baterias (máx. 24 Vcc) garantirá autonomia mínima de <strong>24 horas em regime de
-      supervisão</strong> e <strong>15 minutos em regime de alarme</strong>, ou o tempo necessário para evacuação. A
-      alimentação por grupo gerador terá apenas a finalidade de recarregar as baterias internas.</p>
       <h3>Acionamento e transmissão</h3>
       <ul>
         <li>Alarme geral acionado exclusivamente de forma centralizada pela central, com temporização de retardo de até
@@ -559,18 +610,10 @@ export function gerarMemorialHTML(p: DadosProjeto, r: ResultadoTecnico): string 
         dedicado ou linha privada de alarme), com aviso remoto à diretoria/gerência operacional;</li>
         <li>Possibilidade de ajuste de set point de detecção dentro dos limites normativos.</li>
       </ul>
-      <h3>Acionadores manuais</h3>
-      <p>Instalados em locais de circulação, entre 0,90 m e 1,35 m do piso acabado, com distância máxima de 30 m de
-      qualquer ponto da área protegida ao acionador mais próximo. Recomenda-se a instalação de acionador manual
-      próximo aos postos de hidrante.</p>
-      <h3>Avisadores audiovisuais</h3>
-      <p>Instalados entre 2,20 m e 3,50 m, embutidos ou sobrepostos, com volume mínimo de <strong>90 dB</strong>,
-      assegurando audibilidade e visibilidade em toda a edificação, incluindo sinalizadores visuais estroboscópicos em
-      áreas ruidosas ou acessíveis a pessoas com deficiência auditiva.</p>
       ${aplicavel('deteccao_incendio') ? `
       <h3>Detectores automáticos</h3>
       <ul>
-        <li><strong>Detectores de fumaça pontuais:</strong> analógicos endereçáveis, cobertura máxima de 81 m² por detector e
+        <li><strong>Detectores de fumaça pontuais:</strong> compatíveis com a central adotada, cobertura máxima de 81 m² por detector e
         pé-direito limitado a 8 m (área quadrada de 9 m de lado, inscrita em círculo de raio 6,30 m);</li>
         <li><strong>Detectores de fumaça lineares (beam):</strong> para ambientes com pé-direito superior a 8 m (galpões,
         átrios), com projeto de compatibilização do fabricante;</li>
@@ -582,25 +625,25 @@ export function gerarMemorialHTML(p: DadosProjeto, r: ResultadoTecnico): string 
         <li><strong>Detectores especiais:</strong> de sistemas saponificantes, gases de extinção e coifas, obrigatoriamente
         interligados à central de alarme.</li>
       </ul>` : ''}
-      <h3>Equipamentos auxiliares e de controle de acesso</h3>
+      <h3>Condutores e fiação</h3>
       <ul>
-        <li><strong>Door holders (eletroímãs):</strong> mantêm as portas corta-fogo abertas no uso normal e liberam o
-        fechamento automático no acionamento de qualquer dispositivo do sistema;</li>
-        <li><strong>Catracas, portas automáticas e elevadores:</strong> liberados automaticamente em caso de alarme, sem
-        bloquear a evacuação; elevadores transferidos ao pavimento de descarga e desligados (exceto o de emergência);</li>
-        <li><strong>Flow switches:</strong> interruptores de fluxo nos ramais de sprinklers e hidrantes, interligados ao laço do
-        pavimento para identificar na central o ponto de atuação e evitar uso não autorizado;</li>
-        <li><strong>Abrigos de mangueiras:</strong> com interruptores certificados nas portas para identificar abertura, sendo
-        recomendável o monitoramento por CFTV.</li>
-      </ul>
-      <h3>Condutores, condutos e aterramento</h3>
-      <ul>
-        <li>Fiação em cabo blindado, par trançado, isolação 750 V, classe 70 °C antichama (105 °C para condutor dreno),
-        em lances únicos, sem emendas;</li>
+        <li>Cabos com isolação em material antichama e baixa emissão de fumaça e gases tóxicos (cabo blindado, par
+        trançado, isolação 750 V, classe 70 °C — 105 °C para condutor dreno), em lances únicos, sem emendas, com seção
+        dimensionada conforme a corrente do circuito;</li>
+        <li>Identificação por cores e etiquetas de setor, atendendo aos requisitos de rastreabilidade e manutenção;</li>
         <li>Condutos exclusivos do sistema de incêndio (vedado o compartilhamento com outras instalações), com rede de
         eletrodutos identificada na cor vermelha (ou anéis vermelhos de 2 cm a cada 3 m em locais aparentes);</li>
         <li>Aterramento interligado ao sistema principal da edificação através do BEP (barramento de
         equipotencialização), conforme NBR 5410.</li>
+      </ul>
+      <h3>Funcionalidades do sistema</h3>
+      <ul>
+        <li>Monitoramento contínuo de falhas (curto-circuito, circuito aberto, perda de alimentação);</li>
+        <li>Registro cronológico de eventos (alarme, falha, restauração);</li>
+        <li>Identificação do ponto de origem do alarme;</li>
+        <li>Integração com sistemas de combate e de segurança predial (abrigos de mangueiras com interruptores nas
+        portas e monitoramento recomendado por CFTV);</li>
+        <li>Operação em conformidade com os critérios de confiabilidade e redundância estabelecidos pela NBR 17240.</li>
       </ul>
       ${detalhesUsuario('deteccao_incendio')}${detalhesUsuario('alarme_incendio')}
     `);

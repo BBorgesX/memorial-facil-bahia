@@ -20,6 +20,37 @@ export interface PavimentoProjeto {
   populacaoManual?: number;
 }
 
+/** Configuração do sistema de detecção e alarme de incêndio (IT 19). */
+export interface ConfiguracaoAlarme {
+  /** Tipo do sistema: endereçável ou convencional ('' = a definir) */
+  tipoSistema: 'enderecavel' | 'convencional' | '';
+  /** Central de alarme prevista no sistema */
+  central: boolean;
+  /** Localização da central (vazio = padrão: entrada principal/recepção) */
+  centralLocalizacao: string;
+  /** Fonte de alimentação: rede 220 Vca com carregador automático de baterias */
+  fonte220: boolean;
+  /** Sinalizadores audiovisuais */
+  sirenes: boolean;
+  sinalizadoresVisuais: boolean;
+  /** Equipamentos auxiliares */
+  doorHolders: boolean;
+  controleAcesso: boolean;
+}
+
+export function alarmePadrao(): ConfiguracaoAlarme {
+  return {
+    tipoSistema: '',
+    central: true,
+    centralLocalizacao: '',
+    fonte220: true,
+    sirenes: true,
+    sinalizadoresVisuais: false,
+    doorHolders: false,
+    controleAcesso: false,
+  };
+}
+
 export interface DadosProjeto {
   id: string;
   nome: string;
@@ -74,6 +105,9 @@ export interface DadosProjeto {
   /** Tipo de sistema de hidrantes selecionado manualmente (1–5); 0 = automático (mín. Tipo 2) */
   hidranteTipoManual: number;
 
+  /** Configuração do sistema de detecção e alarme (IT 19) */
+  alarme: ConfiguracaoAlarme;
+
   // Medidas de segurança (ajustes do usuário sobre a classificação automática)
   medidas: Record<string, DetalhesMedida>;
 
@@ -126,6 +160,7 @@ export function novoProjeto(nome = 'Novo Projeto'): DadosProjeto {
     distanciaRealTerreoM: 0,
     distanciaRealDemaisM: 0,
     hidranteTipoManual: 0,
+    alarme: alarmePadrao(),
     medidas: {},
     riscosEspeciais: {},
     respTecnicoNome: '',
