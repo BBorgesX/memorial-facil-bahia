@@ -5,7 +5,9 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Separator } from '@/components/ui/separator';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Building2, AlertTriangle, DoorOpen, ShieldCheck } from 'lucide-react';
+import { useRef } from 'react';
+import { Button } from '@/components/ui/button';
+import { Building2, AlertTriangle, DoorOpen, ImagePlus, ShieldCheck, Trash2 } from 'lucide-react';
 import { DadosProjeto, PavimentoProjeto } from '@/lib/projeto';
 import { nomePavimento, ResultadoTecnico } from '@/lib/engine';
 import { TABELA_1_OCUPACOES, getDivisao, getGrupo } from '@/lib/normas/ocupacoes';
@@ -26,6 +28,25 @@ export const DadosGerais = ({ projeto, resultado, atualizar }: Props) => {
   const grupoSelecionado = getGrupo(projeto.grupo);
   const divisaoInfo = projeto.divisao ? getDivisao(projeto.divisao) : undefined;
   const usaDormitorios = ['A-1', 'A-2', 'A-3', 'H-2'].includes(projeto.divisao);
+  const inputLogo = useRef<HTMLInputElement>(null);
+
+  /** Lê a imagem, reduz para no máx. 480 px de largura e grava como data URL. */
+  const carregarLogo = (arquivo: File) => {
+    const leitor = new FileReader();
+    leitor.onload = () => {
+      const img = new Image();
+      img.onload = () => {
+        const escala = Math.min(1, 480 / img.width);
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.round(img.width * escala);
+        canvas.height = Math.round(img.height * escala);
+        canvas.getContext('2d')?.drawImage(img, 0, 0, canvas.width, canvas.height);
+        atualizar({ logoDataUrl: canvas.toDataURL('image/png') });
+      };
+      img.src = String(leitor.result);
+    };
+    leitor.readAsDataURL(arquivo);
+  };
 
   const atualizarPavimento = (indice: number, mudancas: Partial<PavimentoProjeto>) => {
     const lista = [...(projeto.pavimentosDetalhados ?? [])];
@@ -89,6 +110,44 @@ export const DadosGerais = ({ projeto, resultado, atualizar }: Props) => {
             <div className="space-y-2">
               <Label htmlFor="revisaoDoc">Revisão do documento</Label>
               <Input id="revisaoDoc" value={projeto.revisaoDocumento} onChange={(e) => atualizar({ revisaoDocumento: e.target.value })} placeholder="00" />
+            </div>
+            <div className="space-y-2 md:col-span-2">
+              <Label>Logotipo (capa e cabeçalho do memorial)</Label>
+              <input
+                ref={inputLogo}
+                type="file"
+                accept="image/png,image/jpeg,image/svg+xml,image/webp"
+                className="hidden"
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  if (f) carregarLogo(f);
+                  e.target.value = '';
+                }}
+              />
+              <div className="flex items-center gap-3">
+                {projeto.logoDataUrl ? (
+                  <img
+                    src={projeto.logoDataUrl}
+                    alt="Logotipo do projeto"
+                    className="h-14 max-w-40 object-contain border rounded bg-white p-1"
+                  />
+                ) : (
+                  <div className="h-14 w-40 border border-dashed rounded flex items-center justify-center text-xs text-muted-foreground">
+                    Sem logotipo
+                  </div>
+                )}
+                <Button type="button" variant="outline" size="sm" onClick={() => inputLogo.current?.click()}>
+                  <ImagePlus className="w-4 h-4 mr-1" /> {projeto.logoDataUrl ? 'Trocar' : 'Enviar logo'}
+                </Button>
+                {projeto.logoDataUrl && (
+                  <Button type="button" variant="ghost" size="sm" className="text-destructive" onClick={() => atualizar({ logoDataUrl: '' })}>
+                    <Trash2 className="w-4 h-4 mr-1" /> Remover
+                  </Button>
+                )}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                PNG, JPG ou SVG — a imagem é reduzida automaticamente e aparece na capa e no topo de todas as páginas do memorial.
+              </p>
             </div>
             <div className="space-y-2">
               <Label>Tipo de edificação</Label>
