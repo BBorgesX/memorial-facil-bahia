@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Download, Save } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Download, Save } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { carregarProjeto, DadosProjeto, exportarProjetoJSON, salvarProjeto } from '@/lib/projeto';
 import { processarProjeto } from '@/lib/engine';
@@ -14,12 +14,15 @@ import { RiscosEspeciais } from '@/components/editor/RiscosEspeciais';
 import { PainelResultados } from '@/components/editor/PainelResultados';
 import { MemorialPreview } from '@/components/editor/MemorialPreview';
 
+const ABAS = ['dados', 'medidas', 'riscos', 'resultados', 'memorial'] as const;
+
 const ProjetoEditor = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [projeto, setProjeto] = useState<DadosProjeto | null>(() => (id ? carregarProjeto(id) : null));
   const [salvoEm, setSalvoEm] = useState<Date | null>(null);
+  const [aba, setAba] = useState<(typeof ABAS)[number]>('dados');
   const timerRef = useRef<ReturnType<typeof setTimeout>>();
 
   // Resultado técnico recalculado em tempo real a cada alteração
@@ -102,7 +105,7 @@ const ProjetoEditor = () => {
       </header>
 
       <main className="container mx-auto px-4 py-6 max-w-6xl">
-        <Tabs defaultValue="dados">
+        <Tabs value={aba} onValueChange={(v) => setAba(v as (typeof ABAS)[number])}>
           <TabsList className="grid w-full grid-cols-2 md:grid-cols-5 h-auto">
             <TabsTrigger value="dados">1. Dados e Classificação</TabsTrigger>
             <TabsTrigger value="medidas">2. Medidas de Segurança</TabsTrigger>
@@ -127,6 +130,34 @@ const ProjetoEditor = () => {
             <MemorialPreview projeto={projeto} resultado={resultado} atualizar={atualizar} />
           </TabsContent>
         </Tabs>
+
+        {/* Navegação entre as etapas */}
+        <div className="flex items-center justify-between mt-8 pb-10">
+          <Button
+            variant="outline"
+            size="lg"
+            disabled={ABAS.indexOf(aba) === 0}
+            onClick={() => {
+              setAba(ABAS[ABAS.indexOf(aba) - 1]);
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" /> Anterior
+          </Button>
+          <span className="text-sm text-muted-foreground">
+            Etapa {ABAS.indexOf(aba) + 1} de {ABAS.length}
+          </span>
+          <Button
+            size="lg"
+            disabled={ABAS.indexOf(aba) === ABAS.length - 1}
+            onClick={() => {
+              setAba(ABAS[ABAS.indexOf(aba) + 1]);
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+          >
+            Próximo <ArrowRight className="w-4 h-4 ml-2" />
+          </Button>
+        </div>
       </main>
     </div>
   );
