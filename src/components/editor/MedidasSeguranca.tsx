@@ -6,8 +6,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
-import { Shield, RotateCcw, Layers, BellRing } from 'lucide-react';
-import { alarmePadrao, ConfiguracaoAlarme, DadosProjeto } from '@/lib/projeto';
+import { Shield, RotateCcw, Layers, BellRing, Radar } from 'lucide-react';
+import { alarmePadrao, ConfiguracaoAlarme, ConfiguracaoDeteccao, DadosProjeto, deteccaoPadrao } from '@/lib/projeto';
 import { medidaAplicavel, ResultadoTecnico } from '@/lib/engine';
 import { MEDIDAS_SEGURANCA } from '@/lib/normas/exigencias';
 
@@ -48,6 +48,19 @@ export const MedidasSeguranca = ({ projeto, resultado, atualizar }: Props) => {
   const atualizarAlarme = (mudancas: Partial<ConfiguracaoAlarme>) => {
     atualizar({ alarme: { ...alarme, ...mudancas } });
   };
+
+  const deteccao = projeto.deteccao ?? deteccaoPadrao();
+  const atualizarDeteccao = (mudancas: Partial<ConfiguracaoDeteccao>) => {
+    atualizar({ deteccao: { ...deteccao, ...mudancas } });
+  };
+
+  const TIPOS_DETECTORES: { id: keyof Omit<ConfiguracaoDeteccao, 'outros'>; nome: string; descricao: string }[] = [
+    { id: 'pontuais', nome: 'Detectores de Fumaça Pontuais', descricao: 'tecnologia fotoelétrica, sensibilidade ajustável, indicados para áreas administrativas, corredores e salas técnicas.' },
+    { id: 'lineares', nome: 'Detectores de Fumaça Lineares', descricao: 'feixe infravermelho, alcance até 100 m, aplicados em áreas amplas como galpões e auditórios.' },
+    { id: 'chama', nome: 'Detectores de Chama', descricao: 'baseados em radiação ultravioleta/infravermelha, destinados a áreas com risco de combustíveis líquidos e inflamáveis.' },
+    { id: 'termovelocimetricos', nome: 'Detectores Termovelocimétricos (Térmicos e Velocímetros)', descricao: 'acionados por elevação brusca ou crítica de temperatura, instalados em cozinhas, áreas técnicas e depósitos.' },
+    { id: 'gases', nome: 'Detectores de Gases Combustíveis', descricao: 'sensores específicos para metano, GLP ou outros, aplicados em centrais de GLP e salas de geradores.' },
+  ];
 
   const restaurarAutomatico = () => {
     // Mantém os textos de detalhes, mas volta o estado aplicável para o automático
@@ -133,6 +146,49 @@ export const MedidasSeguranca = ({ projeto, resultado, atualizar }: Props) => {
                       {ajusteManual && <Badge variant="secondary" className="text-xs">Ajuste manual</Badge>}
                     </div>
                     {nota && <p className="text-xs text-muted-foreground">{nota}</p>}
+                    {aplicavel && medida.id === 'deteccao_incendio' && (
+                      <div className="p-4 border rounded-lg bg-muted/40 space-y-3">
+                        <p className="text-sm font-semibold flex items-center gap-2">
+                          <Radar className="w-4 h-4" /> Detectores Automáticos — marcar o que é aplicável
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          Sistema integrado de detecção precoce de incêndios projetado para identificar automaticamente
+                          sinais de combustão em ambientes internos e externos, proporcionando resposta rápida e eficaz
+                          para proteção de vidas e patrimônio.
+                        </p>
+                        <div className="space-y-3">
+                          {TIPOS_DETECTORES.map((tipo) => (
+                            <div key={tipo.id} className="flex items-start space-x-2">
+                              <Checkbox
+                                id={`det-${tipo.id}`}
+                                checked={deteccao[tipo.id]}
+                                onCheckedChange={(c) => atualizarDeteccao({ [tipo.id]: !!c } as Partial<ConfiguracaoDeteccao>)}
+                                className="mt-0.5"
+                              />
+                              <div className="flex-1">
+                                <Label htmlFor={`det-${tipo.id}`} className="text-sm font-medium">{tipo.nome}</Label>
+                                <p className="text-xs text-muted-foreground">{tipo.descricao}</p>
+                              </div>
+                            </div>
+                          ))}
+                          <div className="space-y-1">
+                            <Label htmlFor="det-outros" className="text-sm font-medium">Outros:</Label>
+                            <Textarea
+                              id="det-outros"
+                              value={deteccao.outros}
+                              onChange={(e) => atualizarDeteccao({ outros: e.target.value })}
+                              placeholder="Ex.: localização dos detectores, central do sistema, fonte alternativa de energia"
+                              rows={3}
+                              className="text-sm bg-background"
+                            />
+                          </div>
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          Se nenhum tipo for marcado, o memorial apresenta a relação geral de detectores com definição
+                          remetida ao projeto executivo.
+                        </p>
+                      </div>
+                    )}
                     {aplicavel && medida.id === 'alarme_incendio' && (
                       <div className="p-4 border rounded-lg bg-muted/40 space-y-4">
                         <p className="text-sm font-semibold flex items-center gap-2">

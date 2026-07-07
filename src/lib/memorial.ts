@@ -7,7 +7,7 @@
  * com a classificação e os cálculos das ITs do CBMBA.
  */
 
-import { alarmePadrao, DadosProjeto } from './projeto';
+import { alarmePadrao, DadosProjeto, deteccaoPadrao } from './projeto';
 import { medidaAplicavel, ResultadoTecnico } from './engine';
 import { MEDIDAS_SEGURANCA, RISCOS_ESPECIAIS } from './normas/exigencias';
 
@@ -44,6 +44,81 @@ const APRESENTACAO: Record<string, string> = {
   PTOTEP: 'Projeto Técnico para Ocupação Temporária em Edificação Permanente (PTOTEP)',
 };
 
+/**
+ * Bloco de detectores automáticos (IT 19): lista somente os tipos marcados
+ * pelo usuário; sem marcação, apresenta a relação geral com definição
+ * remetida ao projeto executivo.
+ */
+function gerarBlocoDetectores(p: DadosProjeto): string {
+  const det = p.deteccao ?? deteccaoPadrao();
+  const tipos: { marcado: boolean; nome: string; descricao: string }[] = [
+    { marcado: det.pontuais, nome: 'Detectores de Fumaça Pontuais', descricao: 'tecnologia fotoelétrica, sensibilidade ajustável, indicados para áreas administrativas, corredores e salas técnicas. Cobertura máxima de 81 m² por detector e pé-direito limitado a 8 m' },
+    { marcado: det.lineares, nome: 'Detectores de Fumaça Lineares', descricao: 'feixe infravermelho, alcance de até 100 m, aplicados em áreas amplas como galpões e auditórios (pé-direito superior a 8 m), com projeto de compatibilização do fabricante' },
+    { marcado: det.chama, nome: 'Detectores de Chama', descricao: 'baseados em radiação ultravioleta/infravermelha, destinados a áreas com risco de combustíveis líquidos e inflamáveis' },
+    { marcado: det.termovelocimetricos, nome: 'Detectores Termovelocimétricos (Térmicos e Velocímetros)', descricao: 'acionados por elevação brusca ou crítica de temperatura, instalados em cozinhas, áreas técnicas e depósitos. Cobertura de 36 m² por detector' },
+    { marcado: det.gases, nome: 'Detectores de Gases Combustíveis', descricao: 'sensores específicos para metano, GLP ou outros, aplicados em centrais de GLP e salas de geradores, com atuação no bloqueio automático do suprimento de gás' },
+  ];
+  const selecionados = tipos.filter((t) => t.marcado);
+  const intro = `<p>Sistema integrado de detecção precoce de incêndios projetado para identificar automaticamente
+      sinais de combustão em ambientes internos e externos, proporcionando resposta rápida e eficaz para proteção de
+      vidas e patrimônio.${selecionados.length ? ' Serão utilizados os seguintes tipos de detectores automáticos:' : ''}</p>`;
+
+  const lista = selecionados.length
+    ? `<ul>${selecionados.map((t) => `<li><strong>${t.nome}:</strong> ${t.descricao};</li>`).join('')}</ul>`
+    : `<ul>${tipos.map((t) => `<li><strong>${t.nome}:</strong> ${t.descricao};</li>`).join('')}</ul>
+       <p><em>Os tipos de detectores aplicáveis a cada ambiente serão definidos no projeto executivo.</em></p>`;
+
+  const outros = det.outros.trim()
+    ? `<p><strong>Outros / complementos:</strong></p>${paragrafos(det.outros)}`
+    : '';
+
+  return `
+      <h3>Detectores automáticos</h3>
+      ${intro}
+      ${lista}
+      <p>Detectores especiais (sistemas saponificantes, gases de extinção e coifas) deverão estar obrigatoriamente
+      interligados à central de alarme, mesmo quando não constem do projeto de segurança.</p>
+      ${outros}
+  `;
+}
+
+/** Cabeçalho com logotipo e título, repetido no topo de todas as páginas. */
+export function gerarCabecalho(p: DadosProjeto, tituloDocumento = 'MEMORIAL DESCRITIVO — Instalações de Segurança e Combate a Incêndio'): string {
+  const codigo = p.codigoDocumento.trim() || 'XXX-NNN-DG-DOC-001';
+  const rev = p.revisaoDocumento.trim() || '00';
+  return `
+  <table class="doc-cabecalho">
+    <tr>
+      <td class="cab-logo">${p.logoDataUrl
+        ? `<img src="${p.logoDataUrl}" alt="Logotipo" />`
+        : '<span class="cab-logo-texto">SCIP</span>'}</td>
+      <td class="cab-titulo">
+        <strong>${esc(tituloDocumento)}</strong><br>
+        <span>${esc(p.proprietario || p.nome)}</span>
+      </td>
+      <td class="cab-codigo">
+        ${esc(codigo)}<br>
+        Rev. ${esc(rev)} — ${new Date().toLocaleDateString('pt-BR')}
+      </td>
+    </tr>
+  </table>
+  `;
+}
+
+/**
+ * Envolve o conteúdo do documento em uma tabela com o cabeçalho em <thead>,
+ * fazendo com que logotipo e título se repitam no topo de cada página
+ * impressa (PDF) e sejam tratados como linha de cabeçalho no Word.
+ */
+export function envolverEmFolha(p: DadosProjeto, corpo: string, tituloDocumento?: string): string {
+  return `
+  <table class="folha">
+    <thead><tr><td>${gerarCabecalho(p, tituloDocumento)}</td></tr></thead>
+    <tbody><tr><td>${corpo}</td></tr></tbody>
+  </table>
+  `;
+}
+
 /** Capa do documento, com código, quadro de revisões e quebra de página. */
 function gerarCapa(p: DadosProjeto): string {
   const hoje = new Date();
@@ -56,7 +131,9 @@ function gerarCapa(p: DadosProjeto): string {
     <div class="capa-topo">
       <table class="capa-cabecalho">
         <tr>
-          <td class="capa-logo">CBMBA<br><span>Segurança Contra Incêndio e Pânico</span></td>
+          <td class="capa-logo">${p.logoDataUrl
+            ? `<img src="${p.logoDataUrl}" alt="Logotipo" class="capa-logo-img" />`
+            : 'Segurança Contra<br>Incêndio e Pânico<br><span>Projeto Técnico — CBMBA</span>'}</td>
           <td class="capa-codigo">
             <strong>${esc(codigo)}</strong><br>
             Revisão: ${esc(rev)}<br>
@@ -97,6 +174,7 @@ function gerarCapa(p: DadosProjeto): string {
 export function gerarMemorialHTML(p: DadosProjeto, r: ResultadoTecnico): string {
   let n = 0; // numerador de seções
   const secoes: string[] = [];
+  const titulos: { numero: number; titulo: string }[] = [];
   const aplicavel = (id: string) => medidaAplicavel(p, r, id);
   const detalhesUsuario = (id: string) => {
     const d = p.medidas[id]?.detalhes?.trim();
@@ -104,7 +182,8 @@ export function gerarMemorialHTML(p: DadosProjeto, r: ResultadoTecnico): string 
   };
   const sec = (titulo: string, corpo: string) => {
     n += 1;
-    secoes.push(`<section><h2>${n}. ${titulo}</h2>${corpo}</section>`);
+    titulos.push({ numero: n, titulo });
+    secoes.push(`<section><h2 id="sec-${n}">${n}. ${titulo}</h2>${corpo}</section>`);
   };
 
   // -------------------------------------------------------------------------
@@ -610,21 +689,7 @@ export function gerarMemorialHTML(p: DadosProjeto, r: ResultadoTecnico): string 
         dedicado ou linha privada de alarme), com aviso remoto à diretoria/gerência operacional;</li>
         <li>Possibilidade de ajuste de set point de detecção dentro dos limites normativos.</li>
       </ul>
-      ${aplicavel('deteccao_incendio') ? `
-      <h3>Detectores automáticos</h3>
-      <ul>
-        <li><strong>Detectores de fumaça pontuais:</strong> compatíveis com a central adotada, cobertura máxima de 81 m² por detector e
-        pé-direito limitado a 8 m (área quadrada de 9 m de lado, inscrita em círculo de raio 6,30 m);</li>
-        <li><strong>Detectores de fumaça lineares (beam):</strong> para ambientes com pé-direito superior a 8 m (galpões,
-        átrios), com projeto de compatibilização do fabricante;</li>
-        <li><strong>Detectores termovelocimétricos:</strong> uso restrito aos locais especificados (cozinhas, áreas técnicas),
-        cobertura de 36 m² (quadrado de 6 m de lado);</li>
-        <li><strong>Detectores de chama:</strong> para áreas de maior risco com possibilidade de emissão de chama (inflamáveis);</li>
-        <li><strong>Detectores de gases combustíveis:</strong> em centrais de GLP/GN e salas de geradores, com atuação no
-        bloqueio automático do suprimento de gás;</li>
-        <li><strong>Detectores especiais:</strong> de sistemas saponificantes, gases de extinção e coifas, obrigatoriamente
-        interligados à central de alarme.</li>
-      </ul>` : ''}
+      ${aplicavel('deteccao_incendio') ? gerarBlocoDetectores(p) : ''}
       <h3>Condutores e fiação</h3>
       <ul>
         <li>Cabos com isolação em material antichama e baixa emissão de fumaça e gases tóxicos (cabo blindado, par
@@ -884,8 +949,23 @@ export function gerarMemorialHTML(p: DadosProjeto, r: ResultadoTecnico): string 
     </div>
   `;
 
+  // Sumário gerado a partir das seções efetivamente incluídas
+  const sumario = `
+    <div class="sumario">
+      <h2 class="sumario-titulo">SUMÁRIO</h2>
+      <table class="sumario-lista">
+        ${titulos.map((t) => `
+        <tr>
+          <td class="sumario-num">${t.numero}.</td>
+          <td class="sumario-item"><span>${esc(t.titulo)}</span></td>
+        </tr>`).join('')}
+      </table>
+    </div>
+  `;
+
   return `
     ${gerarCapa(p)}
+    ${sumario}
     ${secoes.join('\n')}
     ${assinaturas}
   `;
@@ -893,8 +973,28 @@ export function gerarMemorialHTML(p: DadosProjeto, r: ResultadoTecnico): string 
 
 /** Estilos usados na pré-visualização, no Word e no PDF (impressão). */
 export const ESTILOS_MEMORIAL = `
-  body { font-family: Arial, Helvetica, sans-serif; font-size: 11pt; color: #1a1a1a; line-height: 1.5; margin: 2cm; }
+  body { font-family: Arial, Helvetica, sans-serif; font-size: 11pt; color: #1a1a1a; line-height: 1.5; margin: 1.5cm 2cm 2cm; }
+  /* ---- Folha com cabeçalho repetido (thead repete em todas as páginas impressas) ---- */
+  table.folha { width: 100%; border-collapse: collapse; }
+  table.folha > thead > tr > td, table.folha > tbody > tr > td { border: none; padding: 0; vertical-align: top; }
+  table.folha > thead > tr > td { padding-bottom: 10pt; }
+  .doc-cabecalho { width: 100%; border-collapse: collapse; border-bottom: 2px solid #b91c1c; }
+  .doc-cabecalho td { border: none; padding: 4pt 6pt; vertical-align: middle; }
+  .cab-logo { width: 22%; }
+  .cab-logo img { max-height: 42px; max-width: 100%; }
+  .cab-logo-texto { font-weight: bold; color: #7f1d1d; font-size: 12pt; }
+  .cab-titulo { text-align: center; font-size: 9pt; line-height: 1.3; }
+  .cab-titulo strong { font-size: 9.5pt; color: #7f1d1d; }
+  .cab-codigo { width: 22%; text-align: right; font-size: 8.5pt; color: #444; }
+  /* ---- Sumário ---- */
+  .sumario { page-break-after: always; }
+  .sumario-titulo { font-size: 14pt; color: #7f1d1d; text-align: center; border-bottom: none !important; margin: 18pt 0 14pt !important; }
+  table.sumario-lista { width: 100%; border-collapse: collapse; }
+  table.sumario-lista td { border: none; padding: 3pt 4pt; font-size: 10.5pt; }
+  td.sumario-num { width: 8%; font-weight: bold; color: #7f1d1d; }
+  td.sumario-item span { border-bottom: 1px dotted #999; display: inline-block; width: 100%; padding-bottom: 1pt; }
   /* ---- Capa ---- */
+  .capa-logo-img { max-height: 70px; max-width: 100%; }
   .capa-pagina { min-height: 24cm; display: flex; flex-direction: column; justify-content: space-between; page-break-after: always; }
   .capa-cabecalho { width: 100%; border-collapse: collapse; }
   .capa-cabecalho td { border: 1px solid #999; padding: 8pt 12pt; vertical-align: middle; }
@@ -942,7 +1042,7 @@ export function documentoCompleto(p: DadosProjeto, r: ResultadoTecnico): string 
 <title>Memorial Descritivo — ${esc(p.nome)}</title>
 <style>${ESTILOS_MEMORIAL}</style>
 </head>
-<body>${gerarMemorialHTML(p, r)}</body>
+<body>${envolverEmFolha(p, gerarMemorialHTML(p, r))}</body>
 </html>`;
 }
 

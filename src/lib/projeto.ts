@@ -51,6 +51,28 @@ export function alarmePadrao(): ConfiguracaoAlarme {
   };
 }
 
+/** Tipos de detectores automáticos selecionados para o projeto (IT 19). */
+export interface ConfiguracaoDeteccao {
+  pontuais: boolean;
+  lineares: boolean;
+  chama: boolean;
+  termovelocimetricos: boolean;
+  gases: boolean;
+  /** Texto livre: localização dos detectores, central, fonte alternativa etc. */
+  outros: string;
+}
+
+export function deteccaoPadrao(): ConfiguracaoDeteccao {
+  return {
+    pontuais: false,
+    lineares: false,
+    chama: false,
+    termovelocimetricos: false,
+    gases: false,
+    outros: '',
+  };
+}
+
 export interface DadosProjeto {
   id: string;
   nome: string;
@@ -108,6 +130,12 @@ export interface DadosProjeto {
   /** Configuração do sistema de detecção e alarme (IT 19) */
   alarme: ConfiguracaoAlarme;
 
+  /** Tipos de detectores automáticos do projeto (IT 19) */
+  deteccao: ConfiguracaoDeteccao;
+
+  /** Logotipo do projeto/empresa em data URL (exibido na capa e no cabeçalho) */
+  logoDataUrl: string;
+
   // Medidas de segurança (ajustes do usuário sobre a classificação automática)
   medidas: Record<string, DetalhesMedida>;
 
@@ -161,6 +189,8 @@ export function novoProjeto(nome = 'Novo Projeto'): DadosProjeto {
     distanciaRealDemaisM: 0,
     hidranteTipoManual: 0,
     alarme: alarmePadrao(),
+    deteccao: deteccaoPadrao(),
+    logoDataUrl: '',
     medidas: {},
     riscosEspeciais: {},
     respTecnicoNome: '',

@@ -6,7 +6,7 @@
 import { DadosProjeto } from './projeto';
 import { ResultadoTecnico } from './engine';
 import { MEDIDAS_SEGURANCA } from './normas/exigencias';
-import { ESTILOS_MEMORIAL, baixarHTMLComoDoc, imprimirHTML } from './memorial';
+import { ESTILOS_MEMORIAL, baixarHTMLComoDoc, envolverEmFolha, imprimirHTML } from './memorial';
 
 const fmt = (n: number | null | undefined, casas = 0): string =>
   n === null || n === undefined ? '—' : n.toLocaleString('pt-BR', { minimumFractionDigits: casas, maximumFractionDigits: casas });
@@ -188,7 +188,7 @@ export function gerarRelatorioCalculosHTML(p: DadosProjeto, r: ResultadoTecnico)
 <title>Relatório de Cálculos — ${esc(p.nome)}</title>
 <style>${ESTILOS_MEMORIAL}</style>
 </head>
-<body>${corpo}</body>
+<body>${envolverEmFolha(p, corpo, 'RELATÓRIO DE CÁLCULOS — Projeto de Segurança Contra Incêndio e Pânico')}</body>
 </html>`;
 }
 
