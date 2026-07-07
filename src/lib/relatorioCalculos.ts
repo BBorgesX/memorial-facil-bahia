@@ -65,23 +65,43 @@ export function gerarRelatorioCalculosHTML(p: DadosProjeto, r: ResultadoTecnico)
 
   ${r.saidas ? `
   <section>
-    <h2>4. SAÍDAS DE EMERGÊNCIA (IT 11 / NBR 9077)</h2>
+    <h2>4. SAÍDAS DE EMERGÊNCIA — MEMORIAL DE CÁLCULO (IT 11/2016, ANEXO A)</h2>
+    <h3>4.1 Dados normativos da ocupação</h3>
     <table class="dados">
+      <tr><td>Divisão</td><td>${r.saidas.divisao} — ${esc(r.saidas.descricaoOcupacao)}</td></tr>
       <tr><td>Coeficiente de população</td><td>${esc(r.saidas.coeficiente)}</td></tr>
-      <tr><td>População calculada</td><td>${fmt(r.saidas.populacaoCalculada)} pessoas</td></tr>
-      <tr><td>População adotada</td><td><strong>${fmt(r.saidas.populacaoAdotada)} pessoas</strong></td></tr>
-      <tr><td>Número mínimo de saídas</td><td>${fmt(r.saidas.numeroMinimoSaidas)}</td></tr>
+      <tr><td>Capacidades AD / ER / Portas</td><td>${fmt(r.saidas.capacidadeUP.acessos)} / ${fmt(r.saidas.capacidadeUP.escadas)} / ${fmt(r.saidas.capacidadeUP.portas)} pessoas por U.P.</td></tr>
     </table>
+    <h3>4.2 População por pavimento (P)</h3>
     <table class="normas">
-      <tr><th>Elemento</th><th>Capacidade da UP</th><th>N = P/C (UP)</th><th>Largura mínima</th></tr>
-      <tr><td>Acessos e descargas</td><td>${fmt(r.saidas.capacidadeUP.acessos)}</td><td>${fmt(r.saidas.unidadesPassagem.acessos)}</td><td>${fmt(r.saidas.larguraMinima.acessosM, 2)} m</td></tr>
-      <tr><td>Escadas e rampas</td><td>${fmt(r.saidas.capacidadeUP.escadas)}</td><td>${fmt(r.saidas.unidadesPassagem.escadas)}</td><td>${fmt(r.saidas.larguraMinima.escadasM, 2)} m</td></tr>
-      <tr><td>Portas</td><td>${fmt(r.saidas.capacidadeUP.portas)}</td><td>${fmt(r.saidas.unidadesPassagem.portas)}</td><td>${fmt(r.saidas.larguraMinima.portasM, 2)} m</td></tr>
+      <tr><th>Pavimento</th><th>Área (m²)</th><th>Memória de cálculo</th><th>Acessos (N = P/C)</th></tr>
+      ${r.saidas.pavimentos.map((pav) => `
+      <tr${pav.nome === r.saidas!.pavimentoCritico ? ' class="linha-ativa"' : ''}>
+        <td>${esc(pav.nome)}</td>
+        <td>${fmt(pav.areaM2, 2)}</td>
+        <td>${esc(pav.memoria)}</td>
+        <td>${fmt(pav.acessos.unidades)} U.P. · ${fmt(pav.acessos.larguraM, 2)} m</td>
+      </tr>`).join('')}
     </table>
+    <table class="dados">
+      <tr><td>População crítica (máxima)</td><td><strong>${fmt(r.saidas.populacaoCritica)} pessoas</strong> (${esc(r.saidas.pavimentoCritico)})</td></tr>
+      <tr><td>População total / adotada</td><td>${fmt(r.saidas.populacaoTotal)} / <strong>${fmt(r.saidas.populacaoAdotada)}</strong> pessoas</td></tr>
+    </table>
+    <h3>4.3 Escadas, rampas, descargas e portas (pela população crítica; W = N × 0,55; mín. 2 U.P.)</h3>
     <table class="normas">
-      <tr><th>Distância máxima a percorrer</th><th>Valor</th></tr>
-      <tr><td>Piso de descarga (térreo)</td><td>${r.saidas.distanciaMaxima.pisoDescargaM ? `${r.saidas.distanciaMaxima.pisoDescargaM} m` : 'Consultar CBMBA'}</td></tr>
-      <tr><td>Demais pavimentos</td><td>${r.saidas.distanciaMaxima.demaisPavimentosM ? `${r.saidas.distanciaMaxima.demaisPavimentosM} m` : 'Consultar CBMBA'}</td></tr>
+      <tr><th>Elemento</th><th>Cálculo</th></tr>
+      <tr><td>E — Escadas</td><td>${esc(r.saidas.dimensionamento.escadas.memoria)}</td></tr>
+      <tr><td>R — Rampas</td><td>${esc(r.saidas.dimensionamento.rampas.memoria)}</td></tr>
+      <tr><td>D — Descargas</td><td>${esc(r.saidas.dimensionamento.descargas.memoria)}</td></tr>
+      <tr><td>P — Portas</td><td>${esc(r.saidas.dimensionamento.portas.memoria)}</td></tr>
+    </table>
+    <h3>4.4 Tipo de escada (Anexo C) e veredito de conformidade</h3>
+    <table class="normas">
+      <tr><th>Item</th><th>Real / Existente</th><th>Exigido / Permitido</th><th>Situação</th></tr>
+      <tr><td>Tipo de escada</td><td>—</td><td>${r.saidas.tipoEscada.sigla} — ${esc(r.saidas.tipoEscada.descricao)}</td><td>${esc(r.saidas.tipoEscada.base)}</td></tr>
+      <tr><td>Distância — piso de descarga</td><td>${r.saidas.conformidade.distanciaTerreo.realM > 0 ? `${fmt(r.saidas.conformidade.distanciaTerreo.realM, 1)} m` : 'não informado'}</td><td>${r.saidas.conformidade.distanciaTerreo.permitidoM ? `${r.saidas.conformidade.distanciaTerreo.permitidoM} m` : 'consultar CBMBA'}</td><td>${r.saidas.conformidade.distanciaTerreo.conforme === null ? 'não verificado' : r.saidas.conformidade.distanciaTerreo.conforme ? 'CONFORME' : 'NÃO CONFORME'}</td></tr>
+      <tr><td>Distância — demais andares</td><td>${r.saidas.conformidade.distanciaDemais.realM > 0 ? `${fmt(r.saidas.conformidade.distanciaDemais.realM, 1)} m` : 'não informado'}</td><td>${r.saidas.conformidade.distanciaDemais.permitidoM ? `${r.saidas.conformidade.distanciaDemais.permitidoM} m` : 'consultar CBMBA'}</td><td>${r.saidas.conformidade.distanciaDemais.conforme === null ? 'não verificado' : r.saidas.conformidade.distanciaDemais.conforme ? 'CONFORME' : 'NÃO CONFORME'}</td></tr>
+      <tr><td>Quantitativo de saídas</td><td>${esc(r.saidas.conformidade.saidas.existente)}</td><td>Mínimo ${fmt(r.saidas.conformidade.saidas.minimo)} (${esc(r.saidas.conformidade.saidas.criterio)})</td><td>${r.saidas.conformidade.saidas.conforme ? 'CONFORME' : 'NÃO CONFORME'}</td></tr>
     </table>
     <p>${esc(r.saidas.distanciaMaxima.consideracoes)}</p>
   </section>` : ''}

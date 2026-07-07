@@ -90,6 +90,8 @@ const ESPECIFICACOES_TIPO: Record<GrupoRTI, {
 
 export interface ResultadoHidrantes {
   sistemaTipo: number;
+  /** Como o tipo foi definido (automático mín. Tipo 2 ou seleção manual) */
+  origemTipo: string;
   descricaoSistema: string;
   rtiM3: number;
   vazaoMinimaLmin: number;
@@ -107,14 +109,28 @@ export function calcularHidrantes(params: {
   divisao: string;
   cargaNivel: NivelRisco;
   areaTotal: number;
+  /** Tipo selecionado manualmente pelo responsável (1 a 5); 0/undefined = automático */
+  tipoManual?: number;
 }): ResultadoHidrantes {
-  const grupo = grupoSistema(params.divisao, params.cargaNivel);
+  let grupo = grupoSistema(params.divisao, params.cargaNivel);
+  let origem = 'determinado automaticamente pela IT 22';
+  if (params.tipoManual && params.tipoManual >= 1 && params.tipoManual <= 5) {
+    // Seleção manual do responsável técnico (única forma de adotar o Tipo 1)
+    grupo = (`g${params.tipoManual}`) as GrupoRTI;
+    origem = 'selecionado manualmente pelo responsável técnico';
+  } else if (grupo === 'g1') {
+    // Exigência de projeto: o dimensionamento automático adota no mínimo o
+    // Tipo 2 — o Tipo 1 (mangotinho) só é admitido por seleção manual.
+    grupo = 'g2';
+    origem = 'determinado automaticamente pela IT 22, elevado ao mínimo de projeto (Tipo 2)';
+  }
   const rti = TABELA_RTI[grupo][indiceFaixaArea(params.areaTotal)];
   const spec = ESPECIFICACOES_TIPO[grupo];
   // RTI = Q × t → duração garantida com a vazão mínima de projeto
   const duracao = Math.round((rti * 1000) / spec.vazaoMinima);
   return {
     sistemaTipo: spec.tipo,
+    origemTipo: origem,
     descricaoSistema: spec.descricao,
     rtiM3: rti,
     vazaoMinimaLmin: spec.vazaoMinima,

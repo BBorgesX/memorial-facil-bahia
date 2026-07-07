@@ -331,33 +331,94 @@ export function gerarMemorialHTML(p: DadosProjeto, r: ResultadoTecnico): string 
   }
 
   if (aplicavel('saidas_emergencia') && r.saidas) {
-    sec('SAÍDAS DE EMERGÊNCIA (IT 11 / NBR 9077)', `
+    const s = r.saidas;
+    const conformeTxt = (c: boolean | null) =>
+      c === null ? '<em>(não verificado)</em>' : c ? '<strong style="color:#15803d">CONFORME</strong>' : '<strong style="color:#b91c1c">NÃO CONFORME</strong>';
+    sec('SAÍDAS DE EMERGÊNCIA — MEMORIAL DE CÁLCULO (IT 11/2016, ANEXO A)', `
       <p>Neste empreendimento, a saída de emergência é composta de: acessos e/ou corredores; rotas de fuga com
       respectivas portas; espaço livre exterior; escadas; rampas e descarga${aplicavel('elevador_emergencia') ? '; e elevador de emergência' : ''}.</p>
-      <h3>Cálculo da população (planilha da IT 11)</h3>
+
+      <h3>1. Dados normativos da ocupação</h3>
       <table class="dados">
-        <tr><td>Grupo / Divisão</td><td>${r.ocupacao?.divisao ?? '—'}</td></tr>
-        <tr><td>Coeficiente de população</td><td>${esc(r.saidas.coeficiente)}</td></tr>
-        <tr><td>População calculada</td><td>${fmt(r.saidas.populacaoCalculada)} pessoas</td></tr>
-        <tr><td>População adotada no projeto</td><td><strong>${fmt(r.saidas.populacaoAdotada)} pessoas</strong></td></tr>
+        <tr><td>Divisão</td><td>${s.divisao} — ${esc(s.descricaoOcupacao)}</td></tr>
+        <tr><td>Coeficiente de população</td><td>${esc(s.coeficiente)}</td></tr>
+        <tr><td>Capacidade AD (acessos/descargas)</td><td>${fmt(s.capacidadeUP.acessos)} pessoas por U.P.</td></tr>
+        <tr><td>Capacidade ER (escadas/rampas)</td><td>${fmt(s.capacidadeUP.escadas)} pessoas por U.P.</td></tr>
+        <tr><td>Capacidade Portas</td><td>${fmt(s.capacidadeUP.portas)} pessoas por U.P.</td></tr>
       </table>
-      <h3>Dimensionamento das saídas (N = P / C)</h3>
+
+      <h3>2. Cálculo de população por pavimento (P)</h3>
       <table class="normas">
-        <tr><th>Elemento</th><th>Capacidade da UP (pessoas)</th><th>Unidades de passagem</th><th>Largura mínima</th></tr>
-        <tr><td>Acessos e descargas</td><td>${fmt(r.saidas.capacidadeUP.acessos)}</td><td>${fmt(r.saidas.unidadesPassagem.acessos)}</td><td>${fmt(r.saidas.larguraMinima.acessosM, 2)} m</td></tr>
-        <tr><td>Escadas e rampas</td><td>${fmt(r.saidas.capacidadeUP.escadas)}</td><td>${fmt(r.saidas.unidadesPassagem.escadas)}</td><td>${fmt(r.saidas.larguraMinima.escadasM, 2)} m</td></tr>
-        <tr><td>Portas</td><td>${fmt(r.saidas.capacidadeUP.portas)}</td><td>${fmt(r.saidas.unidadesPassagem.portas)}</td><td>${fmt(r.saidas.larguraMinima.portasM, 2)} m</td></tr>
+        <tr><th>Pavimento</th><th>Área (m²)</th><th>Memória de cálculo</th><th>População</th></tr>
+        ${s.pavimentos.map((pav) => `
+        <tr${pav.nome === s.pavimentoCritico ? ' class="linha-ativa"' : ''}>
+          <td>${esc(pav.nome)}</td>
+          <td>${fmt(pav.areaM2, 2)}</td>
+          <td>${esc(pav.memoria)}</td>
+          <td><strong>${fmt(pav.populacao)}</strong></td>
+        </tr>`).join('')}
       </table>
-      <h3>Distâncias máximas a percorrer</h3>
       <table class="dados">
-        <tr><td>Piso de descarga (térreo)</td><td>${r.saidas.distanciaMaxima.pisoDescargaM ? `${r.saidas.distanciaMaxima.pisoDescargaM} m` : 'Consultar CBMBA'}</td></tr>
-        <tr><td>Demais pavimentos</td><td>${r.saidas.distanciaMaxima.demaisPavimentosM ? `${r.saidas.distanciaMaxima.demaisPavimentosM} m` : 'Consultar CBMBA'}</td></tr>
+        <tr><td>População crítica (máxima)</td><td><strong>${fmt(s.populacaoCritica)} pessoas</strong> (${esc(s.pavimentoCritico)})</td></tr>
+        <tr><td>População total da edificação</td><td>${fmt(s.populacaoTotal)} pessoas</td></tr>
+        <tr><td>População adotada no projeto</td><td><strong>${fmt(s.populacaoAdotada)} pessoas</strong></td></tr>
       </table>
-      <p>${esc(r.saidas.distanciaMaxima.consideracoes)}</p>
-      <p>Número mínimo de saídas: <strong>${fmt(r.saidas.numeroMinimoSaidas)}</strong>. As portas das rotas de saída abrirão
-      no sentido do fluxo de fuga, dotadas de barra antipânico onde exigido (NBR 11785). Corrimãos contínuos em ambos
-      os lados das escadas, guarda-corpos e degraus conforme IT 11 e NBR 9077. Pisos das rotas de fuga
-      antiderrapantes e desobstruídos.</p>
+
+      <h3>3. Dimensionamento das saídas (N = P / C; W = N × 0,55 m; mínimo 2 U.P.)</h3>
+      <p><strong>Acessos</strong> (dimensionados pavimento a pavimento):</p>
+      <table class="normas">
+        <tr><th>Pavimento</th><th>Cálculo</th></tr>
+        ${s.pavimentos.map((pav) => `<tr><td>${esc(pav.nome)}</td><td>${esc(pav.acessos.memoria)}</td></tr>`).join('')}
+      </table>
+      <p><strong>Escadas, rampas, descargas e portas</strong> (dimensionados pela população crítica = ${fmt(s.populacaoCritica)} pessoas):</p>
+      <table class="normas">
+        <tr><th>Elemento</th><th>Cálculo</th><th>Resultado</th></tr>
+        <tr><td>E — Escadas</td><td>${esc(s.dimensionamento.escadas.memoria)}</td><td><strong>${fmt(s.dimensionamento.escadas.unidades)} U.P. · ${fmt(s.dimensionamento.escadas.larguraM, 2)} m</strong></td></tr>
+        <tr><td>R — Rampas</td><td>${esc(s.dimensionamento.rampas.memoria)}</td><td><strong>${fmt(s.dimensionamento.rampas.unidades)} U.P. · ${fmt(s.dimensionamento.rampas.larguraM, 2)} m</strong></td></tr>
+        <tr><td>D — Descargas</td><td>${esc(s.dimensionamento.descargas.memoria)}</td><td><strong>${fmt(s.dimensionamento.descargas.unidades)} U.P. · ${fmt(s.dimensionamento.descargas.larguraM, 2)} m</strong></td></tr>
+        <tr><td>P — Portas</td><td>${esc(s.dimensionamento.portas.memoria)}</td><td><strong>${fmt(s.dimensionamento.portas.unidades)} U.P. · ${fmt(s.dimensionamento.portas.larguraM, 2)} m</strong></td></tr>
+      </table>
+
+      <h3>4. Tipo de escada (Anexo C, Tabela 3)</h3>
+      <table class="dados">
+        <tr><td>Altura da edificação</td><td>${fmt(p.alturaM, 2)} m</td></tr>
+        <tr><td>Classificação</td><td><strong>${s.tipoEscada.sigla}</strong></td></tr>
+        <tr><td>Descrição</td><td>${esc(s.tipoEscada.descricao)}</td></tr>
+        <tr><td>Critério</td><td>${esc(s.tipoEscada.base)}</td></tr>
+      </table>
+
+      <h3>5. Veredito de conformidade</h3>
+      <table class="normas">
+        <tr><th>Item verificado</th><th>Real / Existente</th><th>Exigido / Permitido</th><th>Situação</th></tr>
+        <tr>
+          <td>Tipo de escada</td>
+          <td>—</td>
+          <td>${s.tipoEscada.sigla} — ${esc(s.tipoEscada.descricao)}</td>
+          <td>Baseado na altura de ${fmt(p.alturaM, 2)} m</td>
+        </tr>
+        <tr>
+          <td>Distância a percorrer — piso de descarga</td>
+          <td>${s.conformidade.distanciaTerreo.realM > 0 ? `${fmt(s.conformidade.distanciaTerreo.realM, 1)} m` : 'não informado'}</td>
+          <td>${s.conformidade.distanciaTerreo.permitidoM ? `${s.conformidade.distanciaTerreo.permitidoM} m` : 'consultar CBMBA'}</td>
+          <td>${conformeTxt(s.conformidade.distanciaTerreo.conforme)}</td>
+        </tr>
+        <tr>
+          <td>Distância a percorrer — demais andares</td>
+          <td>${s.conformidade.distanciaDemais.realM > 0 ? `${fmt(s.conformidade.distanciaDemais.realM, 1)} m` : 'não informado'}</td>
+          <td>${s.conformidade.distanciaDemais.permitidoM ? `${s.conformidade.distanciaDemais.permitidoM} m` : 'consultar CBMBA'}</td>
+          <td>${conformeTxt(s.conformidade.distanciaDemais.conforme)}</td>
+        </tr>
+        <tr>
+          <td>Quantitativo de saídas</td>
+          <td>${esc(s.conformidade.saidas.existente)}</td>
+          <td>Mínimo: ${fmt(s.conformidade.saidas.minimo)} saída(s) (${esc(s.conformidade.saidas.criterio)})</td>
+          <td>${conformeTxt(s.conformidade.saidas.conforme)}</td>
+        </tr>
+      </table>
+      <p>${esc(s.distanciaMaxima.consideracoes)}</p>
+      <p>As portas das rotas de saída abrirão no sentido do fluxo de fuga, dotadas de barra antipânico onde exigido
+      (NBR 11785). Corrimãos contínuos em ambos os lados das escadas, guarda-corpos e degraus conforme IT 11 e
+      NBR 9077. Pisos das rotas de fuga antiderrapantes e desobstruídos.</p>
       ${detalhesUsuario('saidas_emergencia')}
     `);
   }
@@ -631,7 +692,7 @@ export function gerarMemorialHTML(p: DadosProjeto, r: ResultadoTecnico): string 
         </tr>
       </table>
       <p>${esc(r.hidrantes.descricaoSistema)}. A vazão mínima é referida à válvula do hidrante mais desfavorável e a
-      pressão residual à ponta do esguicho mais desfavorável.</p>
+      pressão residual à ponta do esguicho mais desfavorável. Tipo de sistema ${esc(r.hidrantes.origemTipo)}.</p>
       <h3>Reserva Técnica de Incêndio (RTI)</h3>
       <table class="dados">
         <tr><td>Área da edificação</td><td>${fmt(r.areaTotal, 2)} m²</td></tr>

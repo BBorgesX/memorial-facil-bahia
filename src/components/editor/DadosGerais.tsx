@@ -5,9 +5,9 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Separator } from '@/components/ui/separator';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Building2, AlertTriangle, ShieldCheck } from 'lucide-react';
-import { DadosProjeto } from '@/lib/projeto';
-import { ResultadoTecnico } from '@/lib/engine';
+import { Building2, AlertTriangle, DoorOpen, ShieldCheck } from 'lucide-react';
+import { DadosProjeto, PavimentoProjeto } from '@/lib/projeto';
+import { nomePavimento, ResultadoTecnico } from '@/lib/engine';
 import { TABELA_1_OCUPACOES, getDivisao, getGrupo } from '@/lib/normas/ocupacoes';
 import { CARGA_INCENDIO_SUGERIDA } from '@/lib/normas/classificacao';
 
@@ -25,6 +25,16 @@ const num = (v: string): number => {
 export const DadosGerais = ({ projeto, resultado, atualizar }: Props) => {
   const grupoSelecionado = getGrupo(projeto.grupo);
   const divisaoInfo = projeto.divisao ? getDivisao(projeto.divisao) : undefined;
+  const usaDormitorios = ['A-1', 'A-2', 'A-3', 'H-2'].includes(projeto.divisao);
+
+  const atualizarPavimento = (indice: number, mudancas: Partial<PavimentoProjeto>) => {
+    const lista = [...(projeto.pavimentosDetalhados ?? [])];
+    while (lista.length <= indice) {
+      lista.push({ nome: nomePavimento(lista.length), areaM2: 0 });
+    }
+    lista[indice] = { ...lista[indice], ...mudancas };
+    atualizar({ pavimentosDetalhados: lista });
+  };
 
   const selecionarDivisao = (cod: string) => {
     const sugestao = CARGA_INCENDIO_SUGERIDA[cod];
@@ -297,6 +307,140 @@ export const DadosGerais = ({ projeto, resultado, atualizar }: Props) => {
               </AlertDescription>
             </Alert>
           )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <DoorOpen className="w-5 h-5" /> Saídas de Emergência — Dados por Pavimento (IT 11)
+          </CardTitle>
+          <CardDescription>
+            Informe os dados de cada pavimento para o memorial de cálculo das saídas de emergência.
+            {usaDormitorios
+              ? ' Para esta ocupação, a população é calculada por dormitórios (2 pessoas por dormitório).'
+              : ' A população de cada pavimento é calculada pela área × coeficiente da IT 11 (pode ser sobrescrita).'}
+            {' '}Pavimentos sem área informada recebem a divisão uniforme da área total.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b text-left text-muted-foreground">
+                  <th className="py-2 pr-2 font-medium">Pavimento</th>
+                  <th className="py-2 pr-2 font-medium">Área (m²)</th>
+                  {usaDormitorios && <th className="py-2 pr-2 font-medium">Dormitórios</th>}
+                  <th className="py-2 pr-2 font-medium">População (opcional)</th>
+                </tr>
+              </thead>
+              <tbody>
+                {Array.from({ length: Math.max(1, projeto.pavimentos) }, (_, i) => {
+                  const pav = projeto.pavimentosDetalhados?.[i];
+                  return (
+                    <tr key={i} className="border-b last:border-0">
+                      <td className="py-2 pr-2">
+                        <Input
+                          value={pav?.nome ?? nomePavimento(i)}
+                          onChange={(e) => atualizarPavimento(i, { nome: e.target.value })}
+                          className="h-9"
+                        />
+                      </td>
+                      <td className="py-2 pr-2">
+                        <Input
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          value={pav?.areaM2 || ''}
+                          onChange={(e) => atualizarPavimento(i, { areaM2: num(e.target.value) })}
+                          placeholder="automática"
+                          className="h-9"
+                        />
+                      </td>
+                      {usaDormitorios && (
+                        <td className="py-2 pr-2">
+                          <Input
+                            type="number"
+                            min="0"
+                            step="1"
+                            value={pav?.dormitorios ?? ''}
+                            onChange={(e) => atualizarPavimento(i, { dormitorios: e.target.value === '' ? undefined : Math.round(num(e.target.value)) })}
+                            placeholder="nº dormitórios"
+                            className="h-9"
+                          />
+                        </td>
+                      )}
+                      <td className="py-2 pr-2">
+                        <Input
+                          type="number"
+                          min="0"
+                          step="1"
+                          value={pav?.populacaoManual ?? ''}
+                          onChange={(e) => atualizarPavimento(i, { populacaoManual: e.target.value === '' ? undefined : Math.round(num(e.target.value)) })}
+                          placeholder="calcular"
+                          className="h-9"
+                        />
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+
+          <Separator />
+          <h4 className="font-medium text-sm">Verificação de conformidade (valores reais do projeto)</h4>
+          <div className="grid md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="distReal1">Distância real a percorrer — piso de descarga (m)</Label>
+              <Input
+                id="distReal1"
+                type="number"
+                min="0"
+                step="0.1"
+                value={projeto.distanciaRealTerreoM || ''}
+                onChange={(e) => atualizar({ distanciaRealTerreoM: num(e.target.value) })}
+                placeholder="medida em planta"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="distReal2">Distância real a percorrer — demais pavimentos (m)</Label>
+              <Input
+                id="distReal2"
+                type="number"
+                min="0"
+                step="0.1"
+                value={projeto.distanciaRealDemaisM || ''}
+                onChange={(e) => atualizar({ distanciaRealDemaisM: num(e.target.value) })}
+                placeholder="medida em planta"
+              />
+            </div>
+          </div>
+
+          <Separator />
+          <div className="grid md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>Sistema de hidrantes — tipo (IT 22)</Label>
+              <Select
+                value={String(projeto.hidranteTipoManual || 0)}
+                onValueChange={(v) => atualizar({ hidranteTipoManual: parseInt(v, 10) })}
+              >
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="0">Automático (mínimo Tipo 2)</SelectItem>
+                  <SelectItem value="1">Tipo 1 — mangotinho (seleção manual)</SelectItem>
+                  <SelectItem value="2">Tipo 2 — hidrante DN 40, expedição simples</SelectItem>
+                  <SelectItem value="3">Tipo 3 — hidrante DN 40, expedição dupla</SelectItem>
+                  <SelectItem value="4">Tipo 4 — hidrante DN 40/65, expedição dupla</SelectItem>
+                  <SelectItem value="5">Tipo 5 — hidrante DN 65, expedição dupla</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                O dimensionamento automático adota no mínimo o Tipo 2; o Tipo 1 (mangotinho) só é aplicado quando
+                selecionado manualmente pelo responsável técnico.
+              </p>
+            </div>
+          </div>
         </CardContent>
       </Card>
     </div>
