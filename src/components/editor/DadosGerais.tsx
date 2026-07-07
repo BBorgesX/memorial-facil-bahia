@@ -73,6 +73,14 @@ export const DadosGerais = ({ projeto, resultado, atualizar }: Props) => {
               <Input id="cnpj" value={projeto.cnpj} onChange={(e) => atualizar({ cnpj: e.target.value })} placeholder="00.000.000/0000-00" />
             </div>
             <div className="space-y-2">
+              <Label htmlFor="codigoDoc">Código do documento (capa)</Label>
+              <Input id="codigoDoc" value={projeto.codigoDocumento} onChange={(e) => atualizar({ codigoDocumento: e.target.value })} placeholder="XXX-NNN-DG-DOC-001" />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="revisaoDoc">Revisão do documento</Label>
+              <Input id="revisaoDoc" value={projeto.revisaoDocumento} onChange={(e) => atualizar({ revisaoDocumento: e.target.value })} placeholder="00" />
+            </div>
+            <div className="space-y-2">
               <Label>Tipo de edificação</Label>
               <Select value={projeto.tipoEdificacao} onValueChange={(v) => atualizar({ tipoEdificacao: v as DadosProjeto['tipoEdificacao'] })}>
                 <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>

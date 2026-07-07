@@ -20,6 +20,10 @@ export interface DadosProjeto {
   proprietario: string;
   empresa: string;
   cnpj: string;
+  /** Código do documento na capa (ex.: XXX-NNN-DG-DOC-001) */
+  codigoDocumento: string;
+  /** Número da revisão do documento (ex.: 00) */
+  revisaoDocumento: string;
   tipoEdificacao: 'construcao' | 'existente' | 'renovacao' | '';
   apresentacao: 'PT' | 'PTS' | 'PTIOT' | 'PTOTEP' | '';
   logradouro: string;
@@ -73,6 +77,8 @@ export function novoProjeto(nome = 'Novo Projeto'): DadosProjeto {
     proprietario: '',
     empresa: '',
     cnpj: '',
+    codigoDocumento: '',
+    revisaoDocumento: '00',
     tipoEdificacao: '',
     apresentacao: 'PT',
     logradouro: '',

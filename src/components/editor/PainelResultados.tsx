@@ -1,17 +1,22 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import {
   AlertTriangle,
   Clock,
   DoorOpen,
   Droplets,
+  FileDown,
   Flame,
   Lightbulb,
+  Printer,
   Users,
 } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 import { DadosProjeto } from '@/lib/projeto';
 import { ResultadoTecnico } from '@/lib/engine';
+import { exportarCalculosPDF, exportarCalculosWord } from '@/lib/relatorioCalculos';
 
 interface Props {
   projeto: DadosProjeto;
@@ -22,6 +27,7 @@ const fmt = (n: number | null | undefined, casas = 0) =>
   n === null || n === undefined ? '—' : n.toLocaleString('pt-BR', { minimumFractionDigits: casas, maximumFractionDigits: casas });
 
 export const PainelResultados = ({ projeto, resultado: r }: Props) => {
+  const { toast } = useToast();
   if (!r.ocupacao || !r.altura || !r.carga) {
     return (
       <Alert>
@@ -36,6 +42,40 @@ export const PainelResultados = ({ projeto, resultado: r }: Props) => {
 
   return (
     <div className="space-y-6">
+      {/* Exportação separada dos cálculos */}
+      <Card>
+        <CardContent className="pt-4 pb-4 flex flex-wrap items-center gap-3">
+          <div className="flex-1 min-w-48">
+            <p className="font-medium text-sm">Relatório de Cálculos</p>
+            <p className="text-xs text-muted-foreground">
+              Exporte os dados desta aba separadamente, como memória de cálculo resumida do projeto.
+            </p>
+          </div>
+          <Button
+            onClick={() => {
+              if (!exportarCalculosPDF(projeto, r)) {
+                toast({
+                  title: 'Bloqueio de pop-up',
+                  description: 'Permita pop-ups para gerar o PDF (impressão).',
+                  variant: 'destructive',
+                });
+              }
+            }}
+          >
+            <Printer className="w-4 h-4 mr-2" /> Exportar PDF
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => {
+              exportarCalculosWord(projeto, r);
+              toast({ title: 'Relatório exportado', description: 'Documento Word (.doc) gerado.' });
+            }}
+          >
+            <FileDown className="w-4 h-4 mr-2" /> Exportar Word
+          </Button>
+        </CardContent>
+      </Card>
+
       {r.avisos.length > 0 && (
         <Alert variant="destructive">
           <AlertTriangle className="h-4 w-4" />

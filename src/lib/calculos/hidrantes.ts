@@ -66,13 +66,26 @@ function indiceFaixaArea(area: number): number {
   return 5;
 }
 
-/** Especificações por tipo de sistema conforme NBR 13714 / IT 22. */
-const ESPECIFICACOES_TIPO: Record<GrupoRTI, { tipo: number; descricao: string; esguicho: string; mangueira: string; vazaoMinima: number }> = {
-  g1: { tipo: 1, descricao: 'Sistema Tipo 1 — mangotinho DN 25 mm com esguicho regulável', esguicho: 'Regulável DN 25 mm', mangueira: 'Mangueira semirrígida DN 25 mm, até 30 m', vazaoMinima: 100 },
-  g2: { tipo: 2, descricao: 'Sistema Tipo 2 — hidrante DN 40 mm com esguicho regulável ou jato compacto', esguicho: 'Regulável ou jato compacto Ø 13 mm', mangueira: 'Mangueira de incêndio DN 40 mm, até 30 m (2 lances de 15 m)', vazaoMinima: 300 },
-  g3: { tipo: 3, descricao: 'Sistema Tipo 3 — hidrante DN 40/65 mm com esguicho regulável', esguicho: 'Regulável ou jato compacto Ø 16 mm', mangueira: 'Mangueira de incêndio DN 40 mm, até 30 m (2 lances de 15 m)', vazaoMinima: 500 },
-  g4: { tipo: 4, descricao: 'Sistema Tipo 4 — hidrante DN 65 mm com esguicho regulável', esguicho: 'Regulável ou jato compacto Ø 19 mm', mangueira: 'Mangueira de incêndio DN 65 mm, até 30 m (2 lances de 15 m)', vazaoMinima: 600 },
-  g5: { tipo: 5, descricao: 'Sistema Tipo 5 — hidrante duplo DN 65 mm', esguicho: 'Regulável ou jato compacto Ø 25 mm', mangueira: 'Mangueira de incêndio DN 65 mm, até 30 m (2 lances de 15 m)', vazaoMinima: 900 },
+/**
+ * Especificações por tipo de sistema — Tabela de tipos da IT 22 (esguicho,
+ * mangueira, expedições, vazão mínima na válvula do hidrante mais desfavorável
+ * e pressão residual mínima na ponta do esguicho mais desfavorável).
+ */
+const ESPECIFICACOES_TIPO: Record<GrupoRTI, {
+  tipo: number;
+  descricao: string;
+  esguichoDN: number;
+  mangueiraDN: number;
+  mangueiraComprimentoM: number;
+  expedicoes: 'simples' | 'duplo';
+  vazaoMinima: number;
+  pressaoMca: number;
+}> = {
+  g1: { tipo: 1, descricao: 'Sistema Tipo 1 — mangotinho DN 25 mm com mangueira semirrígida e esguicho regulável', esguichoDN: 25, mangueiraDN: 25, mangueiraComprimentoM: 30, expedicoes: 'simples', vazaoMinima: 100, pressaoMca: 30 },
+  g2: { tipo: 2, descricao: 'Sistema Tipo 2 — hidrante DN 40 mm, expedição simples, com esguicho regulável', esguichoDN: 40, mangueiraDN: 40, mangueiraComprimentoM: 30, expedicoes: 'simples', vazaoMinima: 125, pressaoMca: 15 },
+  g3: { tipo: 3, descricao: 'Sistema Tipo 3 — hidrante DN 40 mm, expedição dupla, com esguicho regulável', esguichoDN: 40, mangueiraDN: 40, mangueiraComprimentoM: 30, expedicoes: 'duplo', vazaoMinima: 200, pressaoMca: 15 },
+  g4: { tipo: 4, descricao: 'Sistema Tipo 4 — hidrante DN 40/65 mm, expedição dupla, com esguicho regulável', esguichoDN: 40, mangueiraDN: 65, mangueiraComprimentoM: 30, expedicoes: 'duplo', vazaoMinima: 300, pressaoMca: 16 },
+  g5: { tipo: 5, descricao: 'Sistema Tipo 5 — hidrante DN 65 mm, expedição dupla, com esguicho regulável', esguichoDN: 65, mangueiraDN: 65, mangueiraComprimentoM: 30, expedicoes: 'duplo', vazaoMinima: 600, pressaoMca: 21 },
 };
 
 export interface ResultadoHidrantes {
@@ -80,9 +93,11 @@ export interface ResultadoHidrantes {
   descricaoSistema: string;
   rtiM3: number;
   vazaoMinimaLmin: number;
-  esguicho: string;
-  mangueira: string;
-  /** Pressão dinâmica mínima no esguicho do hidrante mais desfavorável (mca) */
+  esguichoDN: number;
+  mangueiraDN: number;
+  mangueiraComprimentoM: number;
+  expedicoes: string;
+  /** Pressão residual mínima na ponta do esguicho mais desfavorável (mca) */
   pressaoMinimaMca: number;
   /** Tempo mínimo de funcionamento garantido pela RTI (min) */
   duracaoMinutos: number;
@@ -103,9 +118,11 @@ export function calcularHidrantes(params: {
     descricaoSistema: spec.descricao,
     rtiM3: rti,
     vazaoMinimaLmin: spec.vazaoMinima,
-    esguicho: spec.esguicho,
-    mangueira: spec.mangueira,
-    pressaoMinimaMca: 10,
+    esguichoDN: spec.esguichoDN,
+    mangueiraDN: spec.mangueiraDN,
+    mangueiraComprimentoM: spec.mangueiraComprimentoM,
+    expedicoes: spec.expedicoes,
+    pressaoMinimaMca: spec.pressaoMca,
     duracaoMinutos: Math.min(duracao, 60),
   };
 }

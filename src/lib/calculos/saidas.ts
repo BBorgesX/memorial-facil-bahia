@@ -12,19 +12,48 @@ export interface CoeficientePopulacao {
   m2PorPessoa: number;
 }
 
-/** Coeficientes de cálculo de população por grupo de ocupação (NBR 9077/IT 11). */
+/**
+ * Coeficientes de cálculo de população POR DIVISÃO (planilha da IT 11/NBR 9077,
+ * conforme o memorial de referência). Fallback por grupo quando a divisão não
+ * está listada.
+ */
 export const COEFICIENTES_POPULACAO: Record<string, CoeficientePopulacao> = {
-  A: { descricao: 'Duas pessoas por dormitório (≈ 15 m² por pessoa)', m2PorPessoa: 15 },
+  'A-1': { descricao: 'Duas pessoas por dormitório (adotado ≈ 15 m² por pessoa)', m2PorPessoa: 15 },
+  'A-2': { descricao: 'Duas pessoas por dormitório (adotado ≈ 15 m² por pessoa)', m2PorPessoa: 15 },
+  'A-3': { descricao: 'Duas pessoas por dormitório e uma pessoa por 4 m² de alojamento', m2PorPessoa: 4 },
   B: { descricao: 'Uma pessoa por 15 m² de área', m2PorPessoa: 15 },
-  C: { descricao: 'Uma pessoa por 5 m² de área de venda', m2PorPessoa: 5 },
+  C: { descricao: 'Uma pessoa por 5 m² de área', m2PorPessoa: 5 },
   D: { descricao: 'Uma pessoa por 7 m² de área', m2PorPessoa: 7 },
   E: { descricao: 'Uma pessoa por 1,5 m² de área de sala de aula', m2PorPessoa: 1.5 },
-  F: { descricao: 'Uma pessoa por m² de área (locais de reunião de público)', m2PorPessoa: 1 },
-  G: { descricao: 'Uma pessoa por 40 m² de área', m2PorPessoa: 40 },
-  H: { descricao: 'Uma e meia pessoa por leito / 7 m² por pessoa em ambulatórios', m2PorPessoa: 7 },
+  'F-1': { descricao: 'Uma pessoa por 3 m² de área', m2PorPessoa: 3 },
+  'F-2': { descricao: 'Uma pessoa por 1 m² de área', m2PorPessoa: 1 },
+  'F-3': { descricao: 'Duas pessoas por 1 m² de área', m2PorPessoa: 0.5 },
+  'F-4': { descricao: 'Uma pessoa por 3 m² de área', m2PorPessoa: 3 },
+  'F-5': { descricao: 'Uma pessoa por 1 m² de área', m2PorPessoa: 1 },
+  'F-6': { descricao: 'Três pessoas por 1 m² de área', m2PorPessoa: 1 / 3 },
+  'F-7': { descricao: 'Três pessoas por 1 m² de área', m2PorPessoa: 1 / 3 },
+  'F-8': { descricao: 'Uma pessoa por 1 m² de área', m2PorPessoa: 1 },
+  'F-9': { descricao: 'Duas pessoas por 1 m² de área', m2PorPessoa: 0.5 },
+  'F-10': { descricao: 'Uma pessoa por 3 m² de área', m2PorPessoa: 3 },
+  'G-1': { descricao: 'Uma pessoa por 40 vagas de veículos (adotado ≈ 40 m² por pessoa)', m2PorPessoa: 40 },
+  'G-2': { descricao: 'Uma pessoa por 40 vagas de veículos (adotado ≈ 40 m² por pessoa)', m2PorPessoa: 40 },
+  'G-3': { descricao: 'Uma pessoa por 40 vagas de veículos (adotado ≈ 40 m² por pessoa)', m2PorPessoa: 40 },
+  'G-4': { descricao: 'Uma pessoa por 20 m² de área', m2PorPessoa: 20 },
+  'G-5': { descricao: 'Uma pessoa por 20 m² de área', m2PorPessoa: 20 },
+  'H-1': { descricao: 'Uma pessoa por 7 m² de área', m2PorPessoa: 7 },
+  'H-2': { descricao: 'Duas pessoas por dormitório e uma pessoa por 4 m² de alojamento', m2PorPessoa: 4 },
+  'H-3': { descricao: 'Uma pessoa por leito e uma pessoa por 7 m² de área de ambulatório', m2PorPessoa: 7 },
+  'H-4': { descricao: 'Uma pessoa por 7 m² de área', m2PorPessoa: 7 },
+  'H-5': { descricao: 'Uma pessoa por 7 m² de área', m2PorPessoa: 7 },
+  'H-6': { descricao: 'Uma pessoa por 7 m² de área', m2PorPessoa: 7 },
   I: { descricao: 'Uma pessoa por 10 m² de área', m2PorPessoa: 10 },
   J: { descricao: 'Uma pessoa por 30 m² de área', m2PorPessoa: 30 },
-  L: { descricao: 'Uma pessoa por 10 m² de área', m2PorPessoa: 10 },
+  'L-1': { descricao: 'Uma pessoa por 3 m² de área', m2PorPessoa: 3 },
+  'L-2': { descricao: 'Uma pessoa por 10 m² de área', m2PorPessoa: 10 },
+  'L-3': { descricao: 'Uma pessoa por 10 m² de área', m2PorPessoa: 10 },
+  'M-3': { descricao: 'Uma pessoa por 10 m² de área', m2PorPessoa: 10 },
+  'M-4': { descricao: 'Uma pessoa por 4 m² de área', m2PorPessoa: 4 },
+  'M-5': { descricao: 'Uma pessoa por 10 m² de área', m2PorPessoa: 10 },
   M: { descricao: 'Uma pessoa por 10 m² de área', m2PorPessoa: 10 },
 };
 
@@ -34,20 +63,29 @@ interface CapacidadeUP {
   portas: number;
 }
 
-/** Capacidade de uma unidade de passagem (pessoas) — Tabela da NBR 9077/IT 11. */
+/**
+ * Capacidade de uma unidade de passagem (pessoas) POR DIVISÃO — planilha da
+ * IT 11/NBR 9077 do memorial de referência. Fallback por grupo.
+ */
 const CAPACIDADE_UP: Record<string, CapacidadeUP> = {
   A: { acessos: 60, escadas: 45, portas: 100 },
   B: { acessos: 60, escadas: 45, portas: 100 },
   C: { acessos: 100, escadas: 75, portas: 100 },
   D: { acessos: 100, escadas: 75, portas: 100 },
   E: { acessos: 100, escadas: 75, portas: 100 },
+  'E-5': { acessos: 30, escadas: 22, portas: 30 },
+  'E-6': { acessos: 30, escadas: 22, portas: 30 },
   F: { acessos: 100, escadas: 75, portas: 100 },
   G: { acessos: 100, escadas: 60, portas: 100 },
-  H: { acessos: 30, escadas: 22, portas: 30 }, // hospitais (H-2/H-3); demais divisões H usar 60/45/100
-  I: { acessos: 60, escadas: 45, portas: 100 },
+  H: { acessos: 60, escadas: 45, portas: 100 },
+  'H-2': { acessos: 30, escadas: 22, portas: 30 },
+  'H-3': { acessos: 30, escadas: 22, portas: 30 },
+  I: { acessos: 100, escadas: 60, portas: 100 },
   J: { acessos: 100, escadas: 60, portas: 100 },
-  L: { acessos: 60, escadas: 45, portas: 100 },
-  M: { acessos: 60, escadas: 45, portas: 100 },
+  L: { acessos: 100, escadas: 60, portas: 100 },
+  M: { acessos: 100, escadas: 60, portas: 100 },
+  'M-1': { acessos: 100, escadas: 75, portas: 100 },
+  'M-4': { acessos: 60, escadas: 45, portas: 100 },
 };
 
 const LARGURA_UP_M = 0.55; // uma unidade de passagem = 0,55 m
@@ -131,6 +169,8 @@ export interface ResultadoSaidas {
   populacaoCalculada: number;
   populacaoAdotada: number;
   coeficiente: string;
+  /** Capacidade de uma unidade de passagem (pessoas) usada no cálculo */
+  capacidadeUP: { acessos: number; escadas: number; portas: number };
   unidadesPassagem: { acessos: number; escadas: number; portas: number };
   larguraMinima: { acessosM: number; escadasM: number; portasM: number };
   distanciaMaxima: {
@@ -151,17 +191,19 @@ export function calcularSaidas(params: {
   temDeteccao: boolean;
   saidaUnica: boolean;
 }): ResultadoSaidas {
-  const coef = COEFICIENTES_POPULACAO[params.grupo] ?? COEFICIENTES_POPULACAO.M;
+  // Busca por divisão primeiro (linha específica da planilha da IT 11);
+  // se não houver, usa a linha do grupo.
+  const coef = COEFICIENTES_POPULACAO[params.divisao]
+    ?? COEFICIENTES_POPULACAO[params.grupo]
+    ?? COEFICIENTES_POPULACAO.M;
   const populacaoCalculada = Math.ceil(params.areaTotal / coef.m2PorPessoa);
   const populacaoAdotada = params.populacaoInformada && params.populacaoInformada > 0
     ? params.populacaoInformada
     : populacaoCalculada;
 
-  // Capacidade por unidade de passagem: divisões hospitalares H-2/H-3 usam a
-  // linha restritiva; demais divisões do grupo H usam a linha padrão.
-  const capacidade = params.grupo === 'H' && !['H-2', 'H-3', 'H-5'].includes(params.divisao)
-    ? { acessos: 60, escadas: 45, portas: 100 }
-    : CAPACIDADE_UP[params.grupo] ?? CAPACIDADE_UP.M;
+  const capacidade = CAPACIDADE_UP[params.divisao]
+    ?? CAPACIDADE_UP[params.grupo]
+    ?? CAPACIDADE_UP.M;
 
   // População por pavimento (distribuição uniforme — conservador usar o total
   // quando térrea/um pavimento)
@@ -186,6 +228,7 @@ export function calcularSaidas(params: {
     populacaoCalculada,
     populacaoAdotada,
     coeficiente: coef.descricao,
+    capacidadeUP: { ...capacidade },
     unidadesPassagem: { acessos: nAcessos, escadas: nEscadas, portas: nPortas },
     larguraMinima: {
       acessosM: Math.max(1.1, nAcessos * LARGURA_UP_M),
