@@ -73,6 +73,71 @@ export function deteccaoPadrao(): ConfiguracaoDeteccao {
   };
 }
 
+/** Configuração do sistema de hidrantes e mangotinhos (IT 22). */
+export interface ConfiguracaoHidrantes {
+  // Reservatórios (a capacidade em litros vem da tabela da RTI)
+  reservatorioSuperior: boolean;
+  reservatorioInferior: boolean;
+  reservatorioPiscina: boolean;
+  reservatorioOutrosAtivo: boolean;
+  /** Descrição de outros reservatórios */
+  reservatorioOutros: string;
+  /** Material construtivo do reservatório: concreto armado / aço */
+  materialConcretoAco: boolean;
+  materialOutroAtivo: boolean;
+  /** Descrição de outro material construtivo */
+  materialOutro: string;
+  // Tubulações — onde a rede será instalada
+  redeAparente: boolean;
+  redeForro: boolean;
+  redeEmbutida: boolean;
+  redeSubterranea: boolean;
+  // Conexões — redes de aço
+  conexoesRosqueaveis: boolean;
+  conexoesSoldaveis: boolean;
+  conexoesGrooving: boolean;
+  // Conexões — redes plásticas (PEAD)
+  conexoesPEADFusao: boolean;
+  // Sistema de pressurização
+  pressurizacaoEletrica: boolean;
+  pressurizacaoDiesel: boolean;
+  /** Dados técnicos + curva de desempenho da bomba principal (elétrica) */
+  bombaPrincipalDados: string;
+  /** Dados técnicos + curva de desempenho da bomba a combustão (se Diesel) */
+  bombaCombustaoDados: string;
+  /** Dados técnicos + curva de desempenho da bomba jockey */
+  bombaJockeyDados: string;
+  /** Memória de cálculo do sistema de hidrantes (imagens em data URL) */
+  memoriaCalculoImagens: string[];
+}
+
+export function hidrantesPadrao(): ConfiguracaoHidrantes {
+  return {
+    reservatorioSuperior: false,
+    reservatorioInferior: false,
+    reservatorioPiscina: false,
+    reservatorioOutrosAtivo: false,
+    reservatorioOutros: '',
+    materialConcretoAco: true,
+    materialOutroAtivo: false,
+    materialOutro: '',
+    redeAparente: true,
+    redeForro: false,
+    redeEmbutida: false,
+    redeSubterranea: false,
+    conexoesRosqueaveis: true,
+    conexoesSoldaveis: false,
+    conexoesGrooving: false,
+    conexoesPEADFusao: false,
+    pressurizacaoEletrica: true,
+    pressurizacaoDiesel: false,
+    bombaPrincipalDados: '',
+    bombaCombustaoDados: '',
+    bombaJockeyDados: '',
+    memoriaCalculoImagens: [],
+  };
+}
+
 export interface DadosProjeto {
   id: string;
   nome: string;
@@ -133,6 +198,9 @@ export interface DadosProjeto {
   /** Tipos de detectores automáticos do projeto (IT 19) */
   deteccao: ConfiguracaoDeteccao;
 
+  /** Configuração do sistema de hidrantes e mangotinhos (IT 22) */
+  hidrantesConfig: ConfiguracaoHidrantes;
+
   /** Logotipo do projeto/empresa em data URL (exibido na capa e no cabeçalho) */
   logoDataUrl: string;
 
@@ -190,6 +258,7 @@ export function novoProjeto(nome = 'Novo Projeto'): DadosProjeto {
     hidranteTipoManual: 0,
     alarme: alarmePadrao(),
     deteccao: deteccaoPadrao(),
+    hidrantesConfig: hidrantesPadrao(),
     logoDataUrl: '',
     medidas: {},
     riscosEspeciais: {},

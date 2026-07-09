@@ -7,7 +7,7 @@
  * com a classificação e os cálculos das ITs do CBMBA.
  */
 
-import { alarmePadrao, DadosProjeto, deteccaoPadrao } from './projeto';
+import { alarmePadrao, DadosProjeto, deteccaoPadrao, hidrantesPadrao } from './projeto';
 import { medidaAplicavel, ResultadoTecnico } from './engine';
 import { MEDIDAS_SEGURANCA, RISCOS_ESPECIAIS } from './normas/exigencias';
 
@@ -79,6 +79,152 @@ function gerarBlocoDetectores(p: DadosProjeto): string {
       <p>Detectores especiais (sistemas saponificantes, gases de extinção e coifas) deverão estar obrigatoriamente
       interligados à central de alarme, mesmo quando não constem do projeto de segurança.</p>
       ${outros}
+  `;
+}
+
+/**
+ * Bloco da Reserva Técnica de Incêndio (IT 22): tabela da RTI com os
+ * reservatórios selecionados pelo usuário — a capacidade em litros é a mesma
+ * informação da tabela da reserva de incêndio — e o material construtivo.
+ */
+function gerarBlocoRTI(p: DadosProjeto, r: ResultadoTecnico): string {
+  const h = r.hidrantes;
+  if (!h) return '';
+  const cfg = p.hidrantesConfig ?? hidrantesPadrao();
+  const litros = `${(h.rtiM3 * 1000).toLocaleString('pt-BR')} litros`;
+  const reservatorios: string[] = [];
+  if (cfg.reservatorioSuperior) reservatorios.push(`Superior — ${litros} (RTI)`);
+  if (cfg.reservatorioInferior) reservatorios.push(`Inferior — ${litros} (RTI)`);
+  if (cfg.reservatorioPiscina) reservatorios.push(`Piscina — ${litros} (RTI)`);
+  if (cfg.reservatorioOutrosAtivo && cfg.reservatorioOutros.trim()) {
+    reservatorios.push(esc(cfg.reservatorioOutros.trim()));
+  }
+  const materiais: string[] = [];
+  if (cfg.materialConcretoAco) materiais.push('Concreto armado / aço');
+  if (cfg.materialOutroAtivo && cfg.materialOutro.trim()) materiais.push(esc(cfg.materialOutro.trim()));
+  return `
+      <h3>Reserva Técnica de Incêndio (RTI)</h3>
+      <table class="dados">
+        <tr><td>Área da edificação</td><td>${fmt(r.areaTotal, 2)} m²</td></tr>
+        <tr><td>Volume da RTI</td><td><strong>${fmt(h.rtiM3)} m³ (${litros})</strong> — mínimo ${fmt(h.duracaoMinutos)} min de operação</td></tr>
+        <tr><td>Reservatório(s)</td><td>${reservatorios.length ? reservatorios.join('; ') : 'Superior, inferior ou outro previsto em projeto'}</td></tr>
+        <tr><td>Material construtivo do reservatório</td><td>${materiais.length ? materiais.join(' / ') : 'Concreto armado / aço'}</td></tr>
+      </table>
+      <p>A RTI será garantida em reservatório com dispositivo que impeça o seu uso para consumo predial. Existirá
+      <strong>dispositivo de recalque</strong> na fachada principal do empreendimento, no passeio, conforme detalhado
+      no projeto.</p>
+  `;
+}
+
+/** Texto fixo dos abrigos de mangueiras (Anexo D da IT 22). */
+const BLOCO_ABRIGOS = `
+      <h3>Abrigos</h3>
+      <p>Os abrigos de mangueiras devem seguir as especificações do Anexo D, ser destinados exclusivamente a essa
+      finalidade, conforme a legislação vigente, e estar de acordo com o projeto arquitetônico. Ajustes às necessidades
+      específicas são permitidos, desde que sejam respeitados os seguintes requisitos:</p>
+      <ul>
+        <li>Serem confeccionados em materiais incombustíveis;</li>
+        <li>Estarem devidamente identificados, conforme a legislação aplicável;</li>
+        <li>Possuírem porta ou visor transparente, com a inscrição "INCÊNDIO" em vermelho;</li>
+        <li>Não possuírem fechadura trancada por chave;</li>
+        <li>Armazenarem os equipamentos de forma adequada;</li>
+        <li>Estarem localizados em áreas livres e desobstruídas.</li>
+      </ul>
+`;
+
+/**
+ * Bloco das redes hidráulicas (IT 22): tubulações conforme os locais de
+ * instalação marcados e conexões apenas dos sistemas selecionados — grupos sem
+ * seleção são omitidos do texto final.
+ */
+function gerarBlocoRedeHidraulica(p: DadosProjeto): string {
+  const cfg = p.hidrantesConfig ?? hidrantesPadrao();
+  const locais: string[] = [];
+  if (cfg.redeAparente) locais.push('rede aparente (teto)');
+  if (cfg.redeForro) locais.push('interior de forros');
+  if (cfg.redeEmbutida) locais.push('embutida em paredes');
+  if (cfg.redeSubterranea) locais.push('rede subterrânea');
+  const temRedeAco = cfg.redeAparente || cfg.redeForro || cfg.redeEmbutida;
+
+  const tubulacoes: string[] = [];
+  if (temRedeAco) {
+    tubulacoes.push(`<li><strong>Redes aparentes, no interior de forros ou embutidas em paredes:</strong> tubo em aço
+        DIN 2440 — NBR 5580, Classe Média, com costura, acabamento galvanizado preto;</li>`);
+  }
+  if (cfg.redeSubterranea) {
+    tubulacoes.push(`<li><strong>Rede subterrânea:</strong> PEAD (Polietileno de Alta Densidade) PN20, com profundidade
+        mínima de 1,00 m e afastamento mínimo de 1,00 m da área de risco;</li>`);
+  }
+  tubulacoes.push(`<li><strong>Tratamento e pintura:</strong> remoção de impurezas, condicionador para metais, primer
+        fosfatizado e duas demãos de esmalte sintético na cor vermelho incêndio.</li>`);
+
+  const conexoesAco: string[] = [];
+  if (cfg.conexoesRosqueaveis) conexoesAco.push('<li>Conexões rosqueáveis em ferro maleável, Classe 10;</li>');
+  if (cfg.conexoesSoldaveis) conexoesAco.push('<li>Conexões soldáveis em aço carbono, pretas, biseladas, para 150 psi;</li>');
+  if (cfg.conexoesGrooving) conexoesAco.push('<li>Sistema Grooving (ranhurado);</li>');
+
+  const blocoConexoes = (conexoesAco.length || cfg.conexoesPEADFusao) ? `
+      <h3>Redes hidráulicas — conexões</h3>
+      ${conexoesAco.length ? `<p><strong>Para redes de aço:</strong></p><ul>${conexoesAco.join('')}</ul>` : ''}
+      ${cfg.conexoesPEADFusao ? `<p><strong>Para redes plásticas (PEAD):</strong></p>
+      <ul><li>Conexões soldáveis por fusão térmica, com a mesma classe de pressão da tubulação.</li></ul>` : ''}
+  ` : '';
+
+  return `
+      <h3>Redes hidráulicas — tubulações</h3>
+      <p>A tubulação da rede de hidrantes será instalada em: ${locais.length ? locais.join('; ') : 'conforme lançamento em projeto'}.</p>
+      <ul>${tubulacoes.join('')}</ul>
+      ${blocoConexoes}
+  `;
+}
+
+/**
+ * Bloco do sistema de pressurização (IT 22 / NFPA 20): textos fixos de
+ * automação e painéis, texto condicional da bomba reserva (Diesel ou grupo
+ * gerador), dados técnicos das bombas e memória de cálculo hidráulico.
+ */
+function gerarBlocoPressurizacao(p: DadosProjeto): string {
+  const cfg = p.hidrantesConfig ?? hidrantesPadrao();
+  const bombaReserva = cfg.pressurizacaoDiesel
+    ? `<p>A bomba reserva será a combustão Diesel, obedecendo rigorosamente ao disposto na NFPA 20.</p>`
+    : cfg.pressurizacaoEletrica
+      ? `<p>Não existirá bomba a combustão interna. A edificação será suprida por grupo gerador de emergência,
+      dimensionado para atender a demanda da bomba elétrica e com volume de combustível para o tempo necessário ao
+      combate previsto na legislação em vigor.</p>`
+      : '';
+  const dadosBomba = (titulo: string, valor: string) => `
+      <p><strong>${titulo}</strong></p>
+      ${valor.trim()
+        ? paragrafos(valor)
+        : '<p><em>Dados técnicos e curva de desempenho da bomba deverão acompanhar o projeto executivo.</em></p>'}`;
+  const imagens = (cfg.memoriaCalculoImagens ?? []).filter(Boolean);
+  return `
+      <h3>Sistema de pressurização (casa de bombas)</h3>
+      <p><strong>Observação:</strong> Conforme IT-41 (item 7.1 — Premissas Específicas) não se admite o uso de
+      dispositivo DR para proteção contra choques elétricos nos circuitos dos serviços de segurança.</p>
+      <p>A pressurização será feita através de bombas elétricas, abastecendo exclusivamente o sistema hidráulico de
+      hidrantes de combate a incêndio.</p>
+      ${bombaReserva}
+      <p>A automatização da bomba principal e reserva deve ser executada de maneira que, após a partida do motor, o
+      seu desligamento seja somente manual no seu próprio painel de comando, localizado na casa de bombas. O
+      funcionamento automático é iniciado pela simples abertura de um hidrante.</p>
+      <p>As automatizações da bomba de pressurização (jockey) para ligá-la e desligá-la automaticamente e das bombas
+      principais para somente ligá-las automaticamente devem ser feitas através dos pressostatos.</p>
+      <p>O painel de sinalização das bombas principal ou de reforço, elétrica ou de combustão interna, deve ser dotado
+      de uma botoeira para ligar manualmente tais bombas, possuindo sinalização ótica e acústica.</p>
+      <p>Deverá ser previsto na guarita um painel de acionamento remoto e manual para o quadro e bombas de incêndio.</p>
+      <p>As características das bombas estão calculadas e dimensionadas para atender os hidrantes mais desfavoráveis
+      mantendo sua pressão e vazão mínimas estabelecidas em norma.</p>
+      <h3>Dados técnicos das bombas</h3>
+      ${dadosBomba('Bomba Elétrica (Bomba Principal)', cfg.bombaPrincipalDados)}
+      ${cfg.pressurizacaoDiesel ? dadosBomba('Bomba a Combustão', cfg.bombaCombustaoDados) : ''}
+      ${dadosBomba('Bomba Jockey', cfg.bombaJockeyDados)}
+      <h3>Cálculo hidráulico</h3>
+      ${imagens.length
+        ? `<div class="memoria-calculo">${imagens.map((img, i) =>
+            `<p class="memoria-legenda">Memória de cálculo do sistema de hidrantes — folha ${i + 1}</p>
+             <img src="${img}" alt="Memória de cálculo do sistema de hidrantes — folha ${i + 1}" />`).join('')}</div>`
+        : '<p><em>A memória de cálculo do sistema de hidrantes deverá ser anexada ao projeto executivo.</em></p>'}
   `;
 }
 
@@ -801,19 +947,10 @@ export function gerarMemorialHTML(p: DadosProjeto, r: ResultadoTecnico): string 
       </table>
       <p>${esc(r.hidrantes.descricaoSistema)}. A vazão mínima é referida à válvula do hidrante mais desfavorável e a
       pressão residual à ponta do esguicho mais desfavorável. Tipo de sistema ${esc(r.hidrantes.origemTipo)}.</p>
-      <h3>Reserva Técnica de Incêndio (RTI)</h3>
-      <table class="dados">
-        <tr><td>Área da edificação</td><td>${fmt(r.areaTotal, 2)} m²</td></tr>
-        <tr><td>Volume da RTI</td><td><strong>${fmt(r.hidrantes.rtiM3)} m³</strong> (mínimo ${fmt(r.hidrantes.duracaoMinutos)} min de operação)</td></tr>
-        <tr><td>Material construtivo do reservatório</td><td>Concreto armado / aço</td></tr>
-      </table>
-      <p>A RTI será garantida em reservatório (superior, inferior ou outro previsto em projeto) com dispositivo que
-      impeça o seu uso para consumo predial. Existirá <strong>dispositivo de recalque</strong> na fachada principal do
-      empreendimento, no passeio, conforme detalhado no projeto.</p>
-      <h3>Abrigos, válvulas, mangueiras e esguichos</h3>
+      ${gerarBlocoRTI(p, r)}
+      ${BLOCO_ABRIGOS}
+      <h3>Válvulas, mangueiras e esguichos</h3>
       <ul>
-        <li><strong>Abrigos:</strong> de uso exclusivo, em materiais incombustíveis, em áreas livres e desobstruídas, com porta
-        ou visor transparente, inscrição "INCÊNDIO" na cor vermelha e sem fechaduras trancadas a chave;</li>
         <li><strong>Válvulas de hidrantes:</strong> tipo globo angular DN 65 (2½"), com junta de união engate rápido (Storz)
         compatível com as mangueiras do Corpo de Bombeiros; válvulas de mangotinhos de abertura rápida, passagem plena,
         DN mínimo 25 (1");</li>
@@ -822,28 +959,8 @@ export function gerarMemorialHTML(p: DadosProjeto, r: ResultadoTecnico): string 
         <li><strong>Esguichos:</strong> reguláveis, indeformáveis, em material não sujeito à corrosão, resistentes à pressão das
         mangueiras, com adaptador Storz.</li>
       </ul>
-      <h3>Redes hidráulicas</h3>
-      <ul>
-        <li><strong>Redes aparentes/embutidas:</strong> tubos de aço DIN 2440 / NBR 5580 classe média, com costura, galvanizados;</li>
-        <li><strong>Redes subterrâneas:</strong> PEAD PN20, profundidade mínima de 1,00 m e afastamento mínimo de 1,00 m da área de risco;</li>
-        <li><strong>Conexões:</strong> rosqueáveis em ferro maleável classe 10, soldáveis em aço carbono (150 psi) ou sistema ranhurado (grooving);</li>
-        <li><strong>Tratamento e pintura:</strong> remoção de impurezas, condicionador para metais, primer fosfatizado e duas
-        demãos de esmalte sintético na cor vermelho incêndio.</li>
-      </ul>
-      <h3>Sistema de pressurização (casa de bombas)</h3>
-      <ul>
-        <li>Pressurização por <strong>bomba principal elétrica</strong>, abastecendo exclusivamente o sistema de hidrantes;</li>
-        <li><strong>Bomba de reserva</strong> a combustão diesel conforme NFPA 20 (ou suprimento por grupo gerador dimensionado
-        para a demanda da bomba elétrica pelo tempo de combate previsto na legislação);</li>
-        <li><strong>Bomba jockey</strong> para manutenção da pressão do sistema, com liga/desliga automático por pressostatos;</li>
-        <li>Partida automática das bombas principais pela simples abertura de um hidrante; após a partida, o
-        desligamento será somente manual, no painel de comando da casa de bombas;</li>
-        <li>Painel com botoeira de acionamento manual, sinalização ótica e acústica, e painel de acionamento remoto na
-        guarita/portaria;</li>
-        <li>Conforme IT 41, não se admite dispositivo DR na proteção dos circuitos dos serviços de segurança.</li>
-      </ul>
-      <p><em>As características das bombas (curvas de desempenho e pontos de operação) e a memória de cálculo
-      hidráulico do sistema deverão acompanhar o projeto executivo.</em></p>
+      ${gerarBlocoRedeHidraulica(p)}
+      ${gerarBlocoPressurizacao(p)}
       ${detalhesUsuario('hidrantes')}
     `);
   }
@@ -1027,6 +1144,8 @@ export const ESTILOS_MEMORIAL = `
   table.normas th { background: #7f1d1d; color: #fff; text-align: left; }
   tr.linha-ativa td { background: #fdecec !important; font-weight: bold; }
   .detalhes-usuario { border-left: 3px solid #b91c1c; padding-left: 8pt; margin: 8pt 0; }
+  .memoria-calculo img { max-width: 100%; margin: 4pt 0 10pt; border: 1px solid #bbb; page-break-inside: avoid; }
+  .memoria-legenda { font-size: 9pt; color: #555; margin: 8pt 0 2pt; text-align: left; }
   .assinaturas { margin-top: 40pt; page-break-inside: avoid; }
   .assinaturas .local-data { text-align: right; margin-bottom: 30pt; }
   .linha-assinatura { text-align: center; margin-top: 34pt; }
