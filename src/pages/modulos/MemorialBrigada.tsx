@@ -9,8 +9,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { SemProjetoAtivo } from '@/components/shell/SemProjetoAtivo';
 import { useModulo } from './useModulo';
-
-const URL_APP = '/modulos/memorial-brigada.html';
+// App original embutido no bundle (funciona também em prévia de arquivo único)
+import brigadaHtml from '@/modulos/memorial-brigada.html?raw';
 
 export default function MemorialBrigada() {
   const { projeto, resultado, normas } = useModulo();
@@ -33,17 +33,22 @@ export default function MemorialBrigada() {
               : ''}
           </p>
         </div>
-        <Button variant="outline" size="sm" asChild>
-          <a href={URL_APP} target="_blank" rel="noreferrer">
-            Abrir em tela cheia <ExternalLink className="w-3.5 h-3.5 ml-1" />
-          </a>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => {
+            const url = URL.createObjectURL(new Blob([brigadaHtml], { type: 'text/html' }));
+            window.open(url, '_blank');
+          }}
+        >
+          Abrir em tela cheia <ExternalLink className="w-3.5 h-3.5 ml-1" />
         </Button>
       </div>
 
       <Card>
         <CardContent className="p-0">
           <iframe
-            src={URL_APP}
+            srcDoc={brigadaHtml}
             title="Memorial de Brigada de Incêndio (IT 25)"
             className="w-full rounded-md border-0"
             style={{ height: 'calc(100vh - 220px)', minHeight: 560 }}
