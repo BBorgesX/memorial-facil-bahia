@@ -31,7 +31,11 @@ Topbar sempre visível com **Projeto ativo** e **UF (BA/SP)** — o contexto de 
 Toda regra, número de IT e exigência fica na camada de dados por estado (`src/data/normas/ba.ts` e `sp.ts`), nunca "chumbada" no componente.
 
 - **BA (validado):** referências e lógica dos apps originais (Decreto Estadual nº 16.302/2015 + ITs do CBMBA).
-- **SP (em validação):** nenhum valor de IT é inventado — as referências ficam marcadas com `// TODO: VALIDAR COM A IT VIGENTE` e a interface exibe aviso permanente enquanto `validado === false`. Os cálculos reutilizam a matriz validada da Bahia até a confirmação.
+- **SP (Decreto nº 69.118/2024):** a classificação usa o texto oficial do decreto (`src/data/normas/sp/`):
+  - **Tabela 1** (ocupações), **Tabelas 2 e 3** (altura/carga — mesmas faixas da BA), **Tabela 5** (exigências para ≤ 750 m² e H ≤ 12 m, com as notas 1–6 de lotação/pavimentos) e **Tabela 7** (subsolos) — completas;
+  - Residencial unifamiliar (A-1) excluída das exigências (art. 4º, § 1º);
+  - **Tabelas 6A–6M** (> 750 m² ou > 12 m): o documento traz apenas o resumo estrutural — aplica-se a matriz de referência + regras-resumo oficiais (chuveiros > 30 m; elevador de emergência > 60 m / > 80 m residencial; controle de fumaça > 90 m — IT-15), com aviso na interface e `// TODO: VALIDAR` no código;
+  - Numeração das ITs por medida pendente de confirmação (exceto IT-15 e IT-43, citadas no decreto).
 
 Referências oficiais: [ITs do CBMBA](http://www.cbm.ba.gov.br/instrucao-tecnica) · [Legislação do CBMSP](https://cbaplang.corpodebombeiros.sp.gov.br/internetCB/#/LegislacaoConsulta)
 

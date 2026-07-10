@@ -31,7 +31,7 @@ import {
 } from '@/components/ui/table';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { SemProjetoAtivo } from '@/components/shell/SemProjetoAtivo';
-import { TABELA_1_OCUPACOES } from '@/lib/normas/ocupacoes';
+import { getOcupacoesUF } from '@/data/normas/regras';
 import { nomeMedida } from '@/lib/engine';
 import { referenciaMedidaUF } from '@/data/normas';
 import { useModulo } from './useModulo';
@@ -42,6 +42,10 @@ export default function Classificacao() {
   if (!projeto || !resultado) return <SemProjetoAtivo modulo="Classificação & Enquadramento" />;
 
   const num = (v: string) => (v === '' ? 0 : Number(v));
+  // Tabela 1 da UF ativa (BA: Decreto 16.302/2015 · SP: Decreto 69.118/2024)
+  const ocupacoes = getOcupacoesUF(projeto.uf);
+  const divisaoInvalida =
+    !!projeto.divisao && !ocupacoes.some((g) => g.divisoes.some((d) => d.cod === projeto.divisao));
 
   return (
     <div className="max-w-5xl mx-auto space-y-6">
@@ -65,13 +69,16 @@ export default function Classificacao() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-1.5">
-              <Label>Ocupação/Uso (Tabela 1)</Label>
-              <Select value={projeto.divisao} onValueChange={(v) => atualizar({ divisao: v, grupo: v.split('-')[0] })}>
+              <Label>Ocupação/Uso — Tabela 1 ({projeto.uf === 'SP' ? 'Decreto 69.118/2024' : 'Decreto 16.302/2015'})</Label>
+              <Select
+                value={divisaoInvalida ? '' : projeto.divisao}
+                onValueChange={(v) => atualizar({ divisao: v, grupo: v.split('-')[0] })}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Selecione a divisão de ocupação…" />
                 </SelectTrigger>
                 <SelectContent className="max-h-80">
-                  {TABELA_1_OCUPACOES.map((g) => (
+                  {ocupacoes.map((g) => (
                     <SelectGroup key={g.codigo}>
                       <SelectLabel>
                         {g.codigo} — {g.nome}
@@ -85,6 +92,12 @@ export default function Classificacao() {
                   ))}
                 </SelectContent>
               </Select>
+              {divisaoInvalida && (
+                <p className="text-xs text-amber-700">
+                  A divisão "{projeto.divisao}" não consta na Tabela 1 da UF {projeto.uf} — selecione
+                  novamente a ocupação.
+                </p>
+              )}
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
@@ -189,6 +202,18 @@ export default function Classificacao() {
                       <ul className="list-disc pl-4">
                         {resultado.erros.map((e) => (
                           <li key={e.campo}>{e.mensagem}</li>
+                        ))}
+                      </ul>
+                    </AlertDescription>
+                  </Alert>
+                )}
+                {resultado.avisos.length > 0 && (
+                  <Alert>
+                    <AlertTitle>Avisos técnicos</AlertTitle>
+                    <AlertDescription>
+                      <ul className="list-disc pl-4">
+                        {resultado.avisos.map((a, i) => (
+                          <li key={i}>{a}</li>
                         ))}
                       </ul>
                     </AlertDescription>

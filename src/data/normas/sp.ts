@@ -1,44 +1,50 @@
 /**
- * Configuração normativa — SÃO PAULO (CBMSP / CBPMESP).
+ * Configuração normativa — SÃO PAULO (CBPMESP).
  *
- * ATENÇÃO — UF EM VALIDAÇÃO:
- * A numeração e os valores das Instruções Técnicas do CBMSP NÃO foram
- * importados de nenhum app validado pelo usuário. Por regra do produto,
- * NENHUM número de IT é inventado: cada referência abaixo aponta para a
- * "IT correspondente (CBMSP)" até que o responsável técnico confirme a
- * numeração vigente em https://cbaplang.corpodebombeiros.sp.gov.br.
+ * Base legal implementada: Decreto Estadual nº 69.118/2024 (Regulamento de
+ * Segurança Contra Incêndios do Estado de São Paulo, Anexo A), fornecido
+ * pelo usuário — revoga o Decreto nº 63.911/2018.
  *
- * // TODO: VALIDAR COM A IT VIGENTE (CBMSP) — preencher a numeração real de
- * // cada medida abaixo e então mudar `validado` para true.
+ * O que já é OFICIAL nesta camada (src/data/normas/sp/):
+ * - Tabela 1 — classificação por ocupação (completa);
+ * - Tabelas 2 e 3 — altura e carga de incêndio (faixas idênticas às da BA);
+ * - Tabela 5 — exigências para área ≤ 750 m² e altura ≤ 12 m (completa);
+ * - Tabela 7 — exigências adicionais de subsolo (completa);
+ * - Regras-resumo das Tabelas 6 (chuveiros > 30 m; elevador de emergência
+ *   > 60 m / > 80 m residencial; controle de fumaça > 90 m — IT-15).
  *
- * Enquanto `validado === false`, todos os módulos exibem um aviso permanente
- * quando a UF ativa for SP, e a lógica de cálculo reutiliza a matriz já
- * validada da Bahia (os regulamentos de ambas as UFs derivam do mesmo
- * modelo de segurança contra incêndio; as diferenças devem ser ajustadas
- * na validação).
+ * O que segue pendente de validação (por isso `validado: false`):
+ * - Tabelas 6A a 6M.5 integrais (exigências por altura para > 750 m² ou
+ *   > 12 m) — o documento traz apenas o resumo estrutural;
+ * - Numeração das ITs específicas de cada medida (exceto IT-15 e IT-43,
+ *   citadas expressamente no decreto).
+ * // TODO: VALIDAR COM A IT VIGENTE (CBPMESP) — preencher as referências e
+ * // as Tabelas 6 integrais e então mudar `validado` para true.
  */
 
 import { MEDIDAS_SEGURANCA } from '@/lib/normas/exigencias';
 import type { ConfigUF } from './tipos';
 
-// TODO: VALIDAR COM A IT VIGENTE (CBMSP) — substituir cada entrada pela IT
-// específica de São Paulo (a numeração difere da BA em várias medidas).
+// Referências por medida. IT-15 (controle de fumaça) e IT-43 (edificações
+// existentes) são citadas expressamente no Decreto 69.118/2024; as demais
+// permanecem pendentes de confirmação da numeração vigente.
+// TODO: VALIDAR COM A IT VIGENTE (CBPMESP) — preencher a numeração real.
 const referenciasSP: Record<string, string> = Object.fromEntries(
-  MEDIDAS_SEGURANCA.map((m) => [m.id, `IT correspondente (CBMSP) — validar numeração vigente`]),
+  MEDIDAS_SEGURANCA.map((m) => [m.id, 'IT correspondente (CBPMESP) — validar numeração vigente']),
 );
+referenciasSP['controle_fumaca'] = 'IT-15 (CBPMESP) e Decreto 69.118/2024';
 
 export const NORMAS_SP: ConfigUF = {
   uf: 'SP',
   orgao: 'CBMSP',
   orgaoNomeCompleto: 'Corpo de Bombeiros da Polícia Militar do Estado de São Paulo',
-  // TODO: VALIDAR COM A IT VIGENTE — confirmar o decreto regulamentar vigente em SP
-  legislacao: 'Regulamento de Segurança contra Incêndio das edificações do Estado de São Paulo (validar decreto vigente)',
+  legislacao: 'Lei Complementar nº 1.257/2015 e Decreto Estadual nº 69.118/2024',
   linkITs: 'https://cbaplang.corpodebombeiros.sp.gov.br/internetCB/#/LegislacaoConsulta',
-  certificado: 'AVCB/CLCB — validar modalidade aplicável',
+  certificado: 'AVCB / CLCB / TAACB — conforme o Decreto nº 69.118/2024',
   validado: false,
   avisoValidacao:
-    'UF São Paulo em validação: as referências de IT exibidas são provisórias e os cálculos ' +
-    'reutilizam a matriz validada da Bahia. Confirme a numeração e os valores nas ITs vigentes do ' +
-    'CBMSP antes de protocolar.',
+    'SP: classificação e exigências baseadas no Decreto nº 69.118/2024 (Tabelas 1, 2, 3, 5 e 7 oficiais). ' +
+    'Para edificações acima de 750 m² ou 12 m, as Tabelas 6A–6M são aplicadas em regime de resumo — ' +
+    'valide a tabela integral da divisão e a numeração das ITs antes de protocolar.',
   referencias: referenciasSP,
 };
