@@ -6,7 +6,22 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, ArrowRight, Download, Save } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { carregarProjeto, DadosProjeto, exportarProjetoJSON, salvarProjeto } from '@/lib/projeto';
+import {
+  carregarProjeto,
+  DadosProjeto,
+  exportarProjetoJSON,
+  salvarProjeto,
+  STATUS_PROJETO,
+  StatusProjeto,
+} from '@/lib/projeto';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { useApp } from '@/store/appStore';
 import { processarProjeto } from '@/lib/engine';
 import { DadosGerais } from '@/components/editor/DadosGerais';
 import { MedidasSeguranca } from '@/components/editor/MedidasSeguranca';
@@ -20,7 +35,13 @@ const ProjetoEditor = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { setProjetoAtivoId } = useApp();
   const [projeto, setProjeto] = useState<DadosProjeto | null>(() => (id ? carregarProjeto(id) : null));
+
+  // Abrir um projeto no editor o torna o Projeto ativo de toda a plataforma
+  useEffect(() => {
+    if (id && carregarProjeto(id)) setProjetoAtivoId(id);
+  }, [id, setProjetoAtivoId]);
   const [salvoEm, setSalvoEm] = useState<Date | null>(null);
   const [aba, setAba] = useState<(typeof ABAS)[number]>('dados');
   const timerRef = useRef<ReturnType<typeof setTimeout>>();
@@ -45,9 +66,9 @@ const ProjetoEditor = () => {
 
   if (!projeto || !resultado) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center gap-4">
+      <div className="flex flex-col items-center justify-center gap-4 py-24">
         <p className="text-muted-foreground">Projeto não encontrado neste navegador.</p>
-        <Button onClick={() => navigate('/')}>
+        <Button onClick={() => navigate('/projetos')}>
           <ArrowLeft className="w-4 h-4 mr-2" /> Voltar aos projetos
         </Button>
       </div>
@@ -71,10 +92,10 @@ const ProjetoEditor = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="border-b bg-card sticky top-0 z-20">
+    <div className="bg-background rounded-lg border">
+      <header className="border-b bg-card rounded-t-lg">
         <div className="container mx-auto px-4 py-3 flex flex-wrap items-center gap-3">
-          <Button variant="ghost" size="sm" onClick={() => navigate('/')}>
+          <Button variant="ghost" size="sm" onClick={() => navigate('/projetos')}>
             <ArrowLeft className="w-4 h-4 mr-1" /> Projetos
           </Button>
           <Input
@@ -83,6 +104,21 @@ const ProjetoEditor = () => {
             className="max-w-xs font-semibold"
             aria-label="Nome do projeto"
           />
+          <Select
+            value={projeto.status}
+            onValueChange={(v) => atualizar({ status: v as StatusProjeto })}
+          >
+            <SelectTrigger className="h-9 w-[160px]" aria-label="Status do projeto">
+              <SelectValue placeholder="Status" />
+            </SelectTrigger>
+            <SelectContent>
+              {STATUS_PROJETO.map((s) => (
+                <SelectItem key={s} value={s}>
+                  {s}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           {resultado.ocupacao && resultado.altura && (
             <div className="hidden md:flex gap-2">
               <Badge variant="secondary">{resultado.ocupacao.divisao}</Badge>

@@ -138,11 +138,84 @@ export function hidrantesPadrao(): ConfiguracaoHidrantes {
   };
 }
 
+/** UF do projeto — define o corpo de bombeiros e a camada de normas aplicada. */
+export type UFProjeto = 'BA' | 'SP';
+
+/** Situação do projeto no fluxo de aprovação junto ao CBM. */
+export type StatusProjeto =
+  | 'Levantamento'
+  | 'Em desenho'
+  | 'Protocolado'
+  | 'Em análise'
+  | 'Aprovado'
+  | 'Comunique-se';
+
+export const STATUS_PROJETO: StatusProjeto[] = [
+  'Levantamento',
+  'Em desenho',
+  'Protocolado',
+  'Em análise',
+  'Aprovado',
+  'Comunique-se',
+];
+
+/** Entradas da calculadora hidráulica (Hazen-Williams). */
+export interface EntradaHidraulica {
+  areaProtegidaM2: number;
+  densidadeMmMin: number;
+  numBicos: number;
+  vazaoHidrantesLmin: number;
+  comprimentoTubulacaoM: number;
+  diametroTubulacaoMm: number;
+  coeficienteC: number;
+  desnivelM: number;
+  pressaoMinimaRequeridaMca: number;
+  /** Pressão disponível na fonte (bomba/reservatório), em mca — para o veredito */
+  pressaoDisponivelMca: number;
+}
+
+export function hidraulicaPadrao(): EntradaHidraulica {
+  return {
+    areaProtegidaM2: 0,
+    densidadeMmMin: 0,
+    numBicos: 0,
+    vazaoHidrantesLmin: 0,
+    comprimentoTubulacaoM: 0,
+    diametroTubulacaoMm: 0,
+    coeficienteC: 120,
+    desnivelM: 0,
+    pressaoMinimaRequeridaMca: 0,
+    pressaoDisponivelMca: 0,
+  };
+}
+
 export interface DadosProjeto {
   id: string;
   nome: string;
   criadoEm: string;
   atualizadoEm: string;
+
+  /** Dono do projeto (multi-tenant local; pronto para Supabase Auth na fase 2) */
+  ownerId: string;
+
+  /** UF do projeto: BA (CBMBA) ou SP (CBMSP) */
+  uf: UFProjeto;
+
+  /** Cliente/contratante do projeto */
+  cliente: string;
+
+  /** Situação do projeto no fluxo de aprovação */
+  status: StatusProjeto;
+
+  /** Itens marcados no Checklist de Aprovação CBM (id da medida → concluído) */
+  checklistMarcado: Record<string, boolean>;
+
+  /** Entradas salvas da calculadora hidráulica */
+  hidraulica: EntradaHidraulica;
+
+  /** Última notificação (comunique-se) colada e a resposta gerada */
+  notificacaoTexto: string;
+  notificacaoResposta: string;
 
   // Identificação
   proprietario: string;
@@ -217,13 +290,21 @@ export interface DadosProjeto {
   termoAceito: boolean;
 }
 
-export function novoProjeto(nome = 'Novo Projeto'): DadosProjeto {
+export function novoProjeto(nome = 'Novo Projeto', ownerId = '', uf: UFProjeto = 'BA'): DadosProjeto {
   const agora = new Date().toISOString();
   return {
     id: `prj_${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`,
     nome,
     criadoEm: agora,
     atualizadoEm: agora,
+    ownerId,
+    uf,
+    cliente: '',
+    status: 'Levantamento',
+    checklistMarcado: {},
+    hidraulica: hidraulicaPadrao(),
+    notificacaoTexto: '',
+    notificacaoResposta: '',
     proprietario: '',
     empresa: '',
     cnpj: '',
@@ -275,12 +356,16 @@ export function novoProjeto(nome = 'Novo Projeto'): DadosProjeto {
 
 const CHAVE_INDICE = 'mfb:projetos';
 
-interface ResumoProjeto {
+export interface ResumoProjeto {
   id: string;
   nome: string;
   municipio: string;
   divisao: string;
   atualizadoEm: string;
+  ownerId?: string;
+  uf?: UFProjeto;
+  status?: StatusProjeto;
+  cliente?: string;
 }
 
 function lerIndice(): ResumoProjeto[] {
@@ -295,8 +380,14 @@ function gravarIndice(indice: ResumoProjeto[]) {
   localStorage.setItem(CHAVE_INDICE, JSON.stringify(indice));
 }
 
-export function listarProjetos(): ResumoProjeto[] {
-  return lerIndice().sort((a, b) => b.atualizadoEm.localeCompare(a.atualizadoEm));
+/**
+ * Lista os projetos do usuário. Projetos antigos (sem ownerId) permanecem
+ * visíveis para qualquer usuário local até serem salvos de novo (adoção).
+ */
+export function listarProjetos(ownerId?: string): ResumoProjeto[] {
+  return lerIndice()
+    .filter((p) => !ownerId || !p.ownerId || p.ownerId === ownerId)
+    .sort((a, b) => b.atualizadoEm.localeCompare(a.atualizadoEm));
 }
 
 export function carregarProjeto(id: string): DadosProjeto | null {
@@ -320,6 +411,10 @@ export function salvarProjeto(projeto: DadosProjeto): DadosProjeto {
     municipio: atualizado.municipio,
     divisao: atualizado.divisao,
     atualizadoEm: atualizado.atualizadoEm,
+    ownerId: atualizado.ownerId,
+    uf: atualizado.uf,
+    status: atualizado.status,
+    cliente: atualizado.cliente,
   });
   gravarIndice(indice);
   return atualizado;
