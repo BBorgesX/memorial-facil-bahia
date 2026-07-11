@@ -70,7 +70,7 @@ const NAVEGACAO: GrupoNav[] = [
     itens: [
       { rota: '/calculos/rti', rotulo: 'RTI', icone: Calculator },
       { rota: '/calculos/trrf', rotulo: 'TRRF', icone: Timer },
-      { rota: '/calculos/hidraulica', rotulo: 'Hidráulica', icone: Droplets },
+      { rota: '/calculos/hidraulica', rotulo: 'Hidráulica (Hidrantes)', icone: Droplets },
       { rota: '/distancias', rotulo: 'Distâncias / Rotas de Fuga', icone: Ruler },
     ],
   },

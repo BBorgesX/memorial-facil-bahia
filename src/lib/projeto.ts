@@ -159,32 +159,74 @@ export const STATUS_PROJETO: StatusProjeto[] = [
   'Comunique-se',
 ];
 
-/** Entradas da calculadora hidráulica (Hazen-Williams). */
+/**
+ * Entradas do cálculo hidráulico de HIDRANTES — IT 22/2016 (CBMBA),
+ * Hazen-Williams. Valores 0 nos campos "automáticos" significam usar o
+ * valor da Tabela 2 da IT 22 / da classificação do projeto.
+ */
 export interface EntradaHidraulica {
-  areaProtegidaM2: number;
-  densidadeMmMin: number;
-  numBicos: number;
-  vazaoHidrantesLmin: number;
-  comprimentoTubulacaoM: number;
-  diametroTubulacaoMm: number;
+  /** Tipo de sistema (1–5); 0 = automático (definido pela classificação) */
+  tipoSistema: number;
+  /** Vazão mínima por ponto (L/min); 0 = automático (Tabela 2 da IT 22) */
+  vazaoPorPontoLmin: number;
+  /** Nº de hidrantes de uso simultâneo; 0 = automático (Tabela 2) */
+  hidrantesSimultaneos: number;
+  /** Pressão residual mínima na saída do hidrante mais desfavorável (mca); 0 = automático */
+  pressaoResidualMca: number;
+  /** Material da tubulação (Tabela 1 da IT 22 — fator C) */
+  material: string;
+  /** Fator C customizado (usado quando material = 'outro') */
   coeficienteC: number;
-  desnivelM: number;
-  pressaoMinimaRequeridaMca: number;
-  /** Pressão disponível na fonte (bomba/reservatório), em mca — para o veredito */
+  /** Diâmetro interno da tubulação (mm) */
+  diametroInternoMm: number;
+  /** Sub-ramal até o hidrante mais desfavorável: comprimento reto + equivalentes (m) */
+  comprimentoSubRamalM: number;
+  /** Perdas localizadas no sub-ramal (mca) — dados do fabricante */
+  perdaValvulaAngularMca: number;
+  perdaMangueiraMca: number;
+  perdaEsguichoMca: number;
+  /** Desnível do ponto de junção (B) acima do hidrante mais desfavorável (m) */
+  desnivelEntreHidrantesM: number;
+  /** Coluna/recalque: comprimento reto da bomba até o ponto de junção (m) */
+  comprimentoColunaM: number;
+  /** Quantidade de conexões na coluna (comprimentos equivalentes) */
+  conexoesColuna: {
+    registroGaveta: number;
+    valvulaRetencao: number;
+    tePassagemDireta: number;
+    joelho90: number;
+    valvulaPeCrivo: number;
+  };
+  /** Desnível geométrico do fundo do reservatório até o hidrante mais desfavorável (m) */
+  desnivelGeometricoM: number;
+  /** Pressão disponível de bomba/reservatório existente (mca) — opcional, para o veredito */
   pressaoDisponivelMca: number;
 }
 
 export function hidraulicaPadrao(): EntradaHidraulica {
   return {
-    areaProtegidaM2: 0,
-    densidadeMmMin: 0,
-    numBicos: 0,
-    vazaoHidrantesLmin: 0,
-    comprimentoTubulacaoM: 0,
-    diametroTubulacaoMm: 0,
+    tipoSistema: 0,
+    vazaoPorPontoLmin: 0,
+    hidrantesSimultaneos: 0,
+    pressaoResidualMca: 0,
+    material: 'aco_novo',
     coeficienteC: 120,
-    desnivelM: 0,
-    pressaoMinimaRequeridaMca: 0,
+    diametroInternoMm: 0,
+    comprimentoSubRamalM: 0,
+    // Perdas localizadas de referência da planilha do usuário (ajustar ao fabricante)
+    perdaValvulaAngularMca: 1.0,
+    perdaMangueiraMca: 1.65,
+    perdaEsguichoMca: 1.36,
+    desnivelEntreHidrantesM: 0,
+    comprimentoColunaM: 0,
+    conexoesColuna: {
+      registroGaveta: 0,
+      valvulaRetencao: 0,
+      tePassagemDireta: 0,
+      joelho90: 0,
+      valvulaPeCrivo: 0,
+    },
+    desnivelGeometricoM: 0,
     pressaoDisponivelMca: 0,
   };
 }
@@ -395,7 +437,20 @@ export function carregarProjeto(id: string): DadosProjeto | null {
     const bruto = localStorage.getItem(`mfb:projeto:${id}`);
     if (!bruto) return null;
     // Mescla com o modelo vazio para tolerar projetos salvos por versões antigas
-    return { ...novoProjeto(), ...(JSON.parse(bruto) as DadosProjeto) };
+    const salvo = JSON.parse(bruto) as DadosProjeto;
+    return {
+      ...novoProjeto(),
+      ...salvo,
+      // Mescla profunda: entradas hidráulicas ganharam campos novos (IT 22)
+      hidraulica: {
+        ...hidraulicaPadrao(),
+        ...(salvo.hidraulica ?? {}),
+        conexoesColuna: {
+          ...hidraulicaPadrao().conexoesColuna,
+          ...(salvo.hidraulica?.conexoesColuna ?? {}),
+        },
+      },
+    };
   } catch {
     return null;
   }
