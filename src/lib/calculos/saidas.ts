@@ -173,6 +173,13 @@ export interface TipoEscada {
   sigla: 'NE' | 'EP' | 'PF';
   descricao: string;
   base: string;
+  /**
+   * true enquanto a classificação usar a regra simplificada por grupo/altura.
+   * // TODO: VALIDAR — substituir pela Tabela 3 (Anexo C) da IT 11 do CBMBA
+   * // ("Tipos de escadas de emergência por ocupação"), com as faixas de
+   * // altura POR DIVISÃO, assim que a tabela oficial for fornecida.
+   */
+  preliminar: boolean;
 }
 
 /**
@@ -189,7 +196,7 @@ export function classificarTipoEscada(grupo: string, divisao: string, alturaM: n
     PF: 'Escada Enclausurada à Prova de Fumaça',
   };
   const montar = (sigla: TipoEscada['sigla'], base: string): TipoEscada =>
-    ({ sigla, descricao: nomes[sigla], base });
+    ({ sigla, descricao: nomes[sigla], base, preliminar: true });
 
   // Habitação unifamiliar: sempre escada comum
   if (divisao === 'A-1') return montar('NE', 'Habitação unifamiliar (A-1) — escada comum em qualquer altura');

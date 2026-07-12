@@ -126,14 +126,19 @@ export default function Distancias() {
                   </div>
                   <Conformidade conforme={s.conformidade.distanciaDemais.conforme} />
                 </div>
-                <div className="rounded-md border bg-muted/40 p-3 text-sm">
+                <div className="rounded-md border bg-muted/40 p-3 text-sm space-y-1">
                   <p>
                     <span className="text-muted-foreground">Nº mínimo de saídas:</span>{' '}
                     <strong>{s.numeroMinimoSaidas}</strong> — {s.conformidade.saidas.criterio}
                   </p>
                   <p>
-                    <span className="text-muted-foreground">Tipo de escada:</span> {s.tipoEscada.sigla} —{' '}
-                    {s.tipoEscada.descricao}
+                    <span className="text-muted-foreground">Tipo de escada:</span>{' '}
+                    <strong>{s.tipoEscada.sigla}</strong> — {s.tipoEscada.descricao} ({s.tipoEscada.base})
+                    {s.tipoEscada.preliminar && (
+                      <Badge variant="outline" className="ml-2 text-[11px] bg-amber-50 text-amber-800 border-amber-200">
+                        Preliminar — validar Tabela 3 (Anexo C) da IT 11
+                      </Badge>
+                    )}
                   </p>
                 </div>
               </CardContent>
