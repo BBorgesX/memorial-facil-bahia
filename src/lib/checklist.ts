@@ -57,14 +57,20 @@ function subitensDaMedida(medidaId: string, r: ResultadoTecnico, p: DadosProjeto
       const s = r.saidas;
       const itens = [
         sub('numero', 'Número mínimo de saídas por pavimento atendido', s ? `Mínimo ${s.numeroMinimoSaidas} — ${s.conformidade.saidas.criterio}` : undefined),
-        sub('largura', 'Larguras mínimas de portas, acessos, escadas e descargas atendidas', s ? `Portas ${f(s.dimensionamento.portas.larguraM)} m · escadas ${f(s.dimensionamento.escadas.larguraM)} m · descargas ${f(s.dimensionamento.descargas.larguraM)} m` : undefined),
-        sub('distancia_terreo', 'Distância máxima a percorrer no piso de descarga verificada em planta', s?.distanciaMaxima.pisoDescargaM != null ? `Máximo ${s.distanciaMaxima.pisoDescargaM} m` : undefined),
-        sub('distancia_demais', 'Distância máxima a percorrer nos demais pavimentos verificada em planta', s?.distanciaMaxima.demaisPavimentosM != null ? `Máximo ${s.distanciaMaxima.demaisPavimentosM} m` : undefined),
-        sub('escada_tipo', 'Tipo de escada de emergência enquadrado (Anexo C — Tabela 3 da IT 11)', s ? `${s.tipoEscada.sigla} — ${s.tipoEscada.descricao} (${s.tipoEscada.base}); classificação preliminar — confirmar na Tabela 3` : undefined),
-        sub('populacao', 'Cálculo de população documentado no memorial', s ? `${s.populacaoAdotada} pessoas (${s.coeficiente})` : undefined),
-        sub('abertura', 'Portas abrindo no sentido da fuga onde exigido e barras antipânico onde aplicável'),
-        sub('corrimao', 'Corrimãos, guarda-corpos e degraus conforme a IT de saídas da UF'),
+        sub('escadas_min', 'Número mínimo de escadas atendido', s ? `Mínimo ${s.escadasMinimas}${s.escadasMinimas > 1 ? ' (altura > 36 m — IT 11, 5.5.3.5)' : ''}` : undefined),
+        sub('largura', 'Larguras mínimas de portas, acessos, escadas e descargas atendidas (IT 11, 5.4.2 e 5.5.4.3)', s ? `Portas ${f(s.dimensionamento.portas.larguraM)} m · escadas ${f(s.dimensionamento.escadas.larguraM)} m · descargas ${f(s.dimensionamento.descargas.larguraM)} m` : undefined),
+        sub('distancia_terreo', 'Distância máxima a percorrer no piso de descarga verificada em planta (Tabela 2)', s?.distanciaMaxima.pisoDescargaM != null ? `Máximo ${s.distanciaMaxima.pisoDescargaM} m` : undefined),
+        sub('distancia_demais', 'Distância máxima a percorrer nos demais pavimentos verificada em planta (Tabela 2)', s?.distanciaMaxima.demaisPavimentosM != null ? `Máximo ${s.distanciaMaxima.demaisPavimentosM} m` : undefined),
+        sub('escada_tipo', 'Tipo de escada de emergência enquadrado (Tabela 3 — Anexo C da IT 11)', s ? `${s.tipoEscada.sigla} — ${s.tipoEscada.descricao} · ${s.tipoEscada.base}` : undefined),
+        sub('populacao', 'Cálculo de população documentado no memorial (Tabela 1 — Anexo A)', s ? `${s.populacaoAdotada} pessoas (${s.coeficiente})` : undefined),
+        sub('abertura', 'Portas abrindo no sentido da fuga (rotas e salas > 50 pessoas — IT 11, 5.5.4.1)'),
+        sub('corrimao', 'Corrimãos (80–92 cm, ambos os lados), guarda-corpos (≥ 1,10 m) e degraus (Blondel) conforme IT 11, 5.7/5.8'),
       ];
+      // Exigências específicas do projeto (elevador, refúgio, barra antipânico,
+      // subsolos, painel de contagem) — calculadas pela IT 11
+      s?.exigenciasEspecificas.forEach((e) => {
+        itens.push(sub(`esp_${e.id}`, e.texto, e.referencia));
+      });
       return itens;
     }
     case 'hidrantes': {

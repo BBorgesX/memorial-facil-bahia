@@ -132,15 +132,35 @@ export default function Distancias() {
                     <strong>{s.numeroMinimoSaidas}</strong> — {s.conformidade.saidas.criterio}
                   </p>
                   <p>
+                    <span className="text-muted-foreground">Nº mínimo de escadas:</span>{' '}
+                    <strong>{s.escadasMinimas}</strong>
+                    {s.escadasMinimas > 1 ? ' — altura acima de 36 m (IT 11, 5.5.3.5)' : ''}
+                  </p>
+                  <p>
                     <span className="text-muted-foreground">Tipo de escada:</span>{' '}
-                    <strong>{s.tipoEscada.sigla}</strong> — {s.tipoEscada.descricao} ({s.tipoEscada.base})
+                    <strong>{s.tipoEscada.sigla}</strong> — {s.tipoEscada.descricao}
+                    <span className="block text-xs text-muted-foreground">{s.tipoEscada.base}</span>
                     {s.tipoEscada.preliminar && (
                       <Badge variant="outline" className="ml-2 text-[11px] bg-amber-50 text-amber-800 border-amber-200">
-                        Preliminar — validar Tabela 3 (Anexo C) da IT 11
+                        Preliminar — confirmar com o CBMBA
                       </Badge>
                     )}
                   </p>
+                  {s.tipoEscada.notas.map((n, i) => (
+                    <p key={i} className="text-xs text-amber-800">• {n}</p>
+                  ))}
                 </div>
+                {s.exigenciasEspecificas.length > 0 && (
+                  <div className="rounded-md border border-amber-200 bg-amber-50/60 p-3 text-sm space-y-1.5">
+                    <p className="font-medium text-amber-900">Exigências específicas da IT 11 para este projeto:</p>
+                    {s.exigenciasEspecificas.map((e) => (
+                      <p key={e.id} className="text-xs text-amber-900 flex justify-between gap-2">
+                        <span>• {e.texto}</span>
+                        <Badge variant="outline" className="shrink-0 text-[10px]">{e.referencia}</Badge>
+                      </p>
+                    ))}
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>

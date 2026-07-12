@@ -215,6 +215,7 @@ export function processarProjeto(p: DadosProjeto): ResultadoTecnico {
     saidaUnica: p.saidaUnica,
     distanciaRealTerreoM: p.distanciaRealTerreoM,
     distanciaRealDemaisM: p.distanciaRealDemaisM,
+    temSubsolo: p.temSubsolo,
   });
 
   resultado.brigada = calcularBrigada({
