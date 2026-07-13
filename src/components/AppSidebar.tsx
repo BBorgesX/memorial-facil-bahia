@@ -37,7 +37,7 @@ const NAVEGACAO = [
 const FERRAMENTAS = [
   { titulo: 'Classificador PPCI', url: '/ferramentas/classificador-ppci.html', icone: ClipboardList },
   { titulo: 'Calculadora TRRF', url: '/ferramentas/calculadora-trrf.html', icone: Clock },
-  { titulo: 'Cálculo de RTI', url: '/ferramentas/calculo-rti.html', icone: Calculator },
+  { titulo: 'Hidrantes — Cálculo de RTI', url: '/ferramentas/calculo-rti.html', icone: Calculator },
   { titulo: 'Distâncias máximas', url: '/ferramentas/distancias-maximas.html', icone: Route },
   { titulo: 'Memorial de Brigada (IT 25)', url: '/ferramentas/memorial-brigada-it25.html', icone: Building2 },
 ];
