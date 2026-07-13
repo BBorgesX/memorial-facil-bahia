@@ -138,11 +138,46 @@ export function hidrantesPadrao(): ConfiguracaoHidrantes {
   };
 }
 
+/** Situação do projeto no fluxo de aprovação junto ao CBMBA. */
+export type StatusProjeto = 'rascunho' | 'em_analise' | 'aprovado' | 'com_exigencia' | 'vencido';
+
+/** Exigência apontada pelo CBMBA na análise do projeto/vistoria. */
+export interface Exigencia {
+  id: string;
+  descricao: string;
+  /** Prazo para atendimento (YYYY-MM-DD, vazio = sem prazo) */
+  prazo: string;
+  resolvida: boolean;
+  criadaEm: string;
+}
+
+/** Evento registrado na linha do tempo do projeto (mudança de status, exigência etc.). */
+export interface EventoHistorico {
+  data: string;
+  descricao: string;
+}
+
 export interface DadosProjeto {
   id: string;
   nome: string;
   criadoEm: string;
   atualizadoEm: string;
+
+  // Gestão — acompanhamento do processo no CBMBA e do AVCB
+  clienteId: string;
+  status: StatusProjeto;
+  protocoloCBMBA: string;
+  /** Data de entrada do protocolo no CBMBA (YYYY-MM-DD) */
+  dataProtocolo: string;
+  avcbNumero: string;
+  /** Data de emissão do AVCB (YYYY-MM-DD) */
+  avcbEmissao: string;
+  /** Data de validade do AVCB (YYYY-MM-DD) — usada nos alertas de renovação */
+  avcbValidade: string;
+  exigencias: Exigencia[];
+  historico: EventoHistorico[];
+  /** Token de acesso do portal do cliente (vazio = portal não gerado) */
+  tokenPortal: string;
 
   // Identificação
   proprietario: string;
@@ -224,6 +259,16 @@ export function novoProjeto(nome = 'Novo Projeto'): DadosProjeto {
     nome,
     criadoEm: agora,
     atualizadoEm: agora,
+    clienteId: '',
+    status: 'rascunho',
+    protocoloCBMBA: '',
+    dataProtocolo: '',
+    avcbNumero: '',
+    avcbEmissao: '',
+    avcbValidade: '',
+    exigencias: [],
+    historico: [],
+    tokenPortal: '',
     proprietario: '',
     empresa: '',
     cnpj: '',
@@ -269,18 +314,24 @@ export function novoProjeto(nome = 'Novo Projeto'): DadosProjeto {
 }
 
 // ---------------------------------------------------------------------------
-// Persistência local (localStorage) — os projetos ficam salvos no navegador e
-// podem ser reabertos/editados. Estrutura pronta para migração a um backend.
+// Persistência: o localStorage funciona como cache local (leitura instantânea
+// e uso offline) e cada gravação é replicada para a nuvem (Supabase) quando o
+// usuário está logado. A sincronização completa fica em lib/sync.ts.
 // ---------------------------------------------------------------------------
+
+import { empurrarRegistro, removerRegistro } from './supabase';
 
 const CHAVE_INDICE = 'mfb:projetos';
 
-interface ResumoProjeto {
+export interface ResumoProjeto {
   id: string;
   nome: string;
   municipio: string;
   divisao: string;
   atualizadoEm: string;
+  clienteId?: string;
+  status?: StatusProjeto;
+  avcbValidade?: string;
 }
 
 function lerIndice(): ResumoProjeto[] {
@@ -310,24 +361,34 @@ export function carregarProjeto(id: string): DadosProjeto | null {
   }
 }
 
-export function salvarProjeto(projeto: DadosProjeto): DadosProjeto {
-  const atualizado = { ...projeto, atualizadoEm: new Date().toISOString() };
-  localStorage.setItem(`mfb:projeto:${projeto.id}`, JSON.stringify(atualizado));
+/** Grava no cache local sem alterar atualizadoEm nem enviar à nuvem (uso interno da sincronização). */
+export function gravarProjetoLocal(projeto: DadosProjeto) {
+  localStorage.setItem(`mfb:projeto:${projeto.id}`, JSON.stringify(projeto));
   const indice = lerIndice().filter((p) => p.id !== projeto.id);
   indice.push({
-    id: atualizado.id,
-    nome: atualizado.nome,
-    municipio: atualizado.municipio,
-    divisao: atualizado.divisao,
-    atualizadoEm: atualizado.atualizadoEm,
+    id: projeto.id,
+    nome: projeto.nome,
+    municipio: projeto.municipio,
+    divisao: projeto.divisao,
+    atualizadoEm: projeto.atualizadoEm,
+    clienteId: projeto.clienteId,
+    status: projeto.status,
+    avcbValidade: projeto.avcbValidade,
   });
   gravarIndice(indice);
+}
+
+export function salvarProjeto(projeto: DadosProjeto): DadosProjeto {
+  const atualizado = { ...projeto, atualizadoEm: new Date().toISOString() };
+  gravarProjetoLocal(atualizado);
+  void empurrarRegistro('projetos', atualizado.id, atualizado);
   return atualizado;
 }
 
 export function excluirProjeto(id: string) {
   localStorage.removeItem(`mfb:projeto:${id}`);
   gravarIndice(lerIndice().filter((p) => p.id !== id));
+  void removerRegistro('projetos', id);
 }
 
 export function duplicarProjeto(id: string): DadosProjeto | null {
@@ -338,6 +399,16 @@ export function duplicarProjeto(id: string): DadosProjeto | null {
     id: novoProjeto().id,
     nome: `${original.nome} (cópia)`,
     criadoEm: new Date().toISOString(),
+    // A cópia inicia um novo processo: não herda protocolo, AVCB nem histórico
+    status: 'rascunho',
+    protocoloCBMBA: '',
+    dataProtocolo: '',
+    avcbNumero: '',
+    avcbEmissao: '',
+    avcbValidade: '',
+    exigencias: [],
+    historico: [],
+    tokenPortal: '',
   };
   return salvarProjeto(copia);
 }
