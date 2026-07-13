@@ -1,25 +1,25 @@
 /**
  * Motor de processamento técnico do projeto.
  *
- * A partir dos dados informados pelo usuário, aplica as regras do Decreto
- * Estadual nº 16.302/2015 e das ITs do CBMBA e produz o resultado técnico
- * completo usado no painel em tempo real e no memorial descritivo.
+ * A partir dos dados informados pelo usuário, aplica as regras da UF do
+ * projeto — BA: Decreto Estadual nº 16.302/2015 e ITs do CBMBA; SP: Decreto
+ * Estadual nº 69.118/2024 (CBPMESP) — e produz o resultado técnico completo
+ * usado no painel em tempo real e no memorial descritivo.
  */
 
 import { DadosProjeto } from './projeto';
-import { getDivisao } from './normas/ocupacoes';
 import {
   classificarAltura,
   classificarCarga,
   ClassificacaoAltura,
   ClassificacaoCarga,
 } from './normas/classificacao';
+import { MedidaExigida, MEDIDAS_SEGURANCA } from './normas/exigencias';
 import {
-  determinarMedidasExigidas,
-  exigenciasSubsolo,
-  MedidaExigida,
-  MEDIDAS_SEGURANCA,
-} from './normas/exigencias';
+  determinarMedidasExigidasUF,
+  exigenciasSubsoloUF,
+  getDivisaoUF,
+} from '@/data/normas/regras';
 import { calcularTRRF, ResultadoTRRF } from './calculos/trrf';
 import { calcularHidrantes, ResultadoHidrantes } from './calculos/hidrantes';
 import { calcularExtintores, ResultadoExtintores } from './calculos/extintores';
@@ -129,7 +129,13 @@ export function processarProjeto(p: DadosProjeto): ResultadoTecnico {
     exigenciasSubsolo: [],
   };
 
-  const ocup = p.divisao ? getDivisao(p.divisao) : undefined;
+  const uf = p.uf ?? 'BA';
+  const ocup = p.divisao ? getDivisaoUF(uf, p.divisao) : undefined;
+  if (p.divisao && !ocup) {
+    avisos.push(
+      `A divisão "${p.divisao}" não consta na Tabela 1 da UF ${uf} — selecione novamente a ocupação no Classificador.`,
+    );
+  }
   if (!ocup || areaTotal <= 0) return resultado;
 
   resultado.ocupacao = {
@@ -145,16 +151,19 @@ export function processarProjeto(p: DadosProjeto): ResultadoTecnico {
   resultado.altura = altura;
   resultado.carga = carga;
 
-  resultado.medidasExigidas = determinarMedidasExigidas({
+  resultado.medidasExigidas = determinarMedidasExigidasUF(uf, {
     grupo: ocup.grupo.codigo,
     divisao: ocup.divisao.cod,
     altura,
     carga,
     areaTotal,
+    alturaM: p.alturaM,
+    pavimentos: p.pavimentos,
+    populacao: p.ocupantes,
   });
 
   if (p.temSubsolo && p.ocupacaoSubsolo && !p.ocupacaoSubsolo.toLowerCase().includes('estacionamento') && !p.ocupacaoSubsolo.toLowerCase().includes('garagem')) {
-    resultado.exigenciasSubsolo = exigenciasSubsolo({
+    resultado.exigenciasSubsolo = exigenciasSubsoloUF(uf, {
       areaSubsolo: p.areaSubsoloM2,
       primeiroOuSegundoNivel: p.subsoloPrimeiroSegundoNivel,
       divisao: ocup.divisao.cod,
@@ -206,6 +215,7 @@ export function processarProjeto(p: DadosProjeto): ResultadoTecnico {
     saidaUnica: p.saidaUnica,
     distanciaRealTerreoM: p.distanciaRealTerreoM,
     distanciaRealDemaisM: p.distanciaRealDemaisM,
+    temSubsolo: p.temSubsolo,
   });
 
   resultado.brigada = calcularBrigada({
@@ -217,6 +227,25 @@ export function processarProjeto(p: DadosProjeto): ResultadoTecnico {
   resultado.iluminacao = calcularIluminacao({ areaTotal, pavimentos: p.pavimentos });
 
   // Avisos técnicos
+  if (uf === 'SP' && ocup.divisao.cod === 'A-1') {
+    avisos.push(
+      'Edificação residencial exclusivamente unifamiliar está excluída das exigências do Regulamento ' +
+        'em SP (art. 4º, § 1º, do Decreto nº 69.118/2024).',
+    );
+  }
+  if (uf === 'SP' && (areaTotal > 750 || p.alturaM > 12)) {
+    avisos.push(
+      'SP — edificação acima de 750 m² ou 12 m: as exigências listadas partem da matriz de referência ' +
+        'e das regras-resumo das Tabelas 6 do Decreto nº 69.118/2024. Validar com a Tabela 6 integral ' +
+        'da divisão antes de protocolar.',
+    );
+  }
+  if (uf === 'SP' && (areaTotal <= 750 && p.alturaM <= 12) && p.ocupantes <= 0) {
+    avisos.push(
+      'SP — Tabela 5: algumas exigências dependem da lotação (notas 3 a 6). Informe a população no ' +
+        'cadastro para o enquadramento exato.',
+    );
+  }
   if (resultado.trrf.pavimentos === null && resultado.trrf.observacao) avisos.push(resultado.trrf.observacao);
   if (resultado.saidas.distanciaMaxima.pisoDescargaM === null) {
     avisos.push('Distância máxima de caminhamento não tabelada para esta combinação — verificar IT 11 com o CBMBA.');

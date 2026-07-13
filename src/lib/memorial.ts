@@ -1080,11 +1080,20 @@ export function gerarMemorialHTML(p: DadosProjeto, r: ResultadoTecnico): string 
     </div>
   `;
 
+  // Nota obrigatória em todos os documentos gerados pela plataforma
+  const notaFerramenta = `
+    <p style="margin-top: 18pt; font-size: 9pt; color: #555; border-top: 1px solid #ccc; padding-top: 6pt;">
+      Documento gerado por ferramenta de apoio; a responsabilidade técnica e a conferência final são do
+      engenheiro responsável conforme as ITs vigentes da UF.
+    </p>
+  `;
+
   return `
     ${gerarCapa(p)}
     ${sumario}
     ${secoes.join('\n')}
     ${assinaturas}
+    ${notaFerramenta}
   `;
 }
 

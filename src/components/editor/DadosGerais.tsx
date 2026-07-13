@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Building2, AlertTriangle, DoorOpen, ImagePlus, ShieldCheck, Trash2 } from 'lucide-react';
 import { DadosProjeto, PavimentoProjeto } from '@/lib/projeto';
 import { nomePavimento, ResultadoTecnico } from '@/lib/engine';
-import { TABELA_1_OCUPACOES, getDivisao, getGrupo } from '@/lib/normas/ocupacoes';
+import { getDivisaoUF, getOcupacoesUF } from '@/data/normas/regras';
 import { CARGA_INCENDIO_SUGERIDA } from '@/lib/normas/classificacao';
 
 interface Props {
@@ -25,8 +25,10 @@ const num = (v: string): number => {
 };
 
 export const DadosGerais = ({ projeto, resultado, atualizar }: Props) => {
-  const grupoSelecionado = getGrupo(projeto.grupo);
-  const divisaoInfo = projeto.divisao ? getDivisao(projeto.divisao) : undefined;
+  // Tabela 1 da UF do projeto (BA: Decreto 16.302/2015 · SP: Decreto 69.118/2024)
+  const ocupacoesUF = getOcupacoesUF(projeto.uf);
+  const grupoSelecionado = ocupacoesUF.find((g) => g.codigo === projeto.grupo);
+  const divisaoInfo = projeto.divisao ? getDivisaoUF(projeto.uf, projeto.divisao) : undefined;
   const usaDormitorios = ['A-1', 'A-2', 'A-3', 'H-2'].includes(projeto.divisao);
   const inputLogo = useRef<HTMLInputElement>(null);
 
@@ -264,7 +266,7 @@ export const DadosGerais = ({ projeto, resultado, atualizar }: Props) => {
               >
                 <SelectTrigger><SelectValue placeholder="Selecione o grupo" /></SelectTrigger>
                 <SelectContent>
-                  {TABELA_1_OCUPACOES.map((g) => (
+                  {ocupacoesUF.map((g) => (
                     <SelectItem key={g.codigo} value={g.codigo}>
                       {g.codigo} — {g.nome}
                     </SelectItem>

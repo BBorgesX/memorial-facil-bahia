@@ -3,17 +3,24 @@
  *
  * Executada no login e ao abrir o app: baixa os registros da nuvem, mescla
  * com os locais (vence quem tem atualizadoEm mais recente) e sobe o que só
- * existe neste navegador — o que também migra automaticamente os dados
- * criados antes da conta existir.
+ * existe neste navegador. Projetos antigos sem dono (criados antes do login
+ * existir) são adotados pela conta e migrados automaticamente.
  */
 
 import { supabase, empurrarRegistro } from './supabase';
-import { DadosProjeto, carregarProjeto, gravarProjetoLocal, listarProjetos, novoProjeto } from './projeto';
+import {
+  DadosProjeto,
+  carregarProjeto,
+  gravarProjetoLocal,
+  listarProjetos,
+  novoProjeto,
+} from './projeto';
 import { Cliente, gravarClienteLocal, listarClientes, novoCliente } from './gestao';
 
 export async function sincronizarTudo(): Promise<void> {
   const { data } = await supabase.auth.getSession();
   if (!data.session) return;
+  const uid = data.session.user.id;
 
   try {
     const [proj, cli] = await Promise.all([
@@ -29,9 +36,14 @@ export async function sincronizarTudo(): Promise<void> {
       const local = carregarProjeto(remoto.id);
       if (!local || local.atualizadoEm < remoto.atualizadoEm) gravarProjetoLocal(remoto);
     }
-    for (const resumo of listarProjetos()) {
-      const local = carregarProjeto(resumo.id);
+    // listarProjetos(uid) inclui projetos sem dono — eles são adotados aqui
+    for (const resumo of listarProjetos(uid)) {
+      let local = carregarProjeto(resumo.id);
       if (!local) continue;
+      if (!local.ownerId) {
+        local = { ...local, ownerId: uid };
+        gravarProjetoLocal(local);
+      }
       const remoto = projetosRemotos.get(resumo.id);
       if (!remoto || remoto.atualizadoEm < local.atualizadoEm) {
         await empurrarRegistro('projetos', local.id, local);

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useLocation, useParams } from 'react-router-dom';
+import { useParams, useSearchParams } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import {
@@ -22,7 +22,7 @@ import {
   statusEfetivo,
 } from '@/lib/gestao';
 import { supabase } from '@/lib/supabase';
-import { StatusBadge } from '@/components/gestao/StatusBadge';
+import { StatusBadge } from '@/components/shell/StatusBadge';
 
 /**
  * Página pública, somente leitura, para o cliente acompanhar o andamento do
@@ -32,7 +32,8 @@ import { StatusBadge } from '@/components/gestao/StatusBadge';
  */
 const PortalCliente = () => {
   const { token } = useParams<{ token: string }>();
-  const location = useLocation();
+  const [searchParams] = useSearchParams();
+  const codigoSnapshot = searchParams.get('d');
   const [snapshot, setSnapshot] = useState<SnapshotPortal | null>(null);
   const [carregando, setCarregando] = useState(true);
 
@@ -57,10 +58,9 @@ const PortalCliente = () => {
           if (projeto) resultado = gerarSnapshotPortal(projeto);
         }
       }
-      // 3) Retrato embutido no link
-      if (!resultado) {
-        const m = location.hash.match(/#d=(.+)/);
-        resultado = m ? decodificarSnapshot(m[1]) : null;
+      // 3) Retrato embutido no link (parâmetro ?d=)
+      if (!resultado && codigoSnapshot) {
+        resultado = decodificarSnapshot(codigoSnapshot);
       }
       if (ativo) {
         setSnapshot(resultado);
@@ -70,7 +70,7 @@ const PortalCliente = () => {
     return () => {
       ativo = false;
     };
-  }, [token, location.hash]);
+  }, [token, codigoSnapshot]);
 
   if (carregando) {
     return (
@@ -109,7 +109,7 @@ const PortalCliente = () => {
           <h1 className="text-2xl md:text-3xl font-bold">{snapshot.nome}</h1>
           <p className="text-white/85 mt-1">
             {snapshot.empresa || snapshot.municipio
-              ? [snapshot.empresa, snapshot.municipio && `${snapshot.municipio} – BA`].filter(Boolean).join(' · ')
+              ? [snapshot.empresa, snapshot.municipio].filter(Boolean).join(' · ')
               : ''}
           </p>
         </div>
@@ -127,7 +127,7 @@ const PortalCliente = () => {
           </CardHeader>
           <CardContent className="grid gap-3 sm:grid-cols-2 text-sm">
             <div>
-              <p className="text-muted-foreground">Protocolo CBMBA</p>
+              <p className="text-muted-foreground">Protocolo CBM</p>
               <p className="font-medium">{snapshot.protocoloCBMBA || '—'}</p>
             </div>
             <div>

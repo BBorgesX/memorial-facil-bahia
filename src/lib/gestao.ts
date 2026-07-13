@@ -7,62 +7,59 @@ import {
   DadosProjeto,
   EventoHistorico,
   ResumoProjeto,
+  STATUS_PROJETO,
   StatusProjeto,
   carregarProjeto,
   listarProjetos,
+  normalizarStatus,
 } from './projeto';
 import { empurrarRegistro, removerRegistro } from './supabase';
 
 // ---------------------------------------------------------------------------
-// Status do projeto
+// Status do projeto (fluxo de aprovação do FirePro Suite)
 // ---------------------------------------------------------------------------
 
-export const STATUS_INFO: Record<
-  StatusProjeto,
-  { rotulo: string; descricao: string; classe: string; ponto: string }
-> = {
-  rascunho: {
-    rotulo: 'Em elaboração',
-    descricao: 'Projeto em elaboração, ainda não protocolado no CBMBA',
-    classe: 'bg-muted text-muted-foreground border-transparent',
+export const STATUS_INFO: Record<StatusProjeto, { descricao: string; ponto: string }> = {
+  Levantamento: {
+    descricao: 'Coleta de dados da edificação — projeto em elaboração',
     ponto: 'bg-slate-400',
   },
-  em_analise: {
-    rotulo: 'Em análise',
-    descricao: 'Protocolado e aguardando análise do CBMBA',
-    classe: 'bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-950 dark:text-blue-300 dark:border-blue-900',
-    ponto: 'bg-blue-500',
+  'Em desenho': {
+    descricao: 'Projeto em desenho/detalhamento, ainda não protocolado',
+    ponto: 'bg-blue-400',
   },
-  com_exigencia: {
-    rotulo: 'Com exigência',
-    descricao: 'O CBMBA apontou exigências a atender',
-    classe: 'bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-950 dark:text-amber-300 dark:border-amber-900',
+  Protocolado: {
+    descricao: 'Protocolado no Corpo de Bombeiros, aguardando distribuição',
+    ponto: 'bg-violet-500',
+  },
+  'Em análise': {
+    descricao: 'Em análise pelo Corpo de Bombeiros',
     ponto: 'bg-amber-500',
   },
-  aprovado: {
-    rotulo: 'Aprovado',
+  Aprovado: {
     descricao: 'Projeto aprovado / AVCB emitido',
-    classe: 'bg-emerald-100 text-emerald-800 border-emerald-200 dark:bg-emerald-950 dark:text-emerald-300 dark:border-emerald-900',
     ponto: 'bg-emerald-500',
   },
-  vencido: {
-    rotulo: 'Vencido',
-    descricao: 'AVCB vencido — é preciso solicitar a renovação',
-    classe: 'bg-red-100 text-red-800 border-red-200 dark:bg-red-950 dark:text-red-300 dark:border-red-900',
+  'Comunique-se': {
+    descricao: 'O Corpo de Bombeiros apontou exigências a atender',
     ponto: 'bg-red-500',
+  },
+  Vencido: {
+    descricao: 'AVCB vencido — é preciso solicitar a renovação',
+    ponto: 'bg-red-700',
   },
 };
 
-export const TODOS_STATUS: StatusProjeto[] = ['rascunho', 'em_analise', 'com_exigencia', 'aprovado', 'vencido'];
+export const TODOS_STATUS = STATUS_PROJETO;
 
 /**
  * Status efetivo do projeto: um AVCB com validade ultrapassada torna o
- * projeto "vencido" automaticamente, mesmo que o status salvo seja outro.
+ * projeto "Vencido" automaticamente, mesmo que o status salvo seja outro.
  */
 export function statusEfetivo(p: Pick<DadosProjeto, 'status' | 'avcbValidade'>): StatusProjeto {
   const situacao = situacaoAvcb(p.avcbValidade);
-  if (situacao.nivel === 'vencido') return 'vencido';
-  return p.status ?? 'rascunho';
+  if (situacao.nivel === 'vencido') return 'Vencido';
+  return normalizarStatus(p.status);
 }
 
 // ---------------------------------------------------------------------------
@@ -103,9 +100,9 @@ export function evento(descricao: string): EventoHistorico {
   return { data: new Date().toISOString(), descricao };
 }
 
-/** Carrega todos os projetos completos (para o painel de gestão). */
-export function carregarTodosProjetos(): DadosProjeto[] {
-  return listarProjetos()
+/** Carrega todos os projetos completos do usuário (para o painel de gestão). */
+export function carregarTodosProjetos(ownerId?: string): DadosProjeto[] {
+  return listarProjetos(ownerId)
     .map((r: ResumoProjeto) => carregarProjeto(r.id))
     .filter((p): p is DadosProjeto => p !== null);
 }
@@ -213,8 +210,8 @@ export function novaInteracao(tipo: TipoInteracao, descricao: string): Interacao
 }
 
 /** Projetos (obras) vinculados a um cliente. */
-export function projetosDoCliente(clienteId: string): DadosProjeto[] {
-  return carregarTodosProjetos().filter((p) => p.clienteId === clienteId);
+export function projetosDoCliente(clienteId: string, ownerId?: string): DadosProjeto[] {
+  return carregarTodosProjetos(ownerId).filter((p) => p.clienteId === clienteId);
 }
 
 // ---------------------------------------------------------------------------
@@ -287,5 +284,6 @@ export function projetoPorToken(token: string): DadosProjeto | null {
 export function urlPortal(p: DadosProjeto): string {
   const snapshot = codificarSnapshot(gerarSnapshotPortal(p));
   const token = p.tokenPortal ? `/${p.tokenPortal}` : '';
-  return `${window.location.origin}/portal${token}#d=${snapshot}`;
+  // Rotas ficam após o "#" (HashRouter); o retrato vai como parâmetro ?d=
+  return `${window.location.origin}${window.location.pathname}#/portal${token}?d=${snapshot}`;
 }

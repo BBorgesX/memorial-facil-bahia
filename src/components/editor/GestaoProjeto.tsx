@@ -21,10 +21,9 @@ import {
   UserRound,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { DadosProjeto, Exigencia, StatusProjeto } from '@/lib/projeto';
+import { DadosProjeto, Exigencia, STATUS_PROJETO, StatusProjeto } from '@/lib/projeto';
 import {
   STATUS_INFO,
-  TODOS_STATUS,
   evento,
   formatarData,
   gerarTokenPortal,
@@ -32,7 +31,7 @@ import {
   situacaoAvcb,
   urlPortal,
 } from '@/lib/gestao';
-import { StatusBadge } from '@/components/gestao/StatusBadge';
+import { StatusBadge } from '@/components/shell/StatusBadge';
 
 interface Props {
   projeto: DadosProjeto;
@@ -52,7 +51,7 @@ export function GestaoProjeto({ projeto, atualizar }: Props) {
     if (status === projeto.status) return;
     atualizar({
       status,
-      historico: [...projeto.historico, evento(`Status alterado para "${STATUS_INFO[status].rotulo}"`)],
+      historico: [...projeto.historico, evento(`Status alterado para "${status}"`)],
     });
   };
 
@@ -133,7 +132,13 @@ export function GestaoProjeto({ projeto, atualizar }: Props) {
         <CardContent className="space-y-3">
           <Select
             value={projeto.clienteId || 'nenhum'}
-            onValueChange={(v) => atualizar({ clienteId: v === 'nenhum' ? '' : v })}
+            onValueChange={(v) => {
+              const cliente = clientes.find((c) => c.id === v);
+              atualizar({
+                clienteId: v === 'nenhum' ? '' : v,
+                cliente: cliente?.nome ?? '',
+              });
+            }}
           >
             <SelectTrigger>
               <SelectValue placeholder="Selecionar cliente" />
@@ -162,7 +167,7 @@ export function GestaoProjeto({ projeto, atualizar }: Props) {
           <CardTitle className="flex items-center gap-2 text-lg">
             <ClipboardList className="w-5 h-5 text-primary" /> Status do processo
           </CardTitle>
-          <CardDescription>Acompanhamento da tramitação no CBMBA.</CardDescription>
+          <CardDescription>Acompanhamento da tramitação no Corpo de Bombeiros.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex items-center gap-3">
@@ -171,9 +176,9 @@ export function GestaoProjeto({ projeto, atualizar }: Props) {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {TODOS_STATUS.map((s) => (
+                {STATUS_PROJETO.map((s) => (
                   <SelectItem key={s} value={s}>
-                    {STATUS_INFO[s].rotulo}
+                    {s}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -183,7 +188,7 @@ export function GestaoProjeto({ projeto, atualizar }: Props) {
           <p className="text-xs text-muted-foreground">{STATUS_INFO[projeto.status].descricao}</p>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <Label htmlFor="protocolo">Protocolo CBMBA</Label>
+              <Label htmlFor="protocolo">Protocolo CBM</Label>
               <Input
                 id="protocolo"
                 value={projeto.protocoloCBMBA}
@@ -275,14 +280,14 @@ export function GestaoProjeto({ projeto, atualizar }: Props) {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-lg">
-            <AlertTriangle className="w-5 h-5 text-primary" /> Exigências do CBMBA
+            <AlertTriangle className="w-5 h-5 text-primary" /> Exigências do CBM (comunique-se)
             {exigenciasPendentes > 0 && (
               <span className="text-xs font-normal text-amber-600">
                 {exigenciasPendentes} pendente(s)
               </span>
             )}
           </CardTitle>
-          <CardDescription>Registre e acompanhe as exigências da análise ou vistoria.</CardDescription>
+          <CardDescription>Registre e acompanhe as exigências apontadas na análise ou vistoria.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           {projeto.exigencias.length === 0 && (
@@ -312,7 +317,7 @@ export function GestaoProjeto({ projeto, atualizar }: Props) {
             <Textarea
               value={novaExigencia}
               onChange={(e) => setNovaExigencia(e.target.value)}
-              placeholder="Descreva a exigência apontada pelo CBMBA…"
+              placeholder="Descreva a exigência apontada pelo Corpo de Bombeiros…"
               rows={2}
             />
             <div className="flex gap-2">

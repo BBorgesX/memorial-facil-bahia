@@ -2,17 +2,30 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import Index from "./pages/Index";
+// HashRouter: funciona em qualquer hospedagem estática (sem rewrites de
+// servidor) e em prévias de arquivo único — as rotas ficam após o "#".
+import { HashRouter, Routes, Route } from "react-router-dom";
+import { AppProvider } from "@/store/appStore";
+import AppShell from "@/components/shell/AppShell";
+import Login from "./pages/Login";
+import Dashboard from "./pages/Dashboard";
+import Projetos from "./pages/Projetos";
+import Configuracoes from "./pages/Configuracoes";
 import ProjetoEditor from "./pages/ProjetoEditor";
+import Classificacao from "./pages/modulos/Classificacao";
+import CalculoRTI from "./pages/modulos/CalculoRTI";
+import CalculoTRRF from "./pages/modulos/CalculoTRRF";
+import CalculoHidraulica from "./pages/modulos/CalculoHidraulica";
+import Distancias from "./pages/modulos/Distancias";
+import MemorialDescritivo from "./pages/modulos/MemorialDescritivo";
+import MemorialBrigada from "./pages/modulos/MemorialBrigada";
+import Checklist from "./pages/modulos/Checklist";
+import Notificacao from "./pages/modulos/Notificacao";
 import Painel from "./pages/Painel";
 import Clientes from "./pages/Clientes";
 import ClienteDetalhe from "./pages/ClienteDetalhe";
 import PortalCliente from "./pages/PortalCliente";
-import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
-import { AuthGate } from "./components/AuthGate";
-import { AppLayout } from "./components/AppLayout";
 
 const queryClient = new QueryClient();
 
@@ -21,22 +34,37 @@ const App = () => (
     <TooltipProvider>
       <Toaster />
       <Sonner />
-      <BrowserRouter>
-        <Routes>
-          {/* Páginas públicas: login e portal do cliente */}
-          <Route path="/login" element={<Login />} />
-          <Route path="/portal" element={<PortalCliente />} />
-          <Route path="/portal/:token" element={<PortalCliente />} />
-          {/* Páginas internas (exigem login, com menu lateral) */}
-          <Route path="/" element={<AuthGate><AppLayout><Index /></AppLayout></AuthGate>} />
-          <Route path="/projeto/:id" element={<AuthGate><AppLayout><ProjetoEditor /></AppLayout></AuthGate>} />
-          <Route path="/painel" element={<AuthGate><AppLayout><Painel /></AppLayout></AuthGate>} />
-          <Route path="/clientes" element={<AuthGate><AppLayout><Clientes /></AppLayout></AuthGate>} />
-          <Route path="/clientes/:id" element={<AuthGate><AppLayout><ClienteDetalhe /></AppLayout></AuthGate>} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
+      <HashRouter>
+        <AppProvider>
+          <Routes>
+            <Route path="/login" element={<Login />} />
+            {/* Portal do cliente — página pública, sem login */}
+            <Route path="/portal" element={<PortalCliente />} />
+            <Route path="/portal/:token" element={<PortalCliente />} />
+            {/* Casca FirePro Suite: sidebar + topbar (Projeto ativo + UF) */}
+            <Route element={<AppShell />}>
+              <Route path="/" element={<Dashboard />} />
+              <Route path="/projetos" element={<Projetos />} />
+              <Route path="/projeto/:id" element={<ProjetoEditor />} />
+              <Route path="/classificacao" element={<Classificacao />} />
+              <Route path="/calculos/rti" element={<CalculoRTI />} />
+              <Route path="/calculos/trrf" element={<CalculoTRRF />} />
+              <Route path="/calculos/hidraulica" element={<CalculoHidraulica />} />
+              <Route path="/distancias" element={<Distancias />} />
+              <Route path="/memoriais/descritivo" element={<MemorialDescritivo />} />
+              <Route path="/memoriais/brigada" element={<MemorialBrigada />} />
+              <Route path="/checklist" element={<Checklist />} />
+              <Route path="/notificacao" element={<Notificacao />} />
+              <Route path="/painel" element={<Painel />} />
+              <Route path="/clientes" element={<Clientes />} />
+              <Route path="/clientes/:id" element={<ClienteDetalhe />} />
+              <Route path="/configuracoes" element={<Configuracoes />} />
+            </Route>
+            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </AppProvider>
+      </HashRouter>
     </TooltipProvider>
   </QueryClientProvider>
 );

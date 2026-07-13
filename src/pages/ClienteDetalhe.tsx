@@ -27,18 +27,20 @@ import {
   situacaoAvcb,
   statusEfetivo,
 } from '@/lib/gestao';
-import { StatusBadge } from '@/components/gestao/StatusBadge';
+import { StatusBadge } from '@/components/shell/StatusBadge';
+import { useApp } from '@/store/appStore';
 
 const ClienteDetalhe = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { usuario } = useApp();
   const [cliente, setCliente] = useState<Cliente | null>(() => (id ? carregarCliente(id) : null));
   const [tipoInteracao, setTipoInteracao] = useState<TipoInteracao>('ligacao');
   const [textoInteracao, setTextoInteracao] = useState('');
   const timerRef = useRef<ReturnType<typeof setTimeout>>();
 
-  const obras = id ? projetosDoCliente(id) : [];
+  const obras = id ? projetosDoCliente(id, usuario?.id) : [];
 
   // Auto-save com debounce, no mesmo padrão do editor de projetos
   useEffect(() => {
@@ -50,7 +52,7 @@ const ClienteDetalhe = () => {
 
   if (!cliente) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center gap-4">
+      <div className="flex flex-col items-center justify-center gap-4 py-24">
         <p className="text-muted-foreground">Cliente não encontrado neste navegador.</p>
         <Button onClick={() => navigate('/clientes')}>
           <ArrowLeft className="w-4 h-4 mr-2" /> Voltar aos clientes
@@ -83,22 +85,20 @@ const ClienteDetalhe = () => {
   const interacoesOrdenadas = [...cliente.interacoes].sort((a, b) => b.data.localeCompare(a.data));
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="border-b bg-card">
-        <div className="container mx-auto px-4 py-3 flex flex-wrap items-center gap-3">
-          <Button variant="ghost" size="sm" onClick={() => navigate('/clientes')}>
-            <ArrowLeft className="w-4 h-4 mr-1" /> Clientes
-          </Button>
-          <h1 className="text-lg font-bold flex items-center gap-2 truncate">
-            <UserRound className="w-5 h-5 text-primary" /> {cliente.nome || '(sem nome)'}
-          </h1>
-          <Button variant="ghost" size="sm" className="ml-auto text-destructive" onClick={remover}>
-            <Trash2 className="w-4 h-4 mr-1" /> Excluir
-          </Button>
-        </div>
-      </header>
+    <div className="max-w-5xl mx-auto space-y-6">
+      <div className="flex flex-wrap items-center gap-3">
+        <Button variant="ghost" size="sm" onClick={() => navigate('/clientes')}>
+          <ArrowLeft className="w-4 h-4 mr-1" /> Clientes
+        </Button>
+        <h1 className="text-xl font-bold flex items-center gap-2 truncate">
+          <UserRound className="w-5 h-5 text-primary" /> {cliente.nome || '(sem nome)'}
+        </h1>
+        <Button variant="ghost" size="sm" className="ml-auto text-destructive" onClick={remover}>
+          <Trash2 className="w-4 h-4 mr-1" /> Excluir
+        </Button>
+      </div>
 
-      <main className="container mx-auto px-4 py-8 max-w-5xl grid gap-6 lg:grid-cols-2">
+      <div className="grid gap-6 lg:grid-cols-2">
         {/* Dados do cliente */}
         <Card>
           <CardHeader>
@@ -192,7 +192,7 @@ const ClienteDetalhe = () => {
                           {p.nome}
                         </button>
                         <p className="text-xs text-muted-foreground">
-                          {p.municipio ? `${p.municipio} – BA · ` : ''}
+                          {p.municipio ? `${p.municipio} · ` : ''}
                           {avcb.nivel === 'sem_data' ? 'Sem AVCB' : avcb.rotulo}
                         </p>
                       </div>
@@ -264,7 +264,7 @@ const ClienteDetalhe = () => {
             </CardContent>
           </Card>
         </div>
-      </main>
+      </div>
     </div>
   );
 };

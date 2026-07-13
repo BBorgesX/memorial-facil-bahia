@@ -19,4 +19,9 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  build: {
+    // Embute imagens/assets no bundle — permite distribuir o app como
+    // arquivo único (prévias/artifacts) sem requisições externas.
+    assetsInlineLimit: 1024 * 1024,
+  },
 }));
