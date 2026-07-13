@@ -88,7 +88,7 @@ const NAVEGACAO: GrupoNav[] = [
     titulo: 'Memoriais',
     itens: [
       { rota: '/memoriais/descritivo', rotulo: 'Memorial Descritivo', icone: FileText },
-      { rota: '/memoriais/brigada', rotulo: 'Memorial de Brigada (IT 25)', icone: Flame },
+      { rota: '/memoriais/brigada', rotulo: 'Memorial de Brigada (IT 17)', icone: Flame },
     ],
   },
   {

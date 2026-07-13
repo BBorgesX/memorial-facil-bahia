@@ -294,6 +294,14 @@ export interface DadosProjeto {
   notificacaoTexto: string;
   notificacaoResposta: string;
 
+  // Memorial de Brigada de Incêndio — dados complementares (IT 17/NBR 14276)
+  /** Turnos de trabalho da edificação (a brigada mínima vale por turno) */
+  brigadaTurnos: number;
+  /** Nome do coordenador geral da brigada (opcional) */
+  brigadaCoordenador: string;
+  /** Observações específicas incluídas no memorial de brigada */
+  brigadaObservacoes: string;
+
   // Gestão — acompanhamento do processo no CBM e do AVCB
   /** Cliente do CRM vinculado ao projeto (id em lib/gestao.ts) */
   clienteId: string;
@@ -398,6 +406,9 @@ export function novoProjeto(nome = 'Novo Projeto', ownerId = '', uf: UFProjeto =
     hidraulica: hidraulicaPadrao(),
     notificacaoTexto: '',
     notificacaoResposta: '',
+    brigadaTurnos: 1,
+    brigadaCoordenador: '',
+    brigadaObservacoes: '',
     clienteId: '',
     protocoloCBMBA: '',
     dataProtocolo: '',
