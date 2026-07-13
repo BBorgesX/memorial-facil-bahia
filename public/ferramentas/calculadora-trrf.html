@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora TRRF - Tempo Requerido de Resistência ao Fogo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            padding: 30px;
+            margin-bottom: 30px;
+        }
+        
+        .header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+        
+        .header-icon {
+            color: #e63946;
+            font-size: 32px;
+        }
+        
+        .header h1 {
+            color: #333;
+            font-size: 28px;
+        }
+        
+        .header p {
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .form-section {
+            margin-bottom: 25px;
+            padding: 20px;
+            background: #f9f9f9;
+            border-radius: 10px;
+        }
+        
+        .form-section h3 {
+            color: #444;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #444;
+            font-weight: 600;
+            font-size: 15px;
+        }
+        
+        select {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            color: #333;
+            background: white;
+            transition: all 0.3s;
+        }
+        
+        select:focus {
+            outline: none;
+            border-color: #e63946;
+            box-shadow: 0 0 0 3px rgba(230, 57, 70, 0.1);
+        }
+        
+        .radio-group {
+            display: flex;
+            gap: 20px;
+            margin-top: 10px;
+        }
+        
+        .radio-option {
+            flex: 1;
+        }
+        
+        .radio-option input[type="radio"] {
+            display: none;
+        }
+        
+        .radio-option label {
+            display: block;
+            padding: 15px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: normal;
+        }
+        
+        .radio-option input[type="radio"]:checked + label {
+            border-color: #e63946;
+            background: rgba(230, 57, 70, 0.05);
+            font-weight: 600;
+        }
+        
+        .buttons {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+        }
+        
+        .btn {
+            padding: 15px 25px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            flex: 1;
+        }
+        
+        .btn-primary {
+            background: #e63946;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #d32f2f;
+            transform: translateY(-2px);
+        }
+        
+        .btn-secondary {
+            background: #f5f5f5;
+            color: #666;
+        }
+        
+        .btn-secondary:hover {
+            background: #e0e0e0;
+        }
+        
+        .result-card {
+            display: none;
+        }
+        
+        .result-card.show {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .result-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 25px;
+            color: #2e7d32;
+        }
+        
+        .result-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .result-item {
+            background: #f9f9f9;
+            padding: 20px;
+            border-radius: 10px;
+            border-left: 4px solid #e63946;
+        }
+        
+        .result-label {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 5px;
+        }
+        
+        .result-value {
+            color: #333;
+            font-size: 18px;
+            font-weight: 600;
+        }
+        
+        .trrf-result {
+            background: linear-gradient(135deg, #e63946 0%, #ff6b6b 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 10px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        .trrf-label {
+            font-size: 16px;
+            opacity: 0.9;
+            margin-bottom: 10px;
+        }
+        
+        .trrf-value {
+            font-size: 42px;
+            font-weight: 700;
+        }
+        
+        .warning {
+            background: #fff3e0;
+            border-left: 4px solid #ff9800;
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 14px;
+            color: #e65100;
+            margin-top: 20px;
+        }
+        
+        .info-box {
+            background: #e3f2fd;
+            border-left: 4px solid #2196f3;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            color: #1565c0;
+        }
+        
+        .footer {
+            text-align: center;
+            color: #666;
+            font-size: 14px;
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+        }
+        
+        @media (max-width: 768px) {
+            .card {
+                padding: 20px;
+            }
+            
+            .buttons {
+                flex-direction: column;
+            }
+            
+            .header h1 {
+                font-size: 24px;
+            }
+            
+            .trrf-value {
+                font-size: 32px;
+            }
+            
+            .radio-group {
+                flex-direction: column;
+                gap: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <div class="header">
+                <div class="header-icon">🔥</div>
+                <div>
+                    <h1>Calculadora TRRF</h1>
+                    <p>Tempo Requerido de Resistência ao Fogo - Decreto 16.302/2015</p>
+                </div>
+            </div>
+            
+            <div class="info-box">
+                <strong>Instruções:</strong> Selecione primeiro se a edificação possui subsolo, depois escolha o grupo de ocupação e demais características.
+            </div>
+            
+            <div class="form-section">
+                <h3>📐 Características da Edificação</h3>
+                
+                <div class="form-group">
+                    <label>Possui Subsolo?</label>
+                    <div class="radio-group">
+                        <div class="radio-option">
+                            <input type="radio" id="subsolo_sim" name="subsolo" value="sim" onchange="atualizarDimensoes()">
+                            <label for="subsolo_sim">Sim</label>
+                        </div>
+                        <div class="radio-option">
+                            <input type="radio" id="subsolo_nao" name="subsolo" value="nao" onchange="atualizarDimensoes()" checked>
+                            <label for="subsolo_nao">Não</label>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-group" id="profundidadeGroup" style="display: none;">
+                    <label for="profundidade">Profundidade do Subsolo</label>
+                    <select id="profundidade" onchange="atualizarAltura()">
+                        <option value="">Selecione...</option>
+                        <option value="S2">h > 10m</option>
+                        <option value="S1">h ≤ 10m</option>
+                        <option value="P1">h ≤ 6m</option>
+                    </select>
+                </div>
+                
+                <div class="form-group" id="alturaGroup">
+                    <label for="altura">Altura da Edificação</label>
+                    <select id="altura">
+                        <option value="">Selecione...</option>
+                        <option value="P2_6_12">6m < h ≤ 12m</option>
+                        <option value="P2_12_23">12m < h ≤ 23m</option>
+                        <option value="P3_23_30">23m < h ≤ 30m</option>
+                        <option value="P4_30_80">30m < h ≤ 80m</option>
+                        <option value="P5_80_120">80m < h ≤ 120m</option>
+                        <option value="P6_120_150">120m < h ≤ 150m</option>
+                        <option value="P7_150_250">150m < h ≤ 250m</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="form-section">
+                <h3>🏢 Grupo de Ocupação</h3>
+                
+                <div class="form-group">
+                    <label for="grupo">Grupo de Ocupação</label>
+                    <select id="grupo" onchange="atualizarDivisoes()">
+                        <option value="">Selecione o grupo...</option>
+                        <option value="A">A - Residencial</option>
+                        <option value="B">B - Serviços de hospedagem</option>
+                        <option value="C">C - Comercial varejista</option>
+                        <option value="D">D - Serviços profissionais, pessoais e técnicos</option>
+                        <option value="E">E - Educacional e cultura física</option>
+                        <option value="F">F - Locais de reunião de público</option>
+                        <option value="G">G - Serviços automotivos</option>
+                        <option value="H">H - Serviços de saúde e institucional</option>
+                        <option value="I">I - Industrial</option>
+                        <option value="J">J - Depósitos</option>
+                        <option value="L">L - Explosivos</option>
+                        <option value="M">M - Especial</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="divisao">Divisão</label>
+                    <select id="divisao">
+                        <option value="">Selecione primeiro o grupo...</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="buttons">
+                <button class="btn btn-primary" onclick="calcularTRRF()">Calcular TRRF</button>
+                <button class="btn btn-secondary" onclick="limparCampos()">Limpar</button>
+            </div>
+        </div>
+        
+        <div class="card result-card" id="resultCard">
+            <div class="result-header">
+                <div style="font-size: 24px;">📋</div>
+                <h2>Resultado da Classificação</h2>
+            </div>
+            
+            <div class="result-grid">
+                <div class="result-item">
+                    <div class="result-label">Grupo de Ocupação</div>
+                    <div class="result-value" id="resultGrupo">-</div>
+                </div>
+                <div class="result-item">
+                    <div class="result-label">Divisão</div>
+                    <div class="result-value" id="resultDivisao">-</div>
+                </div>
+                <div class="result-item">
+                    <div class="result-label">Características</div>
+                    <div class="result-value" id="resultCaracteristicas">-</div>
+                </div>
+            </div>
+            
+            <div class="trrf-result">
+                <div class="trrf-label">Tempo Requerido de Resistência ao Fogo (TRRF)</div>
+                <div class="trrf-value" id="resultTRRF">- minutos</div>
+            </div>
+            
+            <div class="warning">
+                <strong>Observação:</strong> Este cálculo é baseado no Decreto Estadual nº 16.302/2015. 
+                Para edificações de madeira, verificar item 5.30 do decreto. Consulte sempre um profissional 
+                habilitado para orientações específicas ao seu projeto.
+            </div>
+            
+            <div class="buttons" style="margin-top: 30px;">
+                <button class="btn btn-secondary" onclick="imprimirResultado()">📄 Imprimir Resultado</button>
+                <button class="btn btn-primary" onclick="novoCalculo()">🔄 Novo Cálculo</button>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <p>© 2023 Calculadora TRRF - Para fins informativos e educacionais</p>
+            <p>Baseado no Decreto Estadual nº 16.302/2015 - Estado de São Paulo</p>
+        </div>
+    </div>
+
+    <script>
+        // Dados da aplicação
+        const grupos = {
+            'A': { nome: 'Residencial', divisao: ['A-1 a A-3'] },
+            'B': { nome: 'Serviços de hospedagem', divisao: ['B-1 e B-2'] },
+            'C': { nome: 'Comercial varejista', divisao: ['C-1', 'C-2', 'C-3'] },
+            'D': { nome: 'Serviços profissionais, pessoais e técnicos', divisao: ['D-1 a D-3'] },
+            'E': { nome: 'Educacional e cultura física', divisao: ['E-1 a E-6'] },
+            'F': { nome: 'Locais de reunião de público', divisao: ['F-1, F-2, F-3, F-6, F-8 e F-10', 'F-4, F-5, F-7 e F-9'] },
+            'G': { nome: 'Serviços automotivos', divisao: ['G-1 e G-2 não abertos', 'G-1 e G-2 abertos', 'G-3, G-4 e G-5'] },
+            'H': { nome: 'Serviços de saúde e institucional', divisao: ['H-1 e H-4', 'H-2, H-3 e H-5'] },
+            'I': { nome: 'Industrial', divisao: ['I-1', 'I-2', 'I-3'] },
+            'J': { nome: 'Depósitos', divisao: ['J-1', 'J-2', 'J-3', 'J-4'] },
+            'L': { nome: 'Explosivos', divisao: ['L-1, L-2 e L-3'] },
+            'M': { nome: 'Especial', divisao: ['M-1', 'M-2', 'M-3'] }
+        };
+
+        const profundidadeOpcoes = [
+            { label: 'h > 10m', value: 'S2' },
+            { label: 'h ≤ 10m', value: 'S1' },
+            { label: 'h ≤ 6m', value: 'P1' }
+        ];
+
+        const alturaOpcoes = [
+            { label: '6m < h ≤ 12m', value: 'P2_6_12' },
+            { label: '12m < h ≤ 23m', value: 'P2_12_23' },
+            { label: '23m < h ≤ 30m', value: 'P3_23_30' },
+            { label: '30m < h ≤ 80m', value: 'P4_30_80' },
+            { label: '80m < h ≤ 120m', value: 'P5_80_120' },
+            { label: '120m < h ≤ 150m', value: 'P6_120_150' },
+            { label: '150m < h ≤ 250m', value: 'P7_150_250' }
+        ];
+
+        // Tabela TRRF corrigida com lógica separada para subsolo
+        const tabelaTRRF = {
+            'A': {
+                'A-1 a A-3': {
+                    // Valores para SUBSOLO (quando possui subsolo)
+                    'S2': 90, 'S1': 60, 'P1': 30,
+                    // Valores para ALTURA (quando não possui subsolo)
+                    'P2_6_12': 30, 'P2_12_23': 60, 'P3_23_30': 90,
+                    'P4_30_80': 120, 'P5_80_120': 120, 'P6_120_150': 150, 'P7_150_250': 180
+                }
+            },
+            'B': {
+                'B-1 e B-2': {
+                    'S2': 90, 'S1': 60, 'P1': 30,
+                    'P2_6_12': 60, 'P2_12_23': 60, 'P3_23_30': 90,
+                    'P4_30_80': 120, 'P5_80_120': 150, 'P6_120_150': 180, 'P7_150_250': 180
+                }
+            },
+            'C': {
+                'C-1': {
+                    'S2': 90, 'S1': 60, 'P1': 60,
+                    'P2_6_12': 60, 'P2_12_23': 60, 'P3_23_30': 90,
+                    'P4_30_80': 120, 'P5_80_120': 150, 'P6_120_150': 150, 'P7_150_250': 180
+                },
+                'C-2': {
+                    'S2': 90, 'S1': 60, 'P1': 60,
+                    'P2_6_12': 60, 'P2_12_23': 60, 'P3_23_30': 90,
+                    'P4_30_80': 120, 'P5_80_120': 150, 'P6_120_150': 150, 'P7_150_250': 180
+                },
+                'C-3': {
+                    'S2': 90, 'S1': 60, 'P1': 30,
+                    'P2_6_12': 60, 'P2_12_23': 60, 'P3_23_30': 90,
+                    'P4_30_80': 120, 'P5_80_120': 120, 'P6_120_150': 150, 'P7_150_250': 180
+                }
+            },
+            'D': {
+                'D-1 a D-3': {
+                    'S2': 90, 'S1': 60, 'P1': 30,
+                    'P2_6_12': 60, 'P2_12_23': 60, 'P3_23_30': 90,
+                    'P4_30_80': 120, 'P5_80_120': 120, 'P6_120_150': 150, 'P7_150_250': 180
+                }
+            },
+            'E': {
+                'E-1 a E-6': {
+                    'S2': 90, 'S1': 60, 'P1': 30,
+                    'P2_6_12': 30, 'P2_12_23': 60, 'P3_23_30': 90,
+                    'P4_30_80': 120, 'P5_80_120': 120, 'P6_120_150': 150, 'P7_150_250': 180
+                }
+            },
+            'F': {
+                'F-1, F-2, F-3, F-6, F-8 e F-10': {
+                    'S2': 90, 'S1': 60, 'P1': 60,
+                    'P2_6_12': 60, 'P2_12_23': 60, 'P3_23_30': 90,
+                    'P4_30_80': 120, 'P5_80_120': 150, 'P6_120_150': 180, 'P7_150_250': null
+                },
+                'F-4, F-5, F-7 e F-9': {
+                    'S2': 90, 'S1': 60, 'P1': 30,
+                    'P2_6_12': 60, 'P2_12_23': 60, 'P3_23_30': 90,
+                    'P4_30_80': 120, 'P5_80_120': null, 'P6_120_150': null, 'P7_150_250': null
+                }
+            },
+            'G': {
+                'G-1 e G-2 não abertos': {
+                    'S2': 90, 'S1': 60, 'P1': 30,
+                    'P2_6_12': 60, 'P2_12_23': 60, 'P3_23_30': 90,
+                    'P4_30_80': 120, 'P5_80_120': 120, 'P6_120_150': 150, 'P7_150_250': 180
+                },
+                'G-1 e G-2 abertos': {
+                    'S2': 90, 'S1': 60, 'P1': 30,
+                    'P2_6_12': 30, 'P2_12_23': 30, 'P3_23_30': 30,
+                    'P4_30_80': 60, 'P5_80_120': 120, 'P6_120_150': 150, 'P7_150_250': 150
+                },
+                'G-3, G-4 e G-5': {
+                    'S2': 90, 'S1': 60, 'P1': 30,
+                    'P2_6_12': 60, 'P2_12_23': 60, 'P3_23_30': 90,
+                    'P4_30_80': 120, 'P5_80_120': 120, 'P6_120_150': 150, 'P7_150_250': 180
+                }
+            },
+            'H': {
+                'H-1 e H-4': {
+                    'S2': 90, 'S1': 60, 'P1': 30,
+                    'P2_6_12': 60, 'P2_12_23': 60, 'P3_23_30': 90,
+                    'P4_30_80': 120, 'P5_80_120': 150, 'P6_120_150': 180, 'P7_150_250': 180
+                },
+                'H-2, H-3 e H-5': {
+                    'S2': 90, 'S1': 60, 'P1': 30,
+                    'P2_6_12': 60, 'P2_12_23': 60, 'P3_23_30': 90,
+                    'P4_30_80': 120, 'P5_80_120': 150, 'P6_120_150': 180, 'P7_150_250': 180
+                }
+            },
+            'I': {
+                'I-1': {
+                    'S2': 90, 'S1': 60, 'P1': 30,
+                    'P2_6_12': 30, 'P2_12_23': 30, 'P3_23_30': 60,
+                    'P4_30_80': 120, 'P5_80_120': null, 'P6_120_150': null, 'P7_150_250': null
+                },
+                'I-2': {
+                    'S2': 120, 'S1': 90, 'P1': 30,
+                    'P2_6_12': 30, 'P2_12_23': 60, 'P3_23_30': 90,
+                    'P4_30_80': 120, 'P5_80_120': null, 'P6_120_150': null, 'P7_150_250': null
+                },
+                'I-3': {
+                    'S2': 120, 'S1': 90, 'P1': 60,
+                    'P2_6_12': 60, 'P2_12_23': 90, 'P3_23_30': 120,
+                    'P4_30_80': 120, 'P5_80_120': null, 'P6_120_150': null, 'P7_150_250': null
+                }
+            },
+            'J': {
+                'J-1': {
+                    'S2': 60, 'S1': 30, 'P1': null,
+                    'P2_6_12': null, 'P2_12_23': 30, 'P3_23_30': 30,
+                    'P4_30_80': 60, 'P5_80_120': null, 'P6_120_150': null, 'P7_150_250': null
+                },
+                'J-2': {
+                    'S2': 90, 'S1': 60, 'P1': 30,
+                    'P2_6_12': 30, 'P2_12_23': 30, 'P3_23_30': 30,
+                    'P4_30_80': 60, 'P5_80_120': null, 'P6_120_150': null, 'P7_150_250': null
+                },
+                'J-3': {
+                    'S2': 90, 'S1': 60, 'P1': 30,
+                    'P2_6_12': 60, 'P2_12_23': 60, 'P3_23_30': 120,
+                    'P4_30_80': 120, 'P5_80_120': null, 'P6_120_150': null, 'P7_150_250': null
+                },
+                'J-4': {
+                    'S2': 120, 'S1': 90, 'P1': 60,
+                    'P2_6_12': 60, 'P2_12_23': 90, 'P3_23_30': 120,
+                    'P4_30_80': 120, 'P5_80_120': null, 'P6_120_150': null, 'P7_150_250': null
+                }
+            },
+            'L': {
+                'L-1, L-2 e L-3': {
+                    'S2': 120, 'S1': 120, 'P1': 120,
+                    'P2_6_12': 120, 'P2_12_23': 120, 'P3_23_30': 120,
+                    'P4_30_80': null, 'P5_80_120': null, 'P6_120_150': null, 'P7_150_250': null
+                }
+            },
+            'M': {
+                'M-1': {
+                    'S2': 120, 'S1': 120, 'P1': 120,
+                    'P2_6_12': null, 'P2_12_23': null, 'P3_23_30': null,
+                    'P4_30_80': null, 'P5_80_120': null, 'P6_120_150': null, 'P7_150_250': null
+                },
+                'M-2': {
+                    'S2': 120, 'S1': 90, 'P1': 60,
+                    'P2_6_12': 60, 'P2_12_23': 90, 'P3_23_30': 120,
+                    'P4_30_80': null, 'P5_80_120': null, 'P6_120_150': null, 'P7_150_250': null
+                },
+                'M-3': {
+                    'S2': 120, 'S1': 90, 'P1': 90,
+                    'P2_6_12': 90, 'P2_12_23': 120, 'P3_23_30': 120,
+                    'P4_30_80': 120, 'P5_80_120': 150, 'P6_120_150': null, 'P7_150_250': null
+                }
+            }
+        };
+
+        // Funções
+        function atualizarDivisoes() {
+            const grupoSelect = document.getElementById('grupo');
+            const divisaoSelect = document.getElementById('divisao');
+            const grupo = grupoSelect.value;
+            
+            divisaoSelect.innerHTML = '<option value="">Selecione a divisão...</option>';
+            
+            if (grupo && grupos[grupo]) {
+                grupos[grupo].divisao.forEach(div => {
+                    const option = document.createElement('option');
+                    option.value = div;
+                    option.textContent = div;
+                    divisaoSelect.appendChild(option);
+                });
+            }
+        }
+
+        function atualizarDimensoes() {
+            const possuiSubsolo = document.querySelector('input[name="subsolo"]:checked').value;
+            const profundidadeGroup = document.getElementById('profundidadeGroup');
+            const alturaGroup = document.getElementById('alturaGroup');
+            
+            if (possuiSubsolo === 'sim') {
+                profundidadeGroup.style.display = 'block';
+                alturaGroup.style.display = 'block';
+                document.getElementById('profundidade').required = true;
+            } else {
+                profundidadeGroup.style.display = 'none';
+                alturaGroup.style.display = 'block';
+                document.getElementById('profundidade').required = false;
+            }
+            
+            // Limpar seleções
+            document.getElementById('profundidade').value = '';
+            document.getElementById('altura').value = '';
+        }
+
+        function atualizarAltura() {
+            // Esta função pode ser usada para lógica adicional se necessário
+        }
+
+        function calcularTRRF() {
+            const possuiSubsolo = document.querySelector('input[name="subsolo"]:checked').value;
+            const grupo = document.getElementById('grupo').value;
+            const divisao = document.getElementById('divisao').value;
+            const profundidade = document.getElementById('profundidade').value;
+            const altura = document.getElementById('altura').value;
+            
+            // Validações
+            if (!grupo || !divisao) {
+                alert('Por favor, selecione o Grupo de Ocupação e a Divisão!');
+                return;
+            }
+            
+            if (possuiSubsolo === 'sim' && !profundidade) {
+                alert('Por favor, selecione a profundidade do subsolo!');
+                return;
+            }
+            
+            if (!altura) {
+                alert('Por favor, selecione a altura da edificação!');
+                return;
+            }
+            
+            // Determinar a chave para consulta na tabela
+            let chaveDimensao;
+            let caracteristicas = '';
+            
+            if (possuiSubsolo === 'sim') {
+                chaveDimensao = profundidade;
+                const profundidadeLabel = profundidadeOpcoes.find(p => p.value === profundidade)?.label || '';
+                const alturaLabel = alturaOpcoes.find(a => a.value === altura)?.label || '';
+                caracteristicas = `Subsolo: ${profundidadeLabel} • Altura: ${alturaLabel}`;
+            } else {
+                chaveDimensao = altura;
+                const alturaLabel = alturaOpcoes.find(a => a.value === altura)?.label || '';
+                caracteristicas = `Sem subsolo • Altura: ${alturaLabel}`;
+            }
+            
+            // Verificar se a combinação existe na tabela
+            if (!tabelaTRRF[grupo] || !tabelaTRRF[grupo][divisao]) {
+                alert('Divisão não encontrada na tabela TRRF!');
+                return;
+            }
+            
+            const valoresDivisao = tabelaTRRF[grupo][divisao];
+            
+            if (valoresDivisao[chaveDimensao] === undefined) {
+                alert('Combinação não encontrada na tabela TRRF!\n\nEsta combinação de características pode não ser prevista na norma.');
+                return;
+            }
+            
+            const trrf = valoresDivisao[chaveDimensao];
+            
+            // Atualizar resultados
+            document.getElementById('resultGrupo').textContent = grupos[grupo].nome;
+            document.getElementById('resultDivisao').textContent = divisao;
+            document.getElementById('resultCaracteristicas').textContent = caracteristicas;
+            
+            if (trrf !== null) {
+                document.getElementById('resultTRRF').textContent = trrf + ' minutos';
+            } else {
+                document.getElementById('resultTRRF').textContent = 'Não aplicável';
+            }
+            
+            // Mostrar o card de resultados
+            document.getElementById('resultCard').classList.add('show');
+            
+            // Rolar até os resultados
+            document.getElementById('resultCard').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function limparCampos() {
+            document.getElementById('subsolo_nao').checked = true;
+            document.getElementById('grupo').value = '';
+            document.getElementById('divisao').innerHTML = '<option value="">Selecione primeiro o grupo...</option>';
+            document.getElementById('profundidade').value = '';
+            document.getElementById('altura').value = '';
+            document.getElementById('profundidadeGroup').style.display = 'none';
+            document.getElementById('resultCard').classList.remove('show');
+        }
+
+        function novoCalculo() {
+            limparCampos();
+            document.getElementById('resultCard').classList.remove('show');
+            document.querySelector('.card').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function imprimirResultado() {
+            const conteudo = `
+                <html>
+                <head>
+                    <title>Resultado TRRF</title>
+                    <style>
+                        body { font-family: Arial, sans-serif; padding: 20px; }
+                        h1 { color: #333; }
+                        .resultado { margin: 20px 0; padding: 15px; background: #f5f5f5; }
+                        .valor { font-size: 24px; font-weight: bold; color: #e63946; }
+                    </style>
+                </head>
+                <body>
+                    <h1>Resultado do Cálculo TRRF</h1>
+                    <p><strong>Data:</strong> ${new Date().toLocaleDateString('pt-BR')}</p>
+                    <div class="resultado">
+                        <p><strong>Grupo de Ocupação:</strong> ${document.getElementById('resultGrupo').textContent}</p>
+                        <p><strong>Divisão:</strong> ${document.getElementById('resultDivisao').textContent}</p>
+                        <p><strong>Características:</strong> ${document.getElementById('resultCaracteristicas').textContent}</p>
+                        <p><strong>Tempo Requerido de Resistência ao Fogo (TRRF):</strong></p>
+                        <p class="valor">${document.getElementById('resultTRRF').textContent}</p>
+                    </div>
+                    <p><em>Baseado no Decreto Estadual nº 16.302/2015</em></p>
+                </body>
+                </html>
+            `;
+            
+            const janela = window.open('', '_blank');
+            janela.document.write(conteudo);
+            janela.document.close();
+            janela.print();
+        }
+
+        // Inicialização
+        document.addEventListener('DOMContentLoaded', function() {
+            // Configurar padrão: sem subsolo
+            document.getElementById('subsolo_nao').checked = true;
+            
+            // Adicionar evento para tecla Enter
+            document.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    calcularTRRF();
+                }
+            });
+            
+            console.log('Calculadora TRRF carregada com sucesso!');
+        });
+    </script>
+</body>
+</html>

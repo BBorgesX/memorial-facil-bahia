@@ -12,6 +12,7 @@ import PortalCliente from "./pages/PortalCliente";
 import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
 import { AuthGate } from "./components/AuthGate";
+import { AppLayout } from "./components/AppLayout";
 
 const queryClient = new QueryClient();
 
@@ -26,12 +27,12 @@ const App = () => (
           <Route path="/login" element={<Login />} />
           <Route path="/portal" element={<PortalCliente />} />
           <Route path="/portal/:token" element={<PortalCliente />} />
-          {/* Páginas internas (exigem login) */}
-          <Route path="/" element={<AuthGate><Index /></AuthGate>} />
-          <Route path="/projeto/:id" element={<AuthGate><ProjetoEditor /></AuthGate>} />
-          <Route path="/painel" element={<AuthGate><Painel /></AuthGate>} />
-          <Route path="/clientes" element={<AuthGate><Clientes /></AuthGate>} />
-          <Route path="/clientes/:id" element={<AuthGate><ClienteDetalhe /></AuthGate>} />
+          {/* Páginas internas (exigem login, com menu lateral) */}
+          <Route path="/" element={<AuthGate><AppLayout><Index /></AppLayout></AuthGate>} />
+          <Route path="/projeto/:id" element={<AuthGate><AppLayout><ProjetoEditor /></AppLayout></AuthGate>} />
+          <Route path="/painel" element={<AuthGate><AppLayout><Painel /></AppLayout></AuthGate>} />
+          <Route path="/clientes" element={<AuthGate><AppLayout><Clientes /></AppLayout></AuthGate>} />
+          <Route path="/clientes/:id" element={<AuthGate><AppLayout><ClienteDetalhe /></AppLayout></AuthGate>} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
