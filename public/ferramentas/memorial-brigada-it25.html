@@ -1,0 +1,1642 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Memorial de Brigada de Incêndio - IT 17/2016 CBMBA</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #1a365d;
+            --secondary: #c53030;
+            --accent: #d69e2e;
+            --light: #f7fafc;
+            --dark: #2d3748;
+            --success: #38a169;
+            --warning: #d69e2e;
+            --danger: #e53e3e;
+            --gray: #718096;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            color: var(--dark);
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            background: linear-gradient(135deg, var(--primary) 0%, #2c5282 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        }
+
+        header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        header p {
+            opacity: 0.9;
+            font-size: 1.1em;
+        }
+
+        .badge {
+            background: var(--secondary);
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.4em;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+            margin-bottom: 25px;
+        }
+
+        @media (max-width: 968px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.07);
+            border: 1px solid #e2e8f0;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 3px solid #e2e8f0;
+        }
+
+        .card-header h2 {
+            color: var(--primary);
+            font-size: 1.3em;
+        }
+
+        .icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--primary), #4299e1);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.2em;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--dark);
+            font-size: 0.95em;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: all 0.3s;
+            font-family: inherit;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(26, 54, 93, 0.1);
+        }
+
+        .input-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary), #2c5282);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(26, 54, 93, 0.3);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, var(--success), #2f855a);
+            color: white;
+        }
+
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(56, 161, 105, 0.3);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, var(--danger), #c53030);
+            color: white;
+        }
+
+        .btn-secondary {
+            background: #edf2f7;
+            color: var(--dark);
+        }
+
+        .btn-secondary:hover {
+            background: #e2e8f0;
+        }
+
+        .results-section {
+            display: none;
+            animation: fadeIn 0.5s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .alert {
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid;
+        }
+
+        .alert-info {
+            background: #ebf8ff;
+            border-color: #4299e1;
+            color: #2b6cb0;
+        }
+
+        .alert-warning {
+            background: #fffaf0;
+            border-color: var(--warning);
+            color: #c05621;
+        }
+
+        /* STATS REDUZIDOS - METADE DO TAMANHO */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, var(--primary), #2c5282);
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .stat-card.warning {
+            background: linear-gradient(135deg, var(--warning), #b7791f);
+        }
+
+        .stat-card.danger {
+            background: linear-gradient(135deg, var(--danger), #9b2c2c);
+        }
+
+        .stat-card.success {
+            background: linear-gradient(135deg, var(--success), #276749);
+        }
+
+        .stat-number {
+            font-size: 1.8em;
+            font-weight: bold;
+            margin-bottom: 3px;
+        }
+
+        .stat-label {
+            font-size: 0.75em;
+            opacity: 0.9;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .document-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .tab-btn {
+            padding: 12px 20px;
+            border: 2px solid #e2e8f0;
+            background: white;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .tab-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.3s;
+        }
+
+        .document-content {
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.07);
+            line-height: 1.8;
+            max-height: 700px;
+            overflow-y: auto;
+        }
+
+        .document-header {
+            text-align: center;
+            border-bottom: 3px solid var(--primary);
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+        }
+
+        .document-header h2 {
+            color: var(--primary);
+            font-size: 1.8em;
+            margin-bottom: 10px;
+        }
+
+        .document-section {
+            margin-bottom: 25px;
+        }
+
+        .document-section h3 {
+            color: var(--primary);
+            margin-bottom: 15px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #e2e8f0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            font-size: 0.95em;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border: 1px solid #e2e8f0;
+        }
+
+        th {
+            background: var(--primary);
+            color: white;
+            font-weight: 600;
+        }
+
+        tr:nth-child(even) {
+            background: #f7fafc;
+        }
+
+        .highlight {
+            background: #fffaf0;
+            padding: 15px;
+            border-left: 4px solid var(--warning);
+            margin: 15px 0;
+            border-radius: 0 8px 8px 0;
+        }
+
+        /* FÓRMULA SIMPLIFICADA */
+        .formula-simples {
+            background: #e6fffa;
+            border: 2px solid #38b2ac;
+            padding: 12px 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            text-align: center;
+        }
+
+        @media print {
+            .no-print {
+                display: none !important;
+            }
+            .document-content {
+                max-height: none;
+                overflow: visible;
+            }
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 40px;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid #e2e8f0;
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .sector-list {
+            max-height: 300px;
+            overflow-y: auto;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 10px;
+        }
+
+        .sector-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            background: #f7fafc;
+            margin-bottom: 8px;
+            border-radius: 6px;
+            border-left: 3px solid var(--primary);
+        }
+
+        .sector-item button {
+            background: var(--danger);
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .add-sector-btn {
+            width: 100%;
+            margin-top: 10px;
+            background: #edf2f7;
+            border: 2px dashed #cbd5e0;
+            color: var(--gray);
+            padding: 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .add-sector-btn:hover {
+            background: #e2e8f0;
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        .risk-indicator {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .risk-low { background: #c6f6d5; color: #22543d; }
+        .risk-medium { background: #feebc8; color: #744210; }
+        .risk-high { background: #fed7d7; color: #742a2a; }
+
+        .training-level {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: 600;
+        }
+
+        .level-basic { background: #bee3f8; color: #2a4365; }
+        .level-intermediate { background: #d6f5d6; color: #22543d; }
+        .level-advanced { background: #fed7d7; color: #742a2a; }
+
+        /* ORGANOGRAMA */
+        .org-chart-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            overflow-x: auto;
+        }
+
+        .org-level-container {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-bottom: 40px;
+            position: relative;
+            width: 100%;
+        }
+
+        .org-box {
+            background: linear-gradient(135deg, var(--primary), #2c5282);
+            color: white;
+            padding: 15px 20px;
+            border-radius: 10px;
+            text-align: center;
+            min-width: 140px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            position: relative;
+            font-size: 0.9em;
+        }
+
+        .org-box.coordinator {
+            background: linear-gradient(135deg, #2d3748, #1a202c);
+            font-size: 1.1em;
+            padding: 20px 30px;
+            min-width: 180px;
+        }
+
+        .org-box.leader {
+            background: linear-gradient(135deg, var(--secondary), #9b2c2c);
+        }
+
+        .org-box::after {
+            content: '';
+            position: absolute;
+            bottom: -40px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 2px;
+            height: 40px;
+            background: var(--primary);
+        }
+
+        .org-box.no-children::after {
+            display: none;
+        }
+
+        .grupo-lider {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .brigadista-box {
+            background: linear-gradient(135deg, #38a169, #2f855a);
+            color: white;
+            padding: 10px 15px;
+            border-radius: 8px;
+            text-align: center;
+            min-width: 100px;
+            font-size: 0.8em;
+            position: relative;
+        }
+
+        .brigadista-box.nivel-ii {
+            background: linear-gradient(135deg, var(--warning), #b7791f);
+        }
+
+        .legenda-org {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            margin-top: 30px;
+            flex-wrap: wrap;
+        }
+
+        .legenda-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9em;
+        }
+
+        .legenda-cor {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+        }
+
+        .auto-filled {
+            background: #e6fffa !important;
+            border-color: #38b2ac !important;
+        }
+
+        .auto-filled-label {
+            color: #234e52;
+            font-size: 0.85em;
+            margin-top: 5px;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>
+                🔥 Memorial de Brigada de Incêndio
+                <span class="badge">IT 17/2016 CBMBA</span>
+            </h1>
+            <p>Sistema automatizado para dimensionamento e geração de documentação técnica conforme Instrução Técnica nº 17/2016 do Corpo de Bombeiros Militar da Bahia</p>
+        </header>
+
+        <!-- Formulário de Entrada -->
+        <div id="inputForm" class="card">
+            <div class="card-header">
+                <div class="icon">📋</div>
+                <h2>Dados da Edificação</h2>
+            </div>
+
+            <div class="grid">
+                <div>
+                    <div class="form-group">
+                        <label>Nome da Edificação/Planta</label>
+                        <input type="text" id="nomeEdificacao" placeholder="Ex: Edifício Comercial Centro">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Endereço Completo</label>
+                        <textarea id="endereco" rows="2" placeholder="Rua, número, bairro, cidade"></textarea>
+                    </div>
+
+                    <div class="input-group">
+                        <div class="form-group">
+                            <label>Área Construída Total (m²)</label>
+                            <input type="number" id="areaConstruida" placeholder="0">
+                        </div>
+                        <div class="form-group">
+                            <label>Altura da Edificação (m)</label>
+                            <input type="number" id="alturaEdificacao" placeholder="0">
+                        </div>
+                    </div>
+
+                    <div class="input-group">
+                        <div class="form-group">
+                            <label>Número de Pavimentos</label>
+                            <input type="number" id="numPavimentos" min="1" value="1">
+                        </div>
+                        <div class="form-group">
+                            <label>Número de Turnos</label>
+                            <input type="number" id="numTurnos" min="1" value="1">
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <div class="form-group">
+                        <label>Grupo de Ocupação</label>
+                        <select id="grupoOcupacao" onchange="atualizarDivisoes()">
+                            <option value="">Selecione...</option>
+                            <option value="A">A - Habitação</option>
+                            <option value="B">B - Serviço de Hospedagem</option>
+                            <option value="C">C - Comercial</option>
+                            <option value="D">D - Serviço Profissional</option>
+                            <option value="E">E - Educacional e Cultura Física</option>
+                            <option value="F">F - Local de Reunião do Público</option>
+                            <option value="G">G - Garagens e Serviços</option>
+                            <option value="H">H - Serviço de Saúde</option>
+                            <option value="I">I - Indústria</option>
+                            <option value="J">J - Depósito</option>
+                            <option value="L">L - Explosivos</option>
+                            <option value="M">M - Especial</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Divisão</label>
+                        <select id="divisao" onchange="atualizarGrauRisco()">
+                            <option value="">Selecione o grupo primeiro...</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Grau de Risco <span id="riscoAutoText" style="color: #38a169; font-size: 0.85em; display: none;">(preenchido automaticamente)</span></label>
+                        <select id="grauRisco" disabled>
+                            <option value="">Selecione grupo e divisão...</option>
+                        </select>
+                        <div id="riscoMensagem" class="auto-filled-label" style="display: none;"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>É Evento Programado? (F-3, F-6, F-7)</label>
+                        <select id="isEvento">
+                            <option value="nao">Não</option>
+                            <option value="sim">Sim</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group" id="lotacaoEvento" style="display:none;">
+                        <label>Lotação Máxima do Evento</label>
+                        <input type="number" id="lotacaoMaxima" placeholder="Número de pessoas">
+                    </div>
+                </div>
+            </div>
+
+            <div class="card" style="margin-top: 20px;">
+                <div class="card-header">
+                    <div class="icon">🏢</div>
+                    <h2>Setores/Pavimentos</h2>
+                </div>
+                
+                <div class="input-group">
+                    <div class="form-group">
+                        <label>Nome do Setor/Pavimento</label>
+                        <input type="text" id="nomeSetor" placeholder="Ex: 1º Pavimento - Administração">
+                    </div>
+                    <div class="form-group">
+                        <label>População Fixa</label>
+                        <input type="number" id="populacaoSetor" placeholder="0">
+                    </div>
+                </div>
+
+                <button class="btn btn-secondary add-sector-btn" onclick="adicionarSetor()">
+                    + Adicionar Setor
+                </button>
+
+                <div id="listaSetores" class="sector-list" style="display:none;">
+                    <!-- Setores adicionados aparecem aqui -->
+                </div>
+            </div>
+
+            <div style="margin-top: 25px; text-align: center;">
+                <button class="btn btn-primary" onclick="calcularBrigada()" style="font-size: 1.1em; padding: 15px 40px;">
+                    🚀 Calcular e Gerar Memorial
+                </button>
+            </div>
+        </div>
+
+        <!-- Loading -->
+        <div id="loading" class="loading">
+            <div class="spinner"></div>
+            <p>Processando dimensionamento conforme IT 17/2016...</p>
+        </div>
+
+        <!-- Resultados -->
+        <div id="resultados" class="results-section">
+            
+            <!-- Resumo Estatístico - REDUZIDO -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-number" id="totalNivelI">0</div>
+                    <div class="stat-label">Nível I</div>
+                </div>
+                <div class="stat-card warning">
+                    <div class="stat-number" id="totalNivelII">0</div>
+                    <div class="stat-label">Nível II</div>
+                </div>
+                <div class="stat-card success">
+                    <div class="stat-number" id="totalBrigadistas">0</div>
+                    <div class="stat-label">Total</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="cargaHoraria">0h</div>
+                    <div class="stat-label">Carga Hor.</div>
+                </div>
+            </div>
+
+            <!-- Alertas -->
+            <div id="alertasContainer"></div>
+
+            <!-- Abas de Documentos -->
+            <div class="document-tabs no-print">
+                <button class="tab-btn active" onclick="mostrarAba('memorial')">📄 Memorial</button>
+                <button class="tab-btn" onclick="mostrarAba('dimensionamento')">📊 Dimensionamento</button>
+                <button class="tab-btn" onclick="mostrarAba('inventario')">🎒 Inventário</button>
+                <button class="tab-btn" onclick="mostrarAba('organograma')">👥 Organograma</button>
+            </div>
+
+            <!-- Conteúdo das Abas -->
+            <div id="memorial" class="tab-content active">
+                <div class="document-content" id="memorialContent"></div>
+            </div>
+
+            <div id="dimensionamento" class="tab-content">
+                <div class="document-content" id="dimensionamentoContent"></div>
+            </div>
+
+            <div id="inventario" class="tab-content">
+                <div class="document-content" id="inventarioContent"></div>
+            </div>
+
+            <div id="organograma" class="tab-content">
+                <div class="document-content" id="organogramaContent"></div>
+            </div>
+
+            <!-- Botões de Ação -->
+            <div class="no-print" style="margin-top: 25px; text-align: center; display: flex; gap: 15px; justify-content: center; flex-wrap: wrap;">
+                <button class="btn btn-success" onclick="imprimirDocumentos()">
+                    🖨️ Imprimir
+                </button>
+                <button class="btn btn-primary" onclick="exportarPDF()">
+                    📥 PDF
+                </button>
+                <button class="btn btn-secondary" onclick="novoCalculo()">
+                    🔄 Novo
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Banco de dados das ocupações conforme IT 17/2016
+        const ocupacoesDB = {
+            'A': {
+                'A-1': { desc: 'Habitação unifamiliar', riscos: ['Baixo'], treinamento: { 'Baixo': 'Básico' } },
+                'A-2': { desc: 'Habitação multifamiliar', riscos: ['Baixo'], treinamento: { 'Baixo': 'Básico' } },
+                'A-3': { desc: 'Habitação coletiva', riscos: ['Baixo'], treinamento: { 'Baixo': 'Intermediário' } }
+            },
+            'B': {
+                'B-1': { desc: 'Hotel e Assemelhado', riscos: ['Médio'], treinamento: { 'Médio': 'Intermediário' } },
+                'B-2': { desc: 'Hotel residencial', riscos: ['Médio'], treinamento: { 'Médio': 'Intermediário' } }
+            },
+            'C': {
+                'C-1': { desc: 'Comércio (baixo risco)', riscos: ['Baixo'], treinamento: { 'Baixo': 'Básico' } },
+                'C-2': { desc: 'Comércio (médio/alto risco)', riscos: ['Médio', 'Alto'], treinamento: { 'Médio': 'Intermediário', 'Alto': 'Intermediário' } },
+                'C-3': { desc: 'Shopping Centers', riscos: ['Médio'], treinamento: { 'Médio': 'Intermediário' } }
+            },
+            'D': {
+                'D-1': { desc: 'Serviço profissional', riscos: ['Baixo', 'Médio'], treinamento: { 'Baixo': 'Básico', 'Médio': 'Intermediário' } },
+                'D-2': { desc: 'Agência bancária', riscos: ['Baixo'], treinamento: { 'Baixo': 'Básico' } },
+                'D-3': { desc: 'Serviço de reparação', riscos: ['Baixo', 'Médio'], treinamento: { 'Baixo': 'Básico', 'Médio': 'Intermediário' } },
+                'D-4': { desc: 'Laboratório', riscos: ['Baixo', 'Médio'], treinamento: { 'Baixo': 'Básico', 'Médio': 'Intermediário' } }
+            },
+            'E': {
+                'E-1': { desc: 'Escola em geral', riscos: ['Baixo'], treinamento: { 'Baixo': 'Intermediário' } },
+                'E-2': { desc: 'Escola especial', riscos: ['Baixo'], treinamento: { 'Baixo': 'Intermediário' } },
+                'E-3': { desc: 'Espaço para cultura física', riscos: ['Baixo'], treinamento: { 'Baixo': 'Intermediário' } },
+                'E-4': { desc: 'Centro de treinamento profissional', riscos: ['Baixo'], treinamento: { 'Baixo': 'Intermediário' } },
+                'E-5': { desc: 'Pré-escolas', riscos: ['Baixo'], treinamento: { 'Baixo': 'Intermediário' } },
+                'E-6': { desc: 'Escola para portadores de deficiência', riscos: ['Baixo'], treinamento: { 'Baixo': 'Intermediário' } }
+            },
+            'F': {
+                'F-1': { desc: 'Local com objeto de valor inestimável', riscos: ['Baixo', 'Alto'], treinamento: { 'Baixo': 'Básico', 'Alto': 'Intermediário' } },
+                'F-2': { desc: 'Local religioso e velório', riscos: ['Baixo'], treinamento: { 'Baixo': 'Básico' } },
+                'F-3': { desc: 'Centro esportivo e de exibição', riscos: ['Baixo'], treinamento: { 'Baixo': 'Básico' }, evento: true },
+                'F-4': { desc: 'Estação e terminal de passageiros', riscos: ['Baixo'], treinamento: { 'Baixo': 'Básico' } },
+                'F-5': { desc: 'Artes cênicas', riscos: ['Médio'], treinamento: { 'Médio': 'Intermediário' } },
+                'F-6': { desc: 'Clube social e diversão', riscos: ['Médio'], treinamento: { 'Médio': 'Intermediário' }, evento: true },
+                'F-7': { desc: 'Construção provisória', riscos: ['Médio'], treinamento: { 'Médio': 'Intermediário' }, evento: true },
+                'F-8': { desc: 'Local para refeição', riscos: ['Baixo'], treinamento: { 'Baixo': 'Básico' } },
+                'F-9': { desc: 'Recreação pública', riscos: ['Baixo'], treinamento: { 'Baixo': 'Básico' } },
+                'F-10': { desc: 'Exposição de objetos e animais', riscos: ['Baixo', 'Médio', 'Alto'], treinamento: { 'Baixo': 'Básico', 'Médio': 'Intermediário', 'Alto': 'Intermediário' } }
+            },
+            'G': {
+                'G-1': { desc: 'Garagem sem acesso de público', riscos: ['Baixo'], treinamento: { 'Baixo': 'Básico' } },
+                'G-2': { desc: 'Garagem com acesso de público', riscos: ['Baixo'], treinamento: { 'Baixo': 'Básico' } },
+                'G-3': { desc: 'Local com abastecimento', riscos: ['Baixo'], treinamento: { 'Baixo': 'Básico' } },
+                'G-4': { desc: 'Serviço de conservação e reparos', riscos: ['Baixo'], treinamento: { 'Baixo': 'Básico' } },
+                'G-5': { desc: 'Hangares', riscos: ['Baixo'], treinamento: { 'Baixo': 'Básico' } },
+                'G-6': { desc: 'Marinas, iates-clubes', riscos: ['Baixo', 'Médio', 'Alto'], treinamento: { 'Baixo': 'Básico', 'Médio': 'Intermediário', 'Alto': 'Avançado' } }
+            },
+            'H': {
+                'H-1': { desc: 'Hospitais veterinários', riscos: ['Baixo'], treinamento: { 'Baixo': 'Básico' } },
+                'H-2': { desc: 'Locais com pessoas com limitações', riscos: ['Médio'], treinamento: { 'Médio': 'Intermediário' } },
+                'H-3': { desc: 'Hospital e assemelhado', riscos: ['Baixo'], treinamento: { 'Baixo': 'Básico' } },
+                'H-4': { desc: 'Repartição pública', riscos: ['Médio'], treinamento: { 'Médio': 'Intermediário' } },
+                'H-5': { desc: 'Local com restrição de liberdade', riscos: ['Baixo'], treinamento: { 'Baixo': 'Básico' } },
+                'H-6': { desc: 'Clínica e consultório', riscos: ['Baixo'], treinamento: { 'Baixo': 'Básico' } }
+            },
+            'I': {
+                'I-1': { desc: 'Indústria (baixo risco)', riscos: ['Baixo'], treinamento: { 'Baixo': 'Intermediário' } },
+                'I-2': { desc: 'Indústria (médio risco)', riscos: ['Médio'], treinamento: { 'Médio': 'Intermediário' } },
+                'I-3': { desc: 'Indústria (alto risco)', riscos: ['Alto'], treinamento: { 'Alto': 'Avançado' } }
+            },
+            'J': {
+                'J-1': { desc: 'Depósito material incombustível', riscos: ['Baixo'], treinamento: { 'Baixo': 'Básico' } },
+                'J-2': { desc: 'Depósitos em Geral (baixo)', riscos: ['Baixo'], treinamento: { 'Baixo': 'Intermediário' } },
+                'J-3': { desc: 'Depósitos em Geral (médio)', riscos: ['Médio'], treinamento: { 'Médio': 'Intermediário' } },
+                'J-4': { desc: 'Depósitos em Geral (alto)', riscos: ['Alto'], treinamento: { 'Alto': 'Intermediário' } }
+            },
+            'L': {
+                'L-1': { desc: 'Comércio de explosivos', riscos: ['Baixo', 'Médio', 'Alto'], treinamento: { 'Baixo': 'Intermediário', 'Médio': 'Intermediário', 'Alto': 'Avançado' } },
+                'L-2': { desc: 'Indústria de explosivos', riscos: ['Baixo', 'Médio', 'Alto'], treinamento: { 'Baixo': 'Avançado', 'Médio': 'Avançado', 'Alto': 'Avançado' } },
+                'L-3': { desc: 'Depósito de explosivos', riscos: ['Baixo', 'Médio', 'Alto'], treinamento: { 'Baixo': 'Avançado', 'Médio': 'Avançado', 'Alto': 'Avançado' } }
+            },
+            'M': {
+                'M-1': { desc: 'Túnel', riscos: ['Baixo', 'Médio', 'Alto'], treinamento: { 'Baixo': 'Avançado', 'Médio': 'Avançado', 'Alto': 'Avançado' } },
+                'M-2': { desc: 'Líquidos e gases inflamáveis', riscos: ['Baixo', 'Médio', 'Alto'], treinamento: { 'Baixo': 'Avançado', 'Médio': 'Avançado', 'Alto': 'Avançado' } },
+                'M-3': { desc: 'Central de comunicação e energia', riscos: ['Baixo', 'Médio', 'Alto'], treinamento: { 'Baixo': 'Intermediário', 'Médio': 'Intermediário', 'Alto': 'Avançado' } },
+                'M-4': { desc: 'Propriedade em transformação', riscos: ['Baixo', 'Médio', 'Alto'], treinamento: { 'Baixo': 'Básico', 'Médio': 'Básico', 'Alto': 'Básico' } },
+                'M-5': { desc: 'Silos', riscos: ['Baixo', 'Médio', 'Alto'], treinamento: { 'Baixo': 'Básico', 'Médio': 'Intermediário', 'Alto': 'Avançado' } },
+                'M-6': { desc: 'Terra selvagem', riscos: ['Baixo', 'Médio', 'Alto'], treinamento: { 'Baixo': 'Básico', 'Médio': 'Intermediário', 'Alto': 'Avançado' } },
+                'M-7': { desc: 'Pátio de contêineres', riscos: ['Baixo', 'Médio', 'Alto'], treinamento: { 'Baixo': 'Básico', 'Médio': 'Intermediário', 'Alto': 'Avançado' } }
+            }
+        };
+
+        // Tabela A.1 - Valores base até 10 pessoas
+        const tabelaA1 = {
+            'Baixo': { ate_10: 2, divisor: 20 },
+            'Médio': { ate_10: 4, divisor: 15 },
+            'Alto': { ate_10: 8, divisor: 10 }
+        };
+
+        // Dados dos setores
+        let setores = [];
+
+        function atualizarDivisoes() {
+            const grupo = document.getElementById('grupoOcupacao').value;
+            const selectDivisao = document.getElementById('divisao');
+            
+            selectDivisao.innerHTML = '<option value="">Selecione...</option>';
+            
+            if (grupo && ocupacoesDB[grupo]) {
+                const divisoes = ocupacoesDB[grupo];
+                for (const [cod, info] of Object.entries(divisoes)) {
+                    const option = document.createElement('option');
+                    option.value = cod;
+                    option.textContent = `${cod} - ${info.desc}`;
+                    selectDivisao.appendChild(option);
+                }
+            }
+
+            // Resetar grau de risco
+            document.getElementById('grauRisco').innerHTML = '<option value="">Selecione grupo e divisão...</option>';
+            document.getElementById('grauRisco').disabled = true;
+            document.getElementById('grauRisco').classList.remove('auto-filled');
+            document.getElementById('riscoAutoText').style.display = 'none';
+            document.getElementById('riscoMensagem').style.display = 'none';
+        }
+
+        function atualizarGrauRisco() {
+            const grupo = document.getElementById('grupoOcupacao').value;
+            const divisao = document.getElementById('divisao').value;
+            const selectRisco = document.getElementById('grauRisco');
+            
+            if (!grupo || !divisao || !ocupacoesDB[grupo][divisao]) {
+                selectRisco.innerHTML = '<option value="">Selecione grupo e divisão...</option>';
+                selectRisco.disabled = true;
+                return;
+            }
+
+            const riscos = ocupacoesDB[grupo][divisao].riscos;
+            
+            selectRisco.innerHTML = '';
+            
+            if (riscos.length === 1) {
+                // Apenas uma opção - preencher automaticamente
+                const risco = riscos[0];
+                selectRisco.innerHTML = `<option value="${risco}">${risco}</option>`;
+                selectRisco.value = risco;
+                selectRisco.disabled = true;
+                selectRisco.classList.add('auto-filled');
+                document.getElementById('riscoAutoText').style.display = 'inline';
+                document.getElementById('riscoMensagem').style.display = 'block';
+                document.getElementById('riscoMensagem').textContent = `Grau de risco "${risco}" definido automaticamente para ${divisao}`;
+            } else {
+                // Múltiplas opções - permitir seleção
+                riscos.forEach(risco => {
+                    const option = document.createElement('option');
+                    option.value = risco;
+                    option.textContent = risco;
+                    selectRisco.appendChild(option);
+                });
+                selectRisco.disabled = false;
+                selectRisco.classList.remove('auto-filled');
+                document.getElementById('riscoAutoText').style.display = 'none';
+                document.getElementById('riscoMensagem').style.display = 'none';
+            }
+
+            // Verificar evento
+            if (ocupacoesDB[grupo][divisao].evento) {
+                document.getElementById('isEvento').value = 'sim';
+                document.getElementById('lotacaoEvento').style.display = 'block';
+            } else {
+                document.getElementById('isEvento').value = 'nao';
+                document.getElementById('lotacaoEvento').style.display = 'none';
+            }
+        }
+
+        document.getElementById('isEvento').addEventListener('change', function() {
+            document.getElementById('lotacaoEvento').style.display = 
+                this.value === 'sim' ? 'block' : 'none';
+        });
+
+        function adicionarSetor() {
+            const nome = document.getElementById('nomeSetor').value;
+            const populacao = parseInt(document.getElementById('populacaoSetor').value) || 0;
+
+            if (!nome || populacao <= 0) {
+                alert('Por favor, preencha o nome do setor e a população fixa.');
+                return;
+            }
+
+            setores.push({ nome, populacao });
+            atualizarListaSetores();
+            
+            document.getElementById('nomeSetor').value = '';
+            document.getElementById('populacaoSetor').value = '';
+        }
+
+        function atualizarListaSetores() {
+            const container = document.getElementById('listaSetores');
+            
+            if (setores.length === 0) {
+                container.style.display = 'none';
+                return;
+            }
+
+            container.style.display = 'block';
+            container.innerHTML = setores.map((setor, index) => `
+                <div class="sector-item">
+                    <div>
+                        <strong>${setor.nome}</strong><br>
+                        <small>População fixa: ${setor.populacao} pessoas</small>
+                    </div>
+                    <button onclick="removerSetor(${index})">Remover</button>
+                </div>
+            `).join('');
+        }
+
+        function removerSetor(index) {
+            setores.splice(index, 1);
+            atualizarListaSetores();
+        }
+
+        function calcularNivelI(populacao, grauRisco) {
+            const tabela = tabelaA1[grauRisco];
+            
+            if (populacao <= 10) {
+                return tabela.ate_10;
+            }
+            
+            const base = tabela.ate_10;
+            const excedente = populacao - 10;
+            const acressimo = Math.ceil(excedente / tabela.divisor);
+            
+            return base + acressimo;
+        }
+
+        function calcularNivelII(grupo, divisao, grauRisco, area, altura, isEvento, lotacao) {
+            let nivelII = 0;
+            
+            if (isEvento && lotacao > 0) {
+                if (lotacao <= 500) return 0;
+                else if (lotacao <= 1000) return 5;
+                else if (lotacao <= 2500) return 10;
+                else if (lotacao <= 5000) return 15;
+                else if (lotacao <= 10000) return 20;
+                else {
+                    return 20 + Math.ceil((lotacao - 10000) / 500);
+                }
+            }
+
+            const gruposAnexoI = ['B', 'C', 'D', 'E', 'H', 'I', 'J', 'L', 'M'];
+            
+            if (gruposAnexoI.includes(grupo)) {
+                const gruposAnexoJ = ['B', 'D', 'E', 'H'];
+                
+                if (gruposAnexoJ.includes(grupo) && altura > 30) {
+                    if (altura > 30 && altura <= 60) nivelII = 1;
+                    else if (altura > 60 && altura <= 90) nivelII = 2;
+                    else if (altura > 90) nivelII = 3;
+                } else if (area > 5000) {
+                    if (area > 5000 && area <= 10000) nivelII = 1;
+                    else if (area > 10000 && area <= 50000) {
+                        nivelII = (grauRisco === 'Baixo') ? 1 : 2;
+                    } else if (area > 50000) {
+                        const base = (grauRisco === 'Baixo') ? 1 : 2;
+                        const adicional = Math.floor((area - 50000) / 50000);
+                        nivelII = base + adicional;
+                    }
+                }
+            }
+
+            if (grupo === 'F') {
+                if (['F-1', 'F-2', 'F-4', 'F-5', 'F-10'].includes(divisao)) {
+                    if (lotacao > 2500 && lotacao <= 5000) nivelII = (divisao === 'F-3') ? 3 : 1;
+                    else if (lotacao > 5000 && lotacao <= 10000) nivelII = (divisao === 'F-3') ? 4 : 2;
+                } else if (divisao === 'F-6') {
+                    if (lotacao > 500 && lotacao <= 1000) nivelII = 1;
+                    else if (lotacao > 1000 && lotacao <= 2500) nivelII = 2;
+                    else if (lotacao > 2500 && lotacao <= 5000) nivelII = 3;
+                }
+            }
+
+            const divisoesEspeciais = ['I-3', 'J-4', 'L-1', 'L-2', 'L-3', 'M-1', 'M-2'];
+            if (divisoesEspeciais.includes(`${grupo}-${divisao}`)) {
+                if (area > 5000 && area <= 10000) nivelII = (grauRisco === 'Alto') ? 2 : 1;
+                else if (area > 10000) nivelII = (grauRisco === 'Alto') ? 2 : 1;
+            }
+
+            return nivelII;
+        }
+
+        function getNivelTreinamento(grupo, divisao, grauRisco) {
+            if (ocupacoesDB[grupo] && ocupacoesDB[grupo][divisao]) {
+                return ocupacoesDB[grupo][divisao].treinamento[grauRisco] || 'Intermediário';
+            }
+            return 'Intermediário';
+        }
+
+        function getCargaHoraria(nivelTreinamento) {
+            const cargas = {
+                'Básico': { formacao: 8, reciclagem: 4 },
+                'Intermediário': { formacao: 20, reciclagem: 4 },
+                'Avançado': { formacao: 30, reciclagem: 4 }
+            };
+            return cargas[nivelTreinamento] || cargas['Intermediário'];
+        }
+
+        function calcularBrigada() {
+            const nomeEdificacao = document.getElementById('nomeEdificacao').value;
+            const grupo = document.getElementById('grupoOcupacao').value;
+            const divisao = document.getElementById('divisao').value;
+            const grauRisco = document.getElementById('grauRisco').value;
+            
+            if (!nomeEdificacao || !grupo || !divisao || !grauRisco) {
+                alert('Por favor, preencha todos os campos obrigatórios.');
+                return;
+            }
+
+            if (setores.length === 0) {
+                const popTotal = parseInt(document.getElementById('populacaoSetor').value) || 0;
+                if (popTotal > 0) {
+                    setores.push({ nome: 'Área Principal', populacao: popTotal });
+                } else {
+                    alert('Adicione pelo menos um setor com população fixa.');
+                    return;
+                }
+            }
+
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('inputForm').style.display = 'none';
+
+            setTimeout(() => {
+                realizarCalculos(grupo, divisao, grauRisco);
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('resultados').style.display = 'block';
+                window.scrollTo(0, document.getElementById('resultados').offsetTop - 20);
+            }, 1500);
+        }
+
+        function realizarCalculos(grupo, divisao, grauRisco) {
+            const area = parseInt(document.getElementById('areaConstruida').value) || 0;
+            const altura = parseInt(document.getElementById('alturaEdificacao').value) || 0;
+            const numTurnos = parseInt(document.getElementById('numTurnos').value) || 1;
+            const isEvento = document.getElementById('isEvento').value === 'sim';
+            const lotacao = parseInt(document.getElementById('lotacaoMaxima').value) || 0;
+            const populacaoTotal = setores.reduce((sum, s) => sum + s.populacao, 0);
+
+            let totalNivelI = 0;
+            const detalhesSetores = setores.map(setor => {
+                const qtd = calcularNivelI(setor.populacao, grauRisco);
+                totalNivelI += qtd;
+                return {
+                    ...setor,
+                    brigadistas: qtd,
+                    formula: getFormulaSimplificada(setor.populacao, grauRisco, qtd)
+                };
+            });
+
+            totalNivelI = totalNivelI * numTurnos;
+
+            const totalNivelII = calcularNivelII(grupo, divisao, grauRisco, area, altura, isEvento, lotacao || populacaoTotal);
+            
+            const nivelTreinamento = getNivelTreinamento(grupo, divisao, grauRisco);
+            const cargaHoraria = getCargaHoraria(nivelTreinamento);
+
+            document.getElementById('totalNivelI').textContent = totalNivelI;
+            document.getElementById('totalNivelII').textContent = totalNivelII;
+            document.getElementById('totalBrigadistas').textContent = totalNivelI + totalNivelII;
+            document.getElementById('cargaHoraria').textContent = cargaHoraria.formacao + 'h';
+
+            gerarAlertas(grupo, divisao, grauRisco, totalNivelI, totalNivelII, area, altura);
+            gerarMemorialDescritivo(detalhesSetores, totalNivelI, totalNivelII, nivelTreinamento, cargaHoraria, grupo, divisao, grauRisco);
+            gerarQuadroDimensionamento(detalhesSetores, totalNivelI, totalNivelII, grupo, divisao, grauRisco, area, altura);
+            gerarInventario(populacaoTotal);
+            gerarOrganograma(totalNivelI, totalNivelII, numTurnos, setores);
+        }
+
+        function getFormulaSimplificada(populacao, grauRisco, resultado) {
+            const tabela = tabelaA1[grauRisco];
+            
+            if (populacao <= 10) {
+                return `${tabela.ate_10} (população ≤ 10)`;
+            } else {
+                const excedente = populacao - 10;
+                const adicional = Math.ceil(excedente / tabela.divisor);
+                return `${tabela.ate_10} + ⌈${excedente}/${tabela.divisor}⌉ = ${resultado}`;
+            }
+        }
+
+        function gerarAlertas(grupo, divisao, grauRisco, nivelI, nivelII, area, altura) {
+            const container = document.getElementById('alertasContainer');
+            let alertas = [];
+
+            if (divisao === 'H-3') {
+                alertas.push({
+                    tipo: 'warning',
+                    msg: '<strong>Atenção:</strong> Para UTIs e centros cirúrgicos (H-3), toda a população fixa deve ser brigadista.'
+                });
+            }
+
+            if (['I-3', 'J-4', 'L-1', 'L-2', 'L-3', 'M-1', 'M-2'].includes(`${grupo}-${divisao}`)) {
+                alertas.push({
+                    tipo: 'info',
+                    msg: '<strong>Ocupação de Alto Risco:</strong> Esta divisão exige brigadistas Nível II.'
+                });
+            }
+
+            if (altura > 30) {
+                alertas.push({
+                    tipo: 'info',
+                    msg: '<strong>Edificação Alta:</strong> Para altura > 30m, aplicar Anexo J.'
+                });
+            }
+
+            if (area > 5000) {
+                alertas.push({
+                    tipo: 'info',
+                    msg: '<strong>Grande Porte:</strong> Para área > 5.000m², verificar Anexo I.'
+                });
+            }
+
+            if (nivelII > 0) {
+                alertas.push({
+                    tipo: 'warning',
+                    msg: `<strong>Nível II Obrigatório:</strong> ${nivelII} brigadista(s) por turno.`
+                });
+            }
+
+            container.innerHTML = alertas.map(a => `
+                <div class="alert alert-${a.tipo}">${a.msg}</div>
+            `).join('');
+        }
+
+        function gerarMemorialDescritivo(setores, totalNivelI, totalNivelII, nivelTreinamento, cargaHoraria, grupo, divisao, grauRisco) {
+            const nome = document.getElementById('nomeEdificacao').value;
+            const endereco = document.getElementById('endereco').value;
+            const data = new Date().toLocaleDateString('pt-BR');
+            
+            const conteudo = `
+                <div class="document-header">
+                    <h2>MEMORIAL DESCRITIVO DE BRIGADA DE INCÊNDIO</h2>
+                    <p><strong>${nome}</strong><br>${endereco}</p>
+                    <p>Data: ${data}</p>
+                </div>
+
+                <div class="document-section">
+                    <h3>1. OBJETIVO</h3>
+                    <p>Estabelecer as condições mínimas para a composição, formação, implantação, treinamento, dimensionamento e reciclagem da brigada de incêndio, para atuação exclusiva na edificação supracitada, na prevenção e no combate ao princípio de incêndio, abandono de área e prestação dos primeiros socorros.</p>
+                </div>
+
+                <div class="document-section">
+                    <h3>2. REFERÊNCIAS NORMATIVAS</h3>
+                    <ul>
+                        <li>Lei nº 12.929/13 - Segurança contra Incêndio e Pânico</li>
+                        <li>Decreto nº 16.302/15 - Regulamentação da Lei 12.929/13</li>
+                        <li>Instrução Técnica nº 17/2016 do CBMBA - Brigada de Incêndio</li>
+                        <li>NBR 14276 - Brigada de incêndio - requisitos</li>
+                        <li>NBR 15219 - Plano de emergência contra incêndio</li>
+                    </ul>
+                </div>
+
+                <div class="document-section">
+                    <h3>3. CARACTERIZAÇÃO DA EDIFICAÇÃO</h3>
+                    <table>
+                        <tr><td><strong>Ocupação:</strong></td><td>Grupo ${grupo} - Divisão ${divisao}</td></tr>
+                        <tr><td><strong>Descrição:</strong></td><td>${ocupacoesDB[grupo][divisao].desc}</td></tr>
+                        <tr><td><strong>Grau de Risco:</strong></td><td><span class="risk-indicator risk-${grauRisco.toLowerCase()}">${grauRisco}</span></td></tr>
+                        <tr><td><strong>Nível de Treinamento:</strong></td><td><span class="training-level level-${nivelTreinamento.toLowerCase()}">${nivelTreinamento}</span></td></tr>
+                    </table>
+                </div>
+
+                <div class="document-section">
+                    <h3>4. DIMENSIONAMENTO DA BRIGADA</h3>
+                    <p>O dimensionamento foi realizado conforme <strong>Tabela A.1</strong> e <strong>Nota 5</strong> da IT 17/2016.</p>
+                    
+                    <div class="formula-simples">
+                        <strong>Fórmula (População > 10):</strong> Base (até 10) + ⌈(População - 10) ÷ Divisor⌉
+                    </div>
+
+                    <ul>
+                        ${setores.map(s => `<li><strong>${s.nome}:</strong> ${s.populacao} pessoas = ${s.brigadistas} brigadista(s)</li>`).join('')}
+                    </ul>
+                    
+                    <div class="highlight">
+                        <strong>Total Nível I:</strong> ${totalNivelI} | <strong>Nível II:</strong> ${totalNivelII} | <strong>TOTAL:</strong> ${totalNivelI + totalNivelII}
+                    </div>
+                </div>
+
+                <div class="document-section">
+                    <h3>5. PROGRAMA DE TREINAMENTO</h3>
+                    <p>Formação inicial: <strong>${cargaHoraria.formacao}h</strong> | Reciclagem anual: <strong>${cargaHoraria.reciclagem}h</strong></p>
+                    
+                    <h4>Conteúdo Programático:</h4>
+                    <ul>
+                        <li>Teoria do fogo, propagação e classes de incêndio</li>
+                        <li>Métodos de extinção e agentes extintores</li>
+                        <li>EPI e equipamentos de combate a incêndio</li>
+                        <li>Abandono de área e controle de pânico</li>
+                        <li>Primeiros socorros (SBV, RCP, ferimentos, queimaduras)</li>
+                        <li>DEA e emergências clínicas</li>
+                    </ul>
+                </div>
+
+                <div class="document-section">
+                    <h3>6. AÇÕES DE EMERGÊNCIA</h3>
+                    <ul>
+                        <li><strong>Prevenção:</strong> Análise de riscos, inspeções, orientações</li>
+                        <li><strong>Emergência:</strong> Alerta, análise, primeiros socorros, corte de energia, abandono, confinamento, extinção</li>
+                    </ul>
+                </div>
+
+                <div class="document-section">
+                    <h3>7. PLANO DE MANUTENÇÃO</h3>
+                    <ul>
+                        <li>Reuniões mensais ordinárias</li>
+                        <li>Exercício simulado a cada 12 meses</li>
+                        <li>Relatórios de atividades arquivados por 5 anos</li>
+                    </ul>
+                </div>
+
+                <div class="document-section">
+                    <h3>8. ESTRUTURA HIERÁRQUICA</h3>
+                    <p>Coordenador Geral → Chefe de Edificação/Turno → Líder de Setor → Brigadistas (individualmente conectados)</p>
+                </div>
+            `;
+            
+            document.getElementById('memorialContent').innerHTML = conteudo;
+        }
+
+        function gerarQuadroDimensionamento(setores, totalNivelI, totalNivelII, grupo, divisao, grauRisco, area, altura) {
+            const conteudo = `
+                <div class="document-header">
+                    <h2>QUADRO DE DIMENSIONAMENTO</h2>
+                    <p>IT 17/2016 - Tabela A.1 e Nota 5</p>
+                </div>
+
+                <div class="document-section">
+                    <h3>FÓRMULA APLICADA</h3>
+                    <div class="formula-simples">
+                        População ≤ 10: usar valor base | População > 10: Base + ⌈(Pop - 10) ÷ Divisor⌉
+                    </div>
+                    <table style="margin-top: 15px; font-size: 0.9em;">
+                        <tr>
+                            <th>Risco</th>
+                            <th>Base (≤10)</th>
+                            <th>Divisor (>10)</th>
+                        </tr>
+                        <tr>
+                            <td><span class="risk-indicator risk-low">Baixo</span></td>
+                            <td>2</td>
+                            <td>20</td>
+                        </tr>
+                        <tr>
+                            <td><span class="risk-indicator risk-medium">Médio</span></td>
+                            <td>4</td>
+                            <td>15</td>
+                        </tr>
+                        <tr>
+                            <td><span class="risk-indicator risk-high">Alto</span></td>
+                            <td>8</td>
+                            <td>10</td>
+                        </tr>
+                    </table>
+                </div>
+
+                <div class="document-section">
+                    <h3>CÁLCULO POR SETOR</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Setor</th>
+                                <th>População</th>
+                                <th>Risco</th>
+                                <th>Fórmula</th>
+                                <th>Qtd.</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${setores.map(s => `
+                                <tr>
+                                    <td><strong>${s.nome}</strong></td>
+                                    <td>${s.populacao}</td>
+                                    <td><span class="risk-indicator risk-${grauRisco.toLowerCase()}">${grauRisco}</span></td>
+                                    <td class="formula-simples" style="padding: 8px; margin: 0;">${s.formula}</td>
+                                    <td style="text-align:center; font-weight:bold; font-size:1.2em;">${s.brigadistas}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                        <tfoot>
+                            <tr style="background: var(--primary); color: white; font-weight: bold;">
+                                <td colspan="4">TOTAL NÍVEL I (por turno)</td>
+                                <td style="text-align:center; font-size:1.3em;">${setores.reduce((sum, s) => sum + s.brigadistas, 0)}</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+
+                <div class="document-section">
+                    <h3>NÍVEL II</h3>
+                    <table>
+                        <tr><td><strong>Grupo/Divisão:</strong></td><td>${grupo} - ${divisao}</td></tr>
+                        <tr><td><strong>Área:</strong></td><td>${area} m²</td></tr>
+                        <tr><td><strong>Altura:</strong></td><td>${altura} m</td></tr>
+                        <tr style="background: #fffaf0; font-weight: bold;">
+                            <td><strong>Qtd. Nível II:</strong></td>
+                            <td style="font-size: 1.2em; color: #c53030;">${totalNivelII} por turno</td>
+                        </tr>
+                    </table>
+                </div>
+
+                <div class="highlight" style="text-align: center; font-size: 1.1em;">
+                    <strong>RESUMO:</strong> Nível I: ${totalNivelI} | Nível II: ${totalNivelII} | <strong>TOTAL: ${totalNivelI + totalNivelII}</strong>
+                </div>
+            `;
+            
+            document.getElementById('dimensionamentoContent').innerHTML = conteudo;
+        }
+
+        function gerarInventario(populacaoTotal) {
+            let numInventarios = 1;
+            if (populacaoTotal > 100 && populacaoTotal <= 500) numInventarios = 2;
+            else if (populacaoTotal > 500) numInventarios = 3;
+
+            const itens = [
+                { item: 'Compressas de gaze 08 dobras (7,5cm x 7,5cm)', qtd: 50, un: 'un' },
+                { item: 'Compressas de gaze esterilizadas (10cm x 15cm)', qtd: 4, un: 'un' },
+                { item: 'Ataduras de crepe (20cm)', qtd: 10, un: 'un' },
+                { item: 'Plástico protetor de queimaduras (1m x 1m)', qtd: 4, un: 'un' },
+                { item: 'Soro fisiológico 250ml', qtd: 5, un: 'fr' },
+                { item: 'Fita adesiva grande (crepe)', qtd: 1, un: 'un' },
+                { item: 'Talas moldáveis G/M/P', qtd: '3/3/3', un: 'un' },
+                { item: 'Prancha longa (190cm)', qtd: 1, un: 'un' },
+                { item: 'Bandagens triangulares', qtd: 6, un: 'un' },
+                { item: 'Ambu ou máscara de ressuscitação', qtd: 1, un: 'un' },
+                { item: 'Colar cervical (G,M,P)', qtd: 1, un: 'cj' },
+                { item: 'Tesoura de ponta romba', qtd: 1, un: 'un' },
+                { item: 'Óculos de segurança', qtd: 1, un: 'un' },
+                { item: 'Máscara semi-facial', qtd: 1, un: 'un' },
+                { item: 'Luvas de procedimento', qtd: 10, un: 'par' }
+            ];
+
+            const conteudo = `
+                <div class="document-header">
+                    <h2>INVENTÁRIO DE PRIMEIROS SOCORROS</h2>
+                    <p>Anexo H - IT 17/2016</p>
+                </div>
+
+                <div class="document-section">
+                    <h3>DIMENSIONAMENTO</h3>
+                    <table>
+                        <tr>
+                            <td><strong>População:</strong></td>
+                            <td>${populacaoTotal} pessoas</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Faixa:</strong></td>
+                            <td>${populacaoTotal <= 100 ? '20-100' : populacaoTotal <= 500 ? '101-500' : '>500'}</td>
+                        </tr>
+                        <tr style="background: #c6f6d5; font-weight: bold;">
+                            <td><strong>Inventários:</strong></td>
+                            <td style="font-size: 1.2em;">${numInventarios}</td>
+                        </tr>
+                    </table>
+                </div>
+
+                <div class="document-section">
+                    <h3>COMPOSIÇÃO (por inventário)</h3>
+                    <table style="font-size: 0.9em;">
+                        <thead>
+                            <tr>
+                                <th>Item</th>
+                                <th>Qtd.</th>
+                                <th>Un.</th>
+                                <th>Total (${numInventarios}x)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${itens.map(i => `
+                                <tr>
+                                    <td>${i.item}</td>
+                                    <td style="text-align:center;">${i.qtd}</td>
+                                    <td style="text-align:center;">${i.un}</td>
+                                    <td style="text-align:center; font-weight:bold;">
+                                        ${typeof i.qtd === 'number' ? i.qtd * numInventarios : i.qtd}
+                                    </td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="highlight">
+                    <strong>Verificação:</strong> Mensal, substituindo itens vencidos/utilizados.
+                </div>
+            `;
+            
+            document.getElementById('inventarioContent').innerHTML = conteudo;
+        }
+
+        function gerarOrganograma(nivelI, nivelII, numTurnos, setoresOriginais) {
+            const totalBrigadistas = nivelI + nivelII;
+            const temCoordenador = totalBrigadistas > 4;
+            const temChefes = totalBrigadistas > 8 || numTurnos > 1;
+            
+            const numLideres = Math.max(1, Math.ceil(nivelI / 4));
+            const brigadistasPorLider = Math.floor(nivelI / numLideres);
+            const resto = nivelI % numLideres;
+            
+            let html = `
+                <div class="document-header">
+                    <h2>ORGANOGRAMA FUNCIONAL</h2>
+                    <p>Item 5.1.1 - IT 17/2016</p>
+                </div>
+
+                <div class="org-chart-container">
+            `;
+
+            if (temCoordenador) {
+                html += `
+                    <div class="org-level-container">
+                        <div class="org-box coordinator no-children">
+                            <div style="font-size: 0.75em;">COORDENADOR GERAL</div>
+                            <div style="font-weight: bold; font-size: 1.2em;">1</div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            const numChefes = numTurnos > 1 ? numTurnos : (temChefes ? Math.ceil(numLideres / 2) : 0);
+            if (numChefes > 0) {
+                html += `<div class="org-level-container">`;
+                for (let i = 0; i < numChefes; i++) {
+                    const titulo = numTurnos > 1 ? `CHEFE ${i+1}º TURNO` : `CHEFE ${i+1}`;
+                    html += `
+                        <div class="org-box leader">
+                            <div style="font-size: 0.75em;">${titulo}</div>
+                            <div style="font-weight: bold;">1</div>
+                        </div>
+                    `;
+                }
+                html += `</div>`;
+            }
+
+            html += `<div style="display: flex; gap: 30px; justify-content: center; flex-wrap: wrap; width: 100%;">`;
+            
+            for (let l = 0; l < numLideres; l++) {
+                let qtdBrigadistasLider = brigadistasPorLider + (l < resto ? 1 : 0);
+                let qtdNivelIILider = (l === numLideres - 1) ? nivelII : 0;
+                const totalNoGrupo = qtdBrigadistasLider + qtdNivelIILider;
+                
+                html += `
+                    <div class="grupo-lider">
+                        <div class="org-box leader">
+                            <div style="font-size: 0.75em;">LÍDER ${l+1}</div>
+                            <div style="font-weight: bold;">1</div>
+                            <div style="font-size: 0.7em; margin-top: 3px;">${totalNoGrupo} brig.</div>
+                        </div>
+                        
+                        <div style="width: 2px; height: 25px; background: var(--primary);"></div>
+                        <div style="width: 80%; height: 2px; background: var(--primary);"></div>
+                        
+                        <div style="display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; padding-top: 15px;">
+                `;
+                
+                for (let b = 0; b < qtdBrigadistasLider; b++) {
+                    html += `
+                        <div style="display: flex; flex-direction: column; align-items: center;">
+                            <div style="width: 2px; height: 15px; background: var(--primary); margin-bottom: -8px;"></div>
+                            <div class="brigadista-box">
+                                <div style="font-size: 0.65em;">BRIGADISTA</div>
+                                <div style="font-weight: bold; font-size: 0.8em;">I</div>
+                            </div>
+                        </div>
+                    `;
+                }
+                
+                for (let b = 0; b < qtdNivelIILider; b++) {
+                    html += `
+                        <div style="display: flex; flex-direction: column; align-items: center;">
+                            <div style="width: 2px; height: 15px; background: var(--primary); margin-bottom: -8px;"></div>
+                            <div class="brigadista-box nivel-ii">
+                                <div style="font-size: 0.65em;">BRIGADISTA</div>
+                                <div style="font-weight: bold; font-size: 0.8em;">II</div>
+                            </div>
+                        </div>
+                    `;
+                }
+                
+                html += `</div></div>`;
+            }
+            
+            html += `</div>`;
+
+            html += `
+                <div class="legenda-org">
+                    <div class="legenda-item">
+                        <div class="legenda-cor" style="background: linear-gradient(135deg, #2d3748, #1a202c);"></div>
+                        <span>Coordenador</span>
+                    </div>
+                    <div class="legenda-item">
+                        <div class="legenda-cor" style="background: linear-gradient(135deg, var(--secondary), #9b2c2c);"></div>
+                        <span>Chefe/Líder</span>
+                    </div>
+                    <div class="legenda-item">
+                        <div class="legenda-cor" style="background: linear-gradient(135deg, #38a169, #2f855a);"></div>
+                        <span>Nível I</span>
+                    </div>
+                    <div class="legenda-item">
+                        <div class="legenda-cor" style="background: linear-gradient(135deg, var(--warning), #b7791f);"></div>
+                        <span>Nível II</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="highlight" style="margin-top: 20px; text-align: center;">
+                Total: ${totalBrigadistas} brigadistas em ${numLideres} setor(es), ${numTurnos} turno(s)
+            </div>
+            `;
+
+            document.getElementById('organogramaContent').innerHTML = html;
+        }
+
+        function mostrarAba(aba) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+            document.getElementById(aba).classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        function imprimirDocumentos() {
+            window.print();
+        }
+
+        function exportarPDF() {
+            alert('Funcionalidade PDF seria implementada com jsPDF');
+        }
+
+        function novoCalculo() {
+            location.reload();
+        }
+    </script>
+</body>
+</html>

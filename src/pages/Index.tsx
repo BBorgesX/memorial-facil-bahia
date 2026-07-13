@@ -78,7 +78,7 @@ const Index = () => {
           <div>
             <h2 className="text-2xl font-bold">Meus Projetos</h2>
             <p className="text-muted-foreground text-sm">
-              Os projetos ficam salvos neste navegador e podem ser editados a qualquer momento.
+              Seus projetos ficam sincronizados com sua conta e podem ser editados de qualquer dispositivo.
             </p>
           </div>
           <div className="flex flex-wrap gap-2">

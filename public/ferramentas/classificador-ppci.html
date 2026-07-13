@@ -1,0 +1,1279 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SCIP Bahia - Classificador Completo (Decreto 16.302/2015)</title>
+    <style>
+        :root {
+            --primary-color: #003366;
+            --secondary-color: #cc0000;
+            --bg-color: #f4f4f9;
+            --text-color: #333;
+            --card-bg: #ffffff;
+            --success-color: #28a745;
+            --warning-color: #ffc107;
+            --info-color: #17a2b8;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.6;
+        }
+
+        header {
+            background: linear-gradient(135deg, var(--primary-color) 0%, #004080 100%);
+            color: white;
+            padding: 25px 0;
+            text-align: center;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+        }
+
+        header h1 { margin: 0; font-size: 1.8rem; }
+        header p { margin: 8px 0 0; opacity: 0.9; font-size: 0.9rem; }
+
+        .container {
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 0 20px;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: 10px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 3px 15px rgba(0,0,0,0.08);
+            border-left: 4px solid var(--primary-color);
+        }
+
+        h2 { 
+            color: var(--primary-color); 
+            border-bottom: 2px solid #e0e0e0; 
+            padding-bottom: 12px;
+            margin-bottom: 20px;
+            font-size: 1.4rem;
+        }
+
+        h3 { 
+            color: var(--secondary-color); 
+            margin: 20px 0 12px 0;
+            font-size: 1.1rem;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+        }
+
+        .form-group { margin-bottom: 15px; }
+        label { 
+            display: block; 
+            margin-bottom: 6px; 
+            font-weight: 600;
+            color: #444;
+        }
+        
+        select, input {
+            width: 100%;
+            padding: 11px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 0.95rem;
+            transition: all 0.3s;
+        }
+
+        select:focus, input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(0,51,102,0.1);
+        }
+
+        .form-hint {
+            font-size: 0.8rem;
+            color: #666;
+            margin-top: 4px;
+            font-style: italic;
+        }
+
+        button {
+            background: linear-gradient(135deg, var(--secondary-color) 0%, #990000 100%);
+            color: white;
+            border: none;
+            padding: 14px 30px;
+            font-size: 1rem;
+            font-weight: 600;
+            border-radius: 5px;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 15px;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        button:hover { 
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(204,0,0,0.3);
+        }
+
+        button.secondary {
+            background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);
+            margin-top: 10px;
+        }
+
+        .result-section {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 20px;
+            border: 1px solid #e9ecef;
+        }
+
+        .classification-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .classification-item {
+            background: white;
+            padding: 15px;
+            border-radius: 6px;
+            border-left: 4px solid var(--primary-color);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+
+        .classification-item strong {
+            display: block;
+            color: var(--primary-color);
+            font-size: 0.85rem;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+        }
+
+        .classification-item span {
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            color: white;
+            margin-left: 8px;
+        }
+        .bg-blue { background-color: var(--primary-color); }
+        .bg-red { background-color: var(--secondary-color); }
+        .bg-green { background-color: var(--success-color); }
+        .bg-orange { background-color: var(--warning-color); color: #333; }
+        .bg-info { background-color: var(--info-color); }
+
+        .measures-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            font-size: 0.9rem;
+        }
+
+        .measures-table th,
+        .measures-table td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: left;
+        }
+
+        .measures-table th {
+            background: var(--primary-color);
+            color: white;
+            font-weight: 600;
+        }
+
+        .measures-table tr:nth-child(even) {
+            background: #f8f9fa;
+        }
+
+        .measures-table tr:hover {
+            background: #e9ecef;
+        }
+
+        .mandatory { color: var(--secondary-color); font-weight: bold; }
+        .conditional { color: var(--warning-color); font-weight: bold; }
+
+        .alert-box {
+            padding: 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+            border-left: 4px solid;
+        }
+
+        .alert-info {
+            background: #d1ecf1;
+            border-color: var(--info-color);
+            color: #0c5460;
+        }
+
+        .alert-warning {
+            background: #fff3cd;
+            border-color: var(--warning-color);
+            color: #856404;
+        }
+
+        .alert-danger {
+            background: #f8d7da;
+            border-color: var(--secondary-color);
+            color: #721c24;
+        }
+
+        .alert-success {
+            background: #d4edda;
+            border-color: var(--success-color);
+            color: #155724;
+        }
+
+        .observation-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .observation-list li {
+            padding: 8px 0;
+            padding-left: 25px;
+            position: relative;
+            border-bottom: 1px solid #eee;
+        }
+
+        .observation-list li:before {
+            content: "⚠️";
+            position: absolute;
+            left: 0;
+        }
+
+        .fine-box {
+            background: linear-gradient(135deg, var(--primary-color) 0%, #004080 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .fine-box h3 { color: white; margin: 0 0 10px 0; }
+        .fine-value { font-size: 2.5rem; font-weight: bold; }
+        .fine-note { font-size: 0.85rem; opacity: 0.9; margin-top: 10px; }
+
+        @media print {
+            body { background: white; }
+            header, .no-print, button { display: none !important; }
+            .card { box-shadow: none; border: 1px solid #ccc; }
+        }
+
+        @media (max-width: 768px) {
+            .form-grid { grid-template-columns: 1fr; }
+            .classification-grid { grid-template-columns: 1fr; }
+        }
+
+        .loading {
+            text-align: center;
+            padding: 30px;
+            color: var(--primary-color);
+            font-size: 1.2rem;
+        }
+
+        .error-box {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 5px;
+            border: 1px solid #f5c6cb;
+            margin: 15px 0;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+
+        .tab {
+            padding: 10px 20px;
+            background: #e9ecef;
+            border: none;
+            border-radius: 5px 5px 0 0;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .tab.active {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="container">
+        <h1>🔥 Classificador SCIP Bahia</h1>
+        <p>Decreto Estadual nº 16.302 de 27 de agosto de 2015 - Segurança Contra Incêndio e Pânico</p>
+    </div>
+</header>
+
+<div class="container">
+    <!-- Formulário -->
+    <div class="card no-print">
+        <h2>📋 Dados da Edificação</h2>
+        <form id="scipForm">
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="grupoOcupacao">Grupo de Ocupação (Tabela 1) *</label>
+                    <select id="grupoOcupacao" required onchange="carregarDivisoes()">
+                        <option value="">Selecione o grupo...</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="divisaoOcupacao">Divisão *</label>
+                    <select id="divisaoOcupacao" required disabled>
+                        <option value="">Selecione o grupo primeiro...</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="altura">Altura da Edificação (metros) *</label>
+                    <input type="number" id="altura" step="0.01" min="0" placeholder="Ex: 15.50" required>
+                    <div class="form-hint">Do piso mais baixo ocupado ao piso do último pavimento (Art. 3º, I, a)</div>
+                </div>
+
+                <div class="form-group">
+                    <label for="area">Área Construída Total (m²) *</label>
+                    <input type="number" id="area" step="0.01" min="0" placeholder="Ex: 850.00" required>
+                    <div class="form-hint">Somatório de todas as áreas ocupáveis e cobertas (Art. 3º, II)</div>
+                </div>
+
+                <div class="form-group">
+                    <label for="cargaIncendio">Carga de Incêndio (MJ/m²) *</label>
+                    <input type="number" id="cargaIncendio" step="1" min="0" placeholder="Ex: 400" required>
+                    <div class="form-hint">Tabela 3: Baixo ≤300 | Médio 300-1.200 | Alto >1.200</div>
+                </div>
+
+                <div class="form-group">
+                    <label for="possuiSubsolo">Possui Subsolo Ocupado? *</label>
+                    <select id="possuiSubsolo" onchange="toggleSubsolo()">
+                        <option value="nao">Não</option>
+                        <option value="sim">Sim</option>
+                    </select>
+                </div>
+                
+                <div class="form-group" id="areaSubsoloGroup" style="display:none;">
+                    <label for="areaSubsolo">Área do Subsolo (m²)</label>
+                    <input type="number" id="areaSubsolo" step="1" min="0" placeholder="Ex: 150">
+                </div>
+
+                <div class="form-group" id="nivelSubsoloGroup" style="display:none;">
+                    <label for="nivelSubsolo">Nível do Subsolo</label>
+                    <select id="nivelSubsolo">
+                        <option value="primeiro_segundo">Primeiro ou segundo subsolo</option>
+                        <option value="demais">Demais subsolos (3º ou mais)</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="tipoEdificacao">Tipo de Edificação</label>
+                    <select id="tipoEdificacao">
+                        <option value="nova">Nova Construção</option>
+                        <option value="existente">Edificação Existente</option>
+                    </select>
+                </div>
+            </div>
+
+            <button type="submit">🔍 Gerar Classificação e Exigências</button>
+            <button type="button" class="secondary" onclick="limparFormulario()">🔄 Limpar Formulário</button>
+        </form>
+    </div>
+
+    <!-- Resultados -->
+    <div id="resultado" class="card" style="display: none;">
+        <h2>📊 Resultado da Análise Técnica</h2>
+        
+        <div class="result-section">
+            <h3>1. Classificação da Edificação</h3>
+            <div class="classification-grid">
+                <div class="classification-item">
+                    <strong>Grupo de Ocupação</strong>
+                    <span id="resGrupo"></span>
+                </div>
+                <div class="classification-item">
+                    <strong>Divisão</strong>
+                    <span id="resDivisao"></span>
+                </div>
+                <div class="classification-item">
+                    <strong>Categoria de Altura</strong>
+                    <span id="resAltura"></span>
+                    <span id="resCatAltura" class="badge bg-blue"></span>
+                </div>
+                <div class="classification-item">
+                    <strong>Nível de Carga</strong>
+                    <span id="resCarga"></span>
+                    <span id="resCatCarga" class="badge bg-orange"></span>
+                </div>
+                <div class="classification-item">
+                    <strong>Área Construída</strong>
+                    <span id="resArea"></span>
+                </div>
+                <div class="classification-item">
+                    <strong>Tipo</strong>
+                    <span id="resTipo"></span>
+                </div>
+            </div>
+        </div>
+
+        <div class="tabs no-print">
+            <button class="tab active" onclick="showTab('medidas')">Medidas Obrigatórias</button>
+            <button class="tab" onclick="showTab('subsolo')">Subsolo</button>
+            <button class="tab" onclick="showTab('multas')">Multas</button>
+            <button class="tab" onclick="showTab('observacoes')">Observações</button>
+        </div>
+
+        <div id="tab-medidas" class="tab-content active">
+            <div class="result-section">
+                <h3>2. Medidas de Segurança Obrigatórias</h3>
+                <p style="margin-bottom: 15px; color: #666;">
+                    Conforme Tabelas 4, 5, 6 (6A a 6M.5) e 7 do Anexo Único do Decreto 16.302/2015
+                </p>
+                <table class="measures-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 50px;">#</th>
+                            <th>Medida de Segurança</th>
+                            <th style="width: 150px;">Categoria</th>
+                            <th style="width: 100px;">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabelaMedidas">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="tab-subsolo" class="tab-content">
+            <div class="result-section" id="boxSubsolo">
+                <h3>3. Exigências Adicionais para Subsolo (Tabela 7)</h3>
+                <div id="conteudoSubsolo"></div>
+            </div>
+        </div>
+
+        <div id="tab-multas" class="tab-content">
+            <div class="result-section">
+                <h3>4. Valores de Multas de Referência (Tabela 8)</h3>
+                <div class="fine-box">
+                    <h3>Valor de Multa Tipo I</h3>
+                    <div class="fine-value" id="valorMulta">R$ 0,00</div>
+                    <div class="fine-note">
+                        Valores conforme Tabela 8 do Decreto 16.302/2015<br>
+                        • Tipo II: 95% do Tipo I<br>
+                        • Tipo III: 85% do Tipo I<br>
+                        • Tipo IV: 90% do Tipo I<br>
+                        • Tipo V: 100% do Tipo I
+                    </div>
+                </div>
+                <div class="alert-box alert-info" style="margin-top: 15px;">
+                    <strong>ℹ️ Tipos de Infração (Art. 12 da Lei 12.929/2013):</strong><br>
+                    I - Deixar de apresentar o processo de segurança<br>
+                    II - Deixar de manter as medidas de segurança<br>
+                    III - Dificultar ou impedir a ação do CBMBA<br>
+                    IV - Descumprir notificação ou auto de infração<br>
+                    V - Fazer declaração falsa em processo
+                </div>
+            </div>
+        </div>
+
+        <div id="tab-observacoes" class="tab-content">
+            <div class="result-section">
+                <h3>5. Observações e Notas Técnicas</h3>
+                <ul id="listaObservacoes" class="observation-list"></ul>
+                
+                <div class="alert-box alert-warning" style="margin-top: 20px;">
+                    <strong>⚠️ Importante:</strong> Este relatório é uma simulação técnica baseada no Decreto 16.302/2015. 
+                    Para aprovação oficial e emissão do AVCB, consulte sempre o Corpo de Bombeiros Militar da Bahia (CBMBA) 
+                    e as Instruções Técnicas (IT) específicas atualizadas.
+                </div>
+            </div>
+        </div>
+
+        <div class="no-print" style="margin-top: 25px;">
+            <button onclick="window.print()">🖨️ Imprimir Relatório</button>
+            <button class="secondary" onclick="exportarPDF()">📄 Exportar PDF</button>
+        </div>
+    </div>
+</div>
+
+<script>
+// ============================================================================
+// BANCO DE DADOS COMPLETO - DECRETO 16.302/2015
+// ============================================================================
+
+const DB = {
+    // TABELA 1 - CLASSIFICAÇÃO POR OCUPAÇÃO (COMPLETA)
+    tabela1: [
+        {
+            codigo: 'A',
+            nome: 'Residencial',
+            divisoes: [
+                { cod: 'A-1', desc: 'Habitação unifamiliar', exemplos: 'Casas térreas ou assobradadas (isoladas e não isoladas) e condomínios horizontais' },
+                { cod: 'A-2', desc: 'Habitação multifamiliar', exemplos: 'Edifícios de apartamento em geral' },
+                { cod: 'A-3', desc: 'Habitação coletiva', exemplos: 'Pensionatos, internatos, alojamentos, mosteiros, conventos, residências geriátricas. Capacidade máxima de 16 leitos' }
+            ]
+        },
+        {
+            codigo: 'B',
+            nome: 'Serviço de Hospedagem',
+            divisoes: [
+                { cod: 'B-1', desc: 'Hotel e assemelhado', exemplos: 'Hotéis, motéis, pensões, hospedarias, pousadas, albergues, casas de cômodos, divisão A-3 com mais de 16 leitos' },
+                { cod: 'B-2', desc: 'Hotel residencial', exemplos: 'Hotéis e assemelhados com cozinha própria nos apartamentos (incluem-se apart-hotéis, flats, hotéis residenciais)' }
+            ]
+        },
+        {
+            codigo: 'C',
+            nome: 'Comercial',
+            divisoes: [
+                { cod: 'C-1', desc: 'Comércio com baixa carga de incêndio', exemplos: 'Artigos de metal, louças, artigos hospitalares e outros' },
+                { cod: 'C-2', desc: 'Comércio com média e alta carga de incêndio', exemplos: 'Edifícios de lojas de departamentos, magazines, armarinhos, galerias comerciais, supermercados em geral, mercados e outros' },
+                { cod: 'C-3', desc: 'Shopping centers', exemplos: 'Centro de compras em geral (shopping centers)' }
+            ]
+        },
+        {
+            codigo: 'D',
+            nome: 'Serviço profissional',
+            divisoes: [
+                { cod: 'D-1', desc: 'Local para prestação de serviço profissional ou condução de negócios', exemplos: 'Escritórios administrativos ou técnicos, instituições financeiras (que não estejam incluídas em D-2), repartições públicas, cabeleireiros, centros profissionais e assemelhados' },
+                { cod: 'D-2', desc: 'Agência bancária', exemplos: 'Agências bancárias e assemelhados' },
+                { cod: 'D-3', desc: 'Serviço de reparação (exceto os classificados em G-4)', exemplos: 'Lavanderias, assistência técnica, reparação e manutenção de aparelhos eletrodomésticos, chaveiros, pintura de letreiros e outros' },
+                { cod: 'D-4', desc: 'Laboratório', exemplos: 'Laboratórios de análises clínicas sem internação, laboratórios químicos, fotográficos e assemelhados' }
+            ]
+        },
+        {
+            codigo: 'E',
+            nome: 'Educacional e cultura física',
+            divisoes: [
+                { cod: 'E-1', desc: 'Escola em geral', exemplos: 'Escolas de primeiro, segundo e terceiro graus, cursos supletivos e pré-universitário e assemelhados' },
+                { cod: 'E-2', desc: 'Escola especial', exemplos: 'Escolas de artes e artesanato, de línguas, de cultura geral, de cultura estrangeira, escolas religiosas e assemelhados' },
+                { cod: 'E-3', desc: 'Espaço para cultura física', exemplos: 'Locais de ensino e/ou práticas de artes marciais, natação, ginástica (artística, dança, musculação e outros) esportes coletivos (tênis, futebol e outros que não estejam incluídos em F-3), sauna, casas de fisioterapia e assemelhados. Sem arquibancadas.' },
+                { cod: 'E-4', desc: 'Centro de treinamento profissional', exemplos: 'Escolas profissionais em geral' },
+                { cod: 'E-5', desc: 'Pré-escola', exemplos: 'Creches, escolas maternais, jardins de Infância' },
+                { cod: 'E-6', desc: 'Escola para portadores de deficiências', exemplos: 'Escolas para excepcionais, deficientes visuais e auditivos e assemelhados' }
+            ]
+        },
+        {
+            codigo: 'F',
+            nome: 'Local de Reunião de Público',
+            divisoes: [
+                { cod: 'F-1', desc: 'Local onde há objeto de valor inestimável', exemplos: 'Museus, centro de documentos históricos, galerias de arte, bibliotecas e assemelhados' },
+                { cod: 'F-2', desc: 'Local religioso e velório', exemplos: 'Igrejas, capelas, sinagogas, mesquitas, templos, cemitérios, crematórios, necrotérios, salas de funerais e assemelhados' },
+                { cod: 'F-3', desc: 'Centro esportivo e de exibição', exemplos: 'Arenas em geral, estádios, ginásios, piscinas, rodeios, autódromos, sambódromos, pista de patinação e assemelhados. Todos com arquibancadas' },
+                { cod: 'F-4', desc: 'Estação e terminal de passageiro', exemplos: 'Estações rodoferroviárias e marítimas, portos, metrô, aeroportos, heliponto, estações de transbordo em geral e assemelhados' },
+                { cod: 'F-5', desc: 'Arte cênica e auditório', exemplos: 'Teatros em geral, cinemas, óperas, auditórios de estúdios de rádio e televisão, auditórios em geral e assemelhados' },
+                { cod: 'F-6', desc: 'Clubes sociais e diversão', exemplos: 'Boates, clubes em geral, salões de baile, restaurantes dançantes, clubes sociais, bingo, bilhares, tiro ao alvo, boliche e assemelhados' },
+                { cod: 'F-7', desc: 'Construção provisória', exemplos: 'Circos e assemelhados' },
+                { cod: 'F-8', desc: 'Local para refeição', exemplos: 'Restaurantes, lanchonetes, bares, cafés, refeitórios, cantinas e assemelhados' },
+                { cod: 'F-9', desc: 'Recreação pública', exemplos: 'Jardim zoológico, parques recreativos e assemelhados' },
+                { cod: 'F-10', desc: 'Exposição de objetos ou animais', exemplos: 'Salões e salas para exposição de objetos ou animais. Edificações permanentes' }
+            ]
+        },
+        {
+            codigo: 'G',
+            nome: 'Serviço automotivo e assemelhados',
+            divisoes: [
+                { cod: 'G-1', desc: 'Garagem sem acesso de público e sem abastecimento', exemplos: 'Garagens automáticas, garagens com manobristas' },
+                { cod: 'G-2', desc: 'Garagem com acesso de público e sem abastecimento', exemplos: 'Garagens coletivas sem automação, em geral, sem abastecimento (exceto veículos de carga e coletivos)' },
+                { cod: 'G-3', desc: 'Local dotado de abastecimento de combustível', exemplos: 'Postos de abastecimento e serviço, garagens (exceto veículos de carga e coletivos)' },
+                { cod: 'G-4', desc: 'Serviço de conservação, manutenção e reparos', exemplos: 'Oficinas de conserto de veículos, borracharia (sem recauchutagem). Oficinas e garagens de veículos de carga e coletivos, máquinas agrícolas e rodoviárias, retificadoras de motores' },
+                { cod: 'G-5', desc: 'Hangares', exemplos: 'Abrigos para aeronaves com ou sem abastecimento' }
+            ]
+        },
+        {
+            codigo: 'H',
+            nome: 'Serviço de saúde e institucional',
+            divisoes: [
+                { cod: 'H-1', desc: 'Hospital veterinário e assemelhados', exemplos: 'Hospitais, clínicas e consultórios veterinários e assemelhados (inclui-se alojamento com ou sem adestramento)' },
+                { cod: 'H-2', desc: 'Local onde pessoas requerem cuidados especiais por limitações físicas ou mentais', exemplos: 'Asilos, orfanatos, abrigos geriátricos, hospitais psiquiátricos, reformatórios, tratamento de dependentes de drogas, álcool. E assemelhados. Todos sem celas' },
+                { cod: 'H-3', desc: 'Hospital e assemelhado', exemplos: 'Hospitais, casa de saúde, prontos-socorros, clínicas com internação, ambulatórios e postos de atendimento de urgência, postos de saúde e puericultura e assemelhados com internação' },
+                { cod: 'H-4', desc: 'Edificações das forças armadas e policiais', exemplos: 'Quartéis, delegacias, postos policiais e assemelhados' },
+                { cod: 'H-5', desc: 'Local onde a liberdade das pessoas sofre restrições', exemplos: 'Hospitais psiquiátricos, manicômios, reformatórios, prisões em geral (casa de detenção, penitenciárias, presídios) e instituições assemelhadas. Todos com celas' },
+                { cod: 'H-6', desc: 'Clínica e consultório médico e odontológico', exemplos: 'Clínicas médicas, consultórios em geral, unidades de hemodiálise, ambulatórios e assemelhados. Todos sem internação' }
+            ]
+        },
+        {
+            codigo: 'I',
+            nome: 'Indústria',
+            divisoes: [
+                { cod: 'I-1', desc: 'Baixo potencial de incêndio (≤300 MJ/m²)', exemplos: 'Aço, aparelhos de rádio e som, armas, artigos de metal, gesso, esculturas de pedra, ferramentas, jóias, relógios, sabão, serralheria, suco de frutas, louças, máquinas' },
+                { cod: 'I-2', desc: 'Médio potencial de incêndio (300-1.200 MJ/m²)', exemplos: 'Artigos de vidro, automóveis, bebidas destiladas, instrumentos musicais, móveis, alimentos, marcenarias, fábricas de caixas' },
+                { cod: 'I-3', desc: 'Alto risco de incêndio (>1.200 MJ/m²)', exemplos: 'Atividades industriais que envolvam inflamáveis, materiais oxidantes, ceras, espuma sintética, grãos, tintas, borracha, processamento de lixo' }
+            ]
+        },
+        {
+            codigo: 'J',
+            nome: 'Depósito',
+            divisoes: [
+                { cod: 'J-1', desc: 'Depósitos de material incombustível', exemplos: 'Edificações sem processo industrial que armazenam tijolos, pedras, areias, cimentos, metais e outros materiais incombustíveis. Todos sem embalagem' },
+                { cod: 'J-2', desc: 'Todo tipo de Depósito (até 300 MJ/m²)', exemplos: 'Depósitos com carga de incêndio até 300 MJ/m²' },
+                { cod: 'J-3', desc: 'Todo tipo de Depósito (300-1.200 MJ/m²)', exemplos: 'Depósitos com carga de incêndio entre 300 a 1.200 MJ/m²' },
+                { cod: 'J-4', desc: 'Todo tipo de Depósito (>1.200 MJ/m²)', exemplos: 'Depósitos onde a carga de incêndio ultrapassa a 1.200 MJ/m²' }
+            ]
+        },
+        {
+            codigo: 'L',
+            nome: 'Explosivo',
+            divisoes: [
+                { cod: 'L-1', desc: 'Comércio', exemplos: 'Comércio em geral de fogos de artifício e assemelhados' },
+                { cod: 'L-2', desc: 'Indústria', exemplos: 'Indústria de material explosivo' },
+                { cod: 'L-3', desc: 'Depósito', exemplos: 'Depósito de material explosivo' }
+            ]
+        },
+        {
+            codigo: 'M',
+            nome: 'Especial',
+            divisoes: [
+                { cod: 'M-1', desc: 'Túnel', exemplos: 'Túnel rodoferroviário e marítimo, destinados a transporte de passageiros ou cargas diversas' },
+                { cod: 'M-2', desc: 'Líquido ou gás inflamáveis ou combustíveis', exemplos: 'Edificação destinada a produção, manipulação, armazenamento e distribuição de líquidos ou gases inflamáveis ou combustíveis' },
+                { cod: 'M-3', desc: 'Central de comunicação e energia', exemplos: 'Central telefônica, centros de comunicação, centrais de transmissão ou de distribuição de energia e assemelhados' },
+                { cod: 'M-4', desc: 'Propriedade em transformação', exemplos: 'Locais em construção ou demolição e assemelhados' },
+                { cod: 'M-5', desc: 'Silos', exemplos: 'Armazéns de grãos e assemelhados' },
+                { cod: 'M-6', desc: 'Terra selvagem', exemplos: 'Floresta, reserva ecológica, parque florestal e assemelhados' },
+                { cod: 'M-7', desc: 'Pátio de contêineres', exemplos: 'Área aberta destinada a armazenamento de contêineres' }
+            ]
+        }
+    ],
+
+    // TABELA 2 - CLASSIFICAÇÃO POR ALTURA (CORRIGIDA)
+    tabela2: [
+        { tipo: 'I', denominacao: 'Térrea', alturaMin: 0, alturaMax: 1, descricao: 'Um pavimento' },
+        { tipo: 'II', denominacao: 'Baixa', alturaMin: 1, alturaMax: 6, descricao: 'H ≤ 6,00 m' },
+        { tipo: 'III', denominacao: 'Baixa-Média', alturaMin: 6, alturaMax: 12, descricao: '6,00 m < H ≤ 12,00 m' },
+        { tipo: 'IV', denominacao: 'Média', alturaMin: 12, alturaMax: 23, descricao: '12,00 m < H ≤ 23,00 m' },
+        { tipo: 'V', denominacao: 'Mediamente Alta', alturaMin: 23, alturaMax: 30, descricao: '23,00 m < H ≤ 30,00 m' },
+        { tipo: 'VI', denominacao: 'Alta', alturaMin: 30, alturaMax: 9999, descricao: 'Acima de 30,00 m' }
+    ],
+
+    // TABELA 3 - CLASSIFICAÇÃO POR CARGA DE INCÊNDIO (CORRIGIDA)
+    tabela3: [
+        { nivel: 'Baixo', cargaMin: 0, cargaMax: 300, descricao: 'até 300 MJ/m²' },
+        { nivel: 'Médio', cargaMin: 300, cargaMax: 1200, descricao: 'Entre 300 e 1.200 MJ/m²' },
+        { nivel: 'Alto', cargaMin: 1200, cargaMax: 99999, descricao: 'Acima de 1.200 MJ/m²' }
+    ],
+
+    // MEDIDAS DE SEGURANÇA (BASE)
+    medidasSeguranca: [
+        { codigo: 'MS01', nome: 'Acesso de Viatura na Edificação', categoria: 'Acesso' },
+        { codigo: 'MS02', nome: 'Segurança Estrutural contra Incêndio', categoria: 'Estrutural' },
+        { codigo: 'MS03', nome: 'Compartimentação Horizontal', categoria: 'Compartimentação' },
+        { codigo: 'MS04', nome: 'Compartimentação Vertical', categoria: 'Compartimentação' },
+        { codigo: 'MS05', nome: 'Controle de Materiais de Acabamento', categoria: 'Prevenção' },
+        { codigo: 'MS06', nome: 'Saídas de Emergência', categoria: 'Evacuação' },
+        { codigo: 'MS07', nome: 'Plano de Emergência', categoria: 'Gestão' },
+        { codigo: 'MS08', nome: 'Brigada de Incêndio', categoria: 'Gestão' },
+        { codigo: 'MS09', nome: 'Iluminação de Emergência', categoria: 'Sinalização' },
+        { codigo: 'MS10', nome: 'Detecção de Incêndio', categoria: 'Detecção' },
+        { codigo: 'MS11', nome: 'Alarme de Incêndio', categoria: 'Detecção' },
+        { codigo: 'MS12', nome: 'Sinalização de Emergência', categoria: 'Sinalização' },
+        { codigo: 'MS13', nome: 'Extintores', categoria: 'Combate' },
+        { codigo: 'MS14', nome: 'Hidrante e Mangotinhos', categoria: 'Combate' },
+        { codigo: 'MS15', nome: 'Chuveiros Automáticos (Sprinklers)', categoria: 'Combate' },
+        { codigo: 'MS16', nome: 'Controle de Fumaça', categoria: 'Proteção' },
+        { codigo: 'MS17', nome: 'Elevador de Emergência', categoria: 'Evacuação' },
+        { codigo: 'MS18', nome: 'Sistema de Espuma', categoria: 'Combate' },
+        { codigo: 'MS19', nome: 'SPDA (Proteção contra Descargas Atmosféricas)', categoria: 'Proteção' },
+        { codigo: 'MS20', nome: 'Controle de Fontes de Ignição', categoria: 'Prevenção' }
+    ],
+
+    // TABELA 8 - MULTAS (CORRIGIDA)
+    tabela8: [
+        { areaCategoria: 'pequena', areaMax: 750, alturaMax: 12, carga: 'Baixo', tipo1: 400, tipo2: 380, tipo3: 340, tipo4: 360, tipo5: 400 },
+        { areaCategoria: 'pequena', areaMax: 750, alturaMax: 12, carga: 'Médio', tipo1: 550, tipo2: 522.5, tipo3: 467.5, tipo4: 495, tipo5: 550 },
+        { areaCategoria: 'pequena', areaMax: 750, alturaMax: 12, carga: 'Alto', tipo1: 700, tipo2: 665, tipo3: 595, tipo4: 630, tipo5: 700 },
+        { areaCategoria: 'media', areaMin: 750, areaMax: 5000, alturaMin: 12, alturaMax: 30, carga: 'Baixo', tipo1: 850, tipo2: 807.5, tipo3: 722.5, tipo4: 765, tipo5: 850 },
+        { areaCategoria: 'media', areaMin: 750, areaMax: 5000, alturaMin: 12, alturaMax: 30, carga: 'Médio', tipo1: 1000, tipo2: 950, tipo3: 850, tipo4: 900, tipo5: 1000 },
+        { areaCategoria: 'media', areaMin: 750, areaMax: 5000, alturaMin: 12, alturaMax: 30, carga: 'Alto', tipo1: 1150, tipo2: 1092.5, tipo3: 977.5, tipo4: 1035, tipo5: 1150 },
+        { areaCategoria: 'grande', areaMin: 5000, alturaMin: 30, carga: 'Baixo', tipo1: 1300, tipo2: 1235, tipo3: 1105, tipo4: 1170, tipo5: 1300 },
+        { areaCategoria: 'grande', areaMin: 5000, alturaMin: 30, carga: 'Médio', tipo1: 1450, tipo2: 1377.5, tipo3: 1232.5, tipo4: 1305, tipo5: 1450 },
+        { areaCategoria: 'grande', areaMin: 5000, alturaMin: 30, carga: 'Alto', tipo1: 1600, tipo2: 1520, tipo3: 1360, tipo4: 1440, tipo5: 1600 }
+    ]
+};
+
+// ============================================================================
+// FUNÇÕES DE CLASSIFICAÇÃO
+// ============================================================================
+
+function getClassificacaoAltura(altura) {
+    // CORREÇÃO: Limites corretos conforme Tabela 2
+    if (altura <= 1) return DB.tabela2[0]; // Térrea
+    if (altura <= 6) return DB.tabela2[1]; // Baixa
+    if (altura <= 12) return DB.tabela2[2]; // Baixa-Média
+    if (altura <= 23) return DB.tabela2[3]; // Média
+    if (altura <= 30) return DB.tabela2[4]; // Mediamente Alta
+    return DB.tabela2[5]; // Alta
+}
+
+function getClassificacaoCarga(carga) {
+    // CORREÇÃO: Limites corretos conforme Tabela 3
+    if (carga <= 300) return DB.tabela3[0]; // Baixo
+    if (carga <= 1200) return DB.tabela3[1]; // Médio
+    return DB.tabela3[2]; // Alto
+}
+
+function getCategoriaArea(altura, area) {
+    // CORREÇÃO: Lógica correta para categoria de área/altura
+    if (area <= 750 && altura <= 12) return 'pequena';
+    if (area <= 5000 || altura <= 30) return 'media';
+    return 'grande';
+}
+
+// ============================================================================
+// MATRIZ DE MEDIDAS DE SEGURANÇA POR GRUPO
+// ============================================================================
+
+function getMedidasPorGrupo(grupo, divisao, alturaCat, cargaCat, area) {
+    let medidas = [];
+    const altura = alturaCat.tipo;
+    const isAlta = (altura === 'V' || altura === 'VI');
+    const isMedia = (altura === 'IV');
+    const isGrandeArea = (area > 750);
+
+    // MEDIDAS BÁSICAS (Tabela 5 - Todas as edificações)
+    medidas.push({ codigo: 'MS06', nome: 'Saídas de Emergência', obrigatorio: true });
+    medidas.push({ codigo: 'MS09', nome: 'Iluminação de Emergência', obrigatorio: true });
+    medidas.push({ codigo: 'MS12', nome: 'Sinalização de Emergência', obrigatorio: true });
+    medidas.push({ codigo: 'MS13', nome: 'Extintores', obrigatorio: true });
+    medidas.push({ codigo: 'MS08', nome: 'Brigada de Incêndio', obrigatorio: true });
+    medidas.push({ codigo: 'MS20', nome: 'Controle de Fontes de Ignição', obrigatorio: true });
+    medidas.push({ codigo: 'MS19', nome: 'SPDA', obrigatorio: true, nota: 'Conforme normas técnicas oficiais' });
+
+    // MEDIDAS POR ALTURA (Tabelas 6A-6M.5)
+    if (altura !== 'I' && altura !== 'II') {
+        medidas.push({ codigo: 'MS01', nome: 'Acesso de Viatura', obrigatorio: true });
+        medidas.push({ codigo: 'MS02', nome: 'Segurança Estrutural', obrigatorio: true });
+    }
+
+    if (isMedia || isAlta) {
+        medidas.push({ codigo: 'MS04', nome: 'Compartimentação Vertical', obrigatorio: true });
+    }
+
+    if (isAlta) {
+        medidas.push({ codigo: 'MS03', nome: 'Compartimentação Horizontal', obrigatorio: true });
+        medidas.push({ codigo: 'MS16', nome: 'Controle de Fumaça', obrigatorio: true });
+    }
+
+    if (altura === 'VI') {
+        medidas.push({ codigo: 'MS17', nome: 'Elevador de Emergência', obrigatorio: true, nota: 'Para altura > 60m' });
+    }
+
+    // MEDIDAS POR ÁREA
+    if (isGrandeArea) {
+        medidas.push({ codigo: 'MS14', nome: 'Hidrante e Mangotinhos', obrigatorio: true });
+        medidas.push({ codigo: 'MS11', nome: 'Alarme de Incêndio', obrigatorio: true });
+    }
+
+    // MEDIDAS POR CARGA DE INCÊNDIO
+    if (cargaCat.nivel === 'Médio' || cargaCat.nivel === 'Alto') {
+        medidas.push({ codigo: 'MS05', nome: 'Controle de Materiais de Acabamento', obrigatorio: true });
+    }
+
+    if (cargaCat.nivel === 'Alto') {
+        medidas.push({ codigo: 'MS10', nome: 'Detecção de Incêndio', obrigatorio: true });
+        medidas.push({ codigo: 'MS15', nome: 'Chuveiros Automáticos', obrigatorio: true });
+    }
+
+    // MEDIDAS ESPECÍFICAS POR GRUPO
+    medidas = medidas.concat(getMedidasEspecificasGrupo(grupo, divisao, altura, area));
+
+    // Remover duplicatas
+    return removerDuplicatas(medidas);
+}
+
+function getMedidasEspecificasGrupo(grupo, divisao, altura, area) {
+    let medidas = [];
+
+    // GRUPO A - Residencial
+    if (grupo === 'A') {
+        if (altura === 'VI') {
+            medidas.push({ codigo: 'MS15', nome: 'Chuveiros Automáticos', obrigatorio: true });
+        }
+        if (area > 750) {
+            medidas.push({ codigo: 'MS11', nome: 'Alarme de Incêndio', obrigatorio: true, nota: 'Pode ser substituído por interfone' });
+        }
+    }
+
+    // GRUPO B - Hospedagem
+    if (grupo === 'B') {
+        medidas.push({ codigo: 'MS05', nome: 'Controle de Materiais', obrigatorio: true });
+        if (altura === 'IV' || altura === 'V' || altura === 'VI') {
+            medidas.push({ codigo: 'MS10', nome: 'Detecção de Incêndio', obrigatorio: true, nota: 'Em todos os quartos' });
+        }
+        if (altura === 'V' || altura === 'VI') {
+            medidas.push({ codigo: 'MS15', nome: 'Chuveiros Automáticos', obrigatorio: true });
+            medidas.push({ codigo: 'MS07', nome: 'Plano de Emergência', obrigatorio: true });
+        }
+    }
+
+    // GRUPO C - Comercial
+    if (grupo === 'C') {
+        medidas.push({ codigo: 'MS05', nome: 'Controle de Materiais', obrigatorio: true });
+        medidas.push({ codigo: 'MS10', nome: 'Detecção de Incêndio', obrigatorio: true });
+        medidas.push({ codigo: 'MS07', nome: 'Plano de Emergência', obrigatorio: true, nota: 'Especialmente para C-3 (Shopping)' });
+        if (altura === 'V' || altura === 'VI') {
+            medidas.push({ codigo: 'MS15', nome: 'Chuveiros Automáticos', obrigatorio: true });
+        }
+    }
+
+    // GRUPO D - Serviços Profissionais
+    if (grupo === 'D') {
+        medidas.push({ codigo: 'MS05', nome: 'Controle de Materiais', obrigatorio: true });
+        if (altura === 'VI') {
+            medidas.push({ codigo: 'MS10', nome: 'Detecção de Incêndio', obrigatorio: true });
+            medidas.push({ codigo: 'MS15', nome: 'Chuveiros Automáticos', obrigatorio: true });
+            medidas.push({ codigo: 'MS07', nome: 'Plano de Emergência', obrigatorio: true });
+        }
+    }
+
+    // GRUPO E - Educacional
+    if (grupo === 'E') {
+        medidas.push({ codigo: 'MS05', nome: 'Controle de Materiais', obrigatorio: true });
+        if (divisao === 'E-5' || divisao === 'E-6') {
+            medidas.push({ codigo: 'MS10', nome: 'Detecção de Incêndio', obrigatorio: true, nota: 'Prioritário para E-5 e E-6' });
+        }
+        if (altura === 'V' || altura === 'VI') {
+            medidas.push({ codigo: 'MS15', nome: 'Chuveiros Automáticos', obrigatorio: true });
+            medidas.push({ codigo: 'MS07', nome: 'Plano de Emergência', obrigatorio: true });
+        }
+    }
+
+    // GRUPO F - Reunião de Público
+    if (grupo === 'F') {
+        medidas.push({ codigo: 'MS05', nome: 'Controle de Materiais', obrigatorio: true });
+        medidas.push({ codigo: 'MS07', nome: 'Plano de Emergência', obrigatorio: true, nota: 'Público > 1000 pessoas' });
+        
+        if (['F-1', 'F-5'].includes(divisao)) {
+            medidas.push({ codigo: 'MS10', nome: 'Detecção de Incêndio', obrigatorio: true });
+        }
+        
+        if (['F-3', 'F-4'].includes(divisao) && area > 10000) {
+            medidas.push({ codigo: 'MS15', nome: 'Chuveiros Automáticos', obrigatorio: true });
+        }
+        
+        if (altura === 'V' || altura === 'VI') {
+            medidas.push({ codigo: 'MS15', nome: 'Chuveiros Automáticos', obrigatorio: true });
+        }
+    }
+
+    // GRUPO G - Automotivo
+    if (grupo === 'G') {
+        if (['G-3', 'G-4'].includes(divisao)) {
+            medidas.push({ codigo: 'MS18', nome: 'Sistema de Espuma', obrigatorio: true, nota: 'Para líquidos inflamáveis' });
+        }
+        if (divisao === 'G-5' && area > 2000) {
+            medidas.push({ codigo: 'MS18', nome: 'Sistema de Espuma', obrigatorio: true, nota: 'Fixo para área > 5000m²' });
+        }
+    }
+
+    // GRUPO H - Saúde
+    if (grupo === 'H') {
+        medidas.push({ codigo: 'MS05', nome: 'Controle de Materiais', obrigatorio: true });
+        
+        if (['H-2', 'H-3', 'H-5'].includes(divisao)) {
+            medidas.push({ codigo: 'MS10', nome: 'Detecção de Incêndio', obrigatorio: true, nota: 'Em todos os quartos' });
+        }
+        
+        if (divisao === 'H-3') {
+            medidas.push({ codigo: 'MS07', nome: 'Plano de Emergência', obrigatorio: true });
+        }
+        
+        if (altura === 'VI') {
+            medidas.push({ codigo: 'MS15', nome: 'Chuveiros Automáticos', obrigatorio: true });
+        }
+    }
+
+    // GRUPO I - Indústria
+    if (grupo === 'I') {
+        if (divisao === 'I-3') {
+            medidas.push({ codigo: 'MS10', nome: 'Detecção de Incêndio', obrigatorio: true });
+            medidas.push({ codigo: 'MS15', nome: 'Chuveiros Automáticos', obrigatorio: true });
+            medidas.push({ codigo: 'MS07', nome: 'Plano de Emergência', obrigatorio: true });
+        }
+        if (divisao === 'I-2' && altura !== 'I' && altura !== 'II') {
+            medidas.push({ codigo: 'MS10', nome: 'Detecção de Incêndio', obrigatorio: true });
+        }
+    }
+
+    // GRUPO J - Depósito
+    if (grupo === 'J') {
+        if (['J-3', 'J-4'].includes(divisao)) {
+            medidas.push({ codigo: 'MS10', nome: 'Detecção de Incêndio', obrigatorio: true });
+            medidas.push({ codigo: 'MS15', nome: 'Chuveiros Automáticos', obrigatorio: true });
+            medidas.push({ codigo: 'MS07', nome: 'Plano de Emergência', obrigatorio: true });
+        }
+        if (divisao === 'J-2' && altura !== 'I' && altura !== 'II') {
+            medidas.push({ codigo: 'MS11', nome: 'Alarme de Incêndio', obrigatorio: true });
+        }
+    }
+
+    // GRUPO L - Explosivo
+    if (grupo === 'L') {
+        medidas.push({ codigo: 'MS10', nome: 'Detecção de Incêndio', obrigatorio: true });
+        medidas.push({ codigo: 'MS15', nome: 'Chuveiros Automáticos', obrigatorio: true });
+        medidas.push({ codigo: 'MS07', nome: 'Plano de Emergência', obrigatorio: true });
+        medidas.push({ codigo: 'MS18', nome: 'Sistema de Espuma', obrigatorio: true, nota: 'Conforme IT-30' });
+    }
+
+    // GRUPO M - Especial
+    if (grupo === 'M') {
+        medidas.push({ codigo: 'MS07', nome: 'Plano de Emergência', obrigatorio: true });
+        
+        if (divisao === 'M-2') {
+            medidas.push({ codigo: 'MS18', nome: 'Sistema de Espuma', obrigatorio: true });
+            medidas.push({ codigo: 'MS10', nome: 'Detecção de Incêndio', obrigatorio: true });
+        }
+        
+        if (divisao === 'M-3') {
+            medidas.push({ codigo: 'MS10', nome: 'Detecção de Incêndio', obrigatorio: true });
+            if (altura === 'IV' || altura === 'V' || altura === 'VI') {
+                medidas.push({ codigo: 'MS15', nome: 'Chuveiros Automáticos', obrigatorio: true, nota: 'Pode ser substituído por sistema de gases' });
+            }
+        }
+        
+        if (divisao === 'M-5') {
+            medidas.push({ codigo: 'MS15', nome: 'Chuveiros Automáticos', obrigatorio: true, nota: 'Conforme IT-27' });
+            medidas.push({ codigo: 'MS20', nome: 'Controle de Fontes de Ignição', obrigatorio: true, nota: 'Controle de pós' });
+        }
+    }
+
+    return medidas;
+}
+
+function removerDuplicatas(medidas) {
+    const seen = new Set();
+    return medidas.filter(m => {
+        if (seen.has(m.codigo)) return false;
+        seen.add(m.codigo);
+        return true;
+    });
+}
+
+// ============================================================================
+// TABELA 7 - SUBSOLOS
+// ============================================================================
+
+function getExigenciasSubsolo(areaSubsolo, nivelSubsolo, divisao) {
+    const area = parseFloat(areaSubsolo) || 0;
+    const ehPrimeiroSegundo = (nivelSubsolo === 'primeiro_segundo');
+    const exigencias = [];
+
+    // CORREÇÃO: Lógica completa da Tabela 7
+    if (area <= 50) {
+        exigencias.push('Sem exigências adicionais específicas além das básicas.');
+    } else if (area > 50 && area <= 100) {
+        if (ehPrimeiroSegundo) {
+            if (divisao.startsWith('J')) {
+                exigencias.push('Depósitos individuais com área máxima até 5m² cada, OU');
+                exigencias.push('Depósitos individuais até 25m² com detecção automática, OU');
+                exigencias.push('Chuveiros automáticos de resposta rápida, OU');
+                exigencias.push('Controle de fumaça.');
+            } else if (['F-1', 'F-2', 'F-3', 'F-5', 'F-6', 'F-10'].includes(divisao)) {
+                exigencias.push('Ambientes subdivididos com área máxima até 50m² e detecção automática, OU');
+                exigencias.push('Chuveiros automáticos de resposta rápida, OU');
+                exigencias.push('Controle de fumaça.');
+            } else {
+                exigencias.push('Ambientes subdivididos com área máxima até 50m² e detecção automática, OU');
+                exigencias.push('Chuveiros automáticos de resposta rápida, OU');
+                exigencias.push('Controle de fumaça.');
+            }
+        } else {
+            exigencias.push('Depósitos individuais com área máxima até 5m² cada, OU');
+            exigencias.push('Depósitos individuais até 25m² com detecção automática, OU');
+            exigencias.push('Chuveiros automáticos de resposta rápida, OU');
+            exigencias.push('Controle de fumaça.');
+        }
+    } else if (area > 100 && area <= 250) {
+        if (ehPrimeiroSegundo) {
+            exigencias.push('Detecção automática de incêndio e exaustão, OU');
+            exigencias.push('Chuveiros automáticos de resposta rápida e exaustão, OU');
+            exigencias.push('Controle de fumaça.');
+        } else {
+            exigencias.push('Detecção automática de incêndio em todo o subsolo, exaustão e duas saídas de emergência, OU');
+            exigencias.push('Chuveiros automáticos de resposta rápida e exaustão, OU');
+            exigencias.push('Controle de fumaça.');
+        }
+    } else if (area > 250 && area <= 500) {
+        exigencias.push('Detecção automática de incêndio em todo o subsolo e exaustão, OU');
+        exigencias.push('Chuveiros automáticos de resposta rápida e exaustão, OU');
+        exigencias.push('Controle de fumaça.');
+        if (ehPrimeiroSegundo && ['F-1', 'F-2', 'F-3', 'F-5', 'F-6', 'F-10'].includes(divisao)) {
+            exigencias.push('Duas saídas de emergência em lados opostos.');
+        }
+    } else if (area > 500) {
+        exigencias.push('⚠️ OBRIGATÓRIO: Chuveiros automáticos de resposta rápida E detecção automática de incêndio em todo o subsolo');
+        exigencias.push('⚠️ OBRIGATÓRIO: Duas saídas de emergência em lados opostos');
+        exigencias.push('⚠️ OBRIGATÓRIO: Controle de fumaça');
+    }
+
+    return exigencias;
+}
+
+// ============================================================================
+// TABELA 8 - MULTAS
+// ============================================================================
+
+function calcularMulta(altura, area, cargaNivel) {
+    const categoria = getCategoriaArea(altura, area);
+    
+    // CORREÇÃO: Busca correta na Tabela 8
+    let multa = DB.tabela8.find(m => {
+        if (categoria === 'pequena') {
+            return m.areaCategoria === 'pequena' && m.carga === cargaNivel;
+        } else if (categoria === 'media') {
+            return m.areaCategoria === 'media' && m.carga === cargaNivel;
+        } else {
+            return m.areaCategoria === 'grande' && m.carga === cargaNivel;
+        }
+    });
+
+    return multa ? multa.tipo1 : 850; // Valor padrão se não encontrar
+}
+
+// ============================================================================
+// FUNÇÕES DE INTERFACE
+// ============================================================================
+
+window.onload = function() {
+    carregarGruposOcupacao();
+    
+    document.getElementById('scipForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        processarClassificacao();
+    });
+};
+
+function carregarGruposOcupacao() {
+    const select = document.getElementById('grupoOcupacao');
+    DB.tabela1.forEach(grupo => {
+        const option = document.createElement('option');
+        option.value = grupo.codigo;
+        option.textContent = `${grupo.codigo} - ${grupo.nome}`;
+        select.appendChild(option);
+    });
+}
+
+function carregarDivisoes() {
+    const grupoCod = document.getElementById('grupoOcupacao').value;
+    const select = document.getElementById('divisaoOcupacao');
+    select.innerHTML = '<option value="">Selecione a divisão...</option>';
+    
+    if (!grupoCod) {
+        select.disabled = true;
+        return;
+    }
+
+    const grupo = DB.tabela1.find(g => g.codigo === grupoCod);
+    if (grupo) {
+        grupo.divisoes.forEach(div => {
+            const option = document.createElement('option');
+            option.value = div.cod;
+            option.textContent = `${div.cod} - ${div.desc}`;
+            select.appendChild(option);
+        });
+        select.disabled = false;
+    }
+}
+
+function toggleSubsolo() {
+    const possui = document.getElementById('possuiSubsolo').value === 'sim';
+    document.getElementById('areaSubsoloGroup').style.display = possui ? 'block' : 'none';
+    document.getElementById('nivelSubsoloGroup').style.display = possui ? 'block' : 'none';
+}
+
+function showTab(tabName) {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+    
+    event.target.classList.add('active');
+    document.getElementById(`tab-${tabName}`).classList.add('active');
+}
+
+function processarClassificacao() {
+    // Coleta de dados
+    const grupo = document.getElementById('grupoOcupacao').value;
+    const divisao = document.getElementById('divisaoOcupacao').value;
+    const altura = parseFloat(document.getElementById('altura').value);
+    const area = parseFloat(document.getElementById('area').value);
+    const carga = parseFloat(document.getElementById('cargaIncendio').value);
+    const possuiSubsolo = document.getElementById('possuiSubsolo').value === 'sim';
+    const areaSubsolo = parseFloat(document.getElementById('areaSubsolo').value) || 0;
+    const nivelSubsolo = document.getElementById('nivelSubsolo').value;
+    const tipoEdificacao = document.getElementById('tipoEdificacao').value;
+
+    // Validações
+    if (!grupo || !divisao) {
+        alert('❌ Selecione o grupo e divisão de ocupação!');
+        return;
+    }
+
+    if (isNaN(altura) || altura < 0) {
+        alert('❌ Altura inválida!');
+        return;
+    }
+
+    if (isNaN(area) || area < 0) {
+        alert('❌ Área inválida!');
+        return;
+    }
+
+    if (isNaN(carga) || carga < 0) {
+        alert('❌ Carga de incêndio inválida!');
+        return;
+    }
+
+    // Classificações
+    const catAltura = getClassificacaoAltura(altura);
+    const catCarga = getClassificacaoCarga(carga);
+
+    // Preencher resultados
+    const grupoData = DB.tabela1.find(g => g.codigo === grupo);
+    const divisaoData = grupoData.divisoes.find(d => d.cod === divisao);
+
+    document.getElementById('resGrupo').textContent = `${grupo} - ${grupoData.nome}`;
+    document.getElementById('resDivisao').textContent = `${divisao} - ${divisaoData.desc}`;
+    document.getElementById('resAltura').textContent = `${altura.toFixed(2)}m`;
+    document.getElementById('resCatAltura').textContent = `Cat. ${catAltura.tipo} (${catAltura.denominacao})`;
+    document.getElementById('resCarga').textContent = `${carga.toFixed(0)} MJ/m²`;
+    document.getElementById('resCatCarga').textContent = `${catCarga.nivel}`;
+    document.getElementById('resArea').textContent = `${area.toFixed(2)} m²`;
+    document.getElementById('resTipo').textContent = tipoEdificacao === 'nova' ? 'Nova Construção' : 'Existente';
+
+    // Gerar medidas
+    const medidas = getMedidasPorGrupo(grupo, divisao, catAltura, catCarga, area);
+    const tbody = document.getElementById('tabelaMedidas');
+    tbody.innerHTML = '';
+    
+    medidas.forEach((m, index) => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td>${index + 1}</td>
+            <td>${m.nome} ${m.nota ? '<br><small style="color:#666;">' + m.nota + '</small>' : ''}</td>
+            <td>${m.categoria || 'Geral'}</td>
+            <td class="mandatory">${m.obrigatorio ? '✅ Obrigatório' : '⚠️ Condicional'}</td>
+        `;
+        tbody.appendChild(tr);
+    });
+
+    // Subsolo
+    const boxSubsolo = document.getElementById('boxSubsolo');
+    const conteudoSubsolo = document.getElementById('conteudoSubsolo');
+    
+    if (possuiSubsolo) {
+        boxSubsolo.style.display = 'block';
+        const exigencias = getExigenciasSubsolo(areaSubsolo, nivelSubsolo, divisao);
+        conteudoSubsolo.innerHTML = `
+            <div class="alert-box alert-info">
+                <strong>Área do Subsolo:</strong> ${areaSubsolo.toFixed(2)} m² | 
+                <strong>Nível:</strong> ${nivelSubsolo === 'primeiro_segundo' ? 'Primeiro ou segundo' : 'Demais subsolos'}
+            </div>
+            <ul class="observation-list">
+                ${exigencias.map(e => `<li>${e}</li>`).join('')}
+            </ul>
+        `;
+    } else {
+        boxSubsolo.style.display = 'none';
+    }
+
+    // Multas
+    const valorMulta = calcularMulta(altura, area, catCarga.nivel);
+    document.getElementById('valorMulta').textContent = valorMulta.toLocaleString('pt-BR', {
+        style: 'currency',
+        currency: 'BRL'
+    });
+
+    // Observações
+    const observacoes = gerarObservacoes(grupo, divisao, catAltura, catCarga, area, possuiSubsolo, areaSubsolo);
+    const listaObs = document.getElementById('listaObservacoes');
+    listaObs.innerHTML = observacoes.map(obs => `<li>${obs}</li>`).join('');
+
+    // Mostrar resultado
+    document.getElementById('resultado').style.display = 'block';
+    document.getElementById('resultado').scrollIntoView({ behavior: 'smooth' });
+}
+
+function gerarObservacoes(grupo, divisao, catAltura, catCarga, area, possuiSubsolo, areaSubsolo) {
+    const obs = [];
+
+    if (catAltura.tipo === 'VI') {
+        obs.push('Edificação ALTA (>30m): Exige projeto técnico detalhado e aprovação prévia do CBMBA.');
+    }
+    
+    if (catAltura.tipo === 'V' || catAltura.tipo === 'VI') {
+        obs.push('Altura >23m: Necessário elevador de emergência para altura >60m (Art. 22).');
+    }
+
+    if (catCarga.nivel === 'Alto') {
+        obs.push('Carga de incêndio ALTA (>1.200 MJ/m²): Necessário cálculo por engenheiro habilitado e sistema de chuveiros automáticos.');
+    }
+
+    if (area > 5000) {
+        obs.push('Grande área (>5.000m²): Pode exigir medidas compensatórias adicionais conforme IT específica.');
+    }
+
+    if (grupo === 'F') {
+        obs.push('Local de reunião de público: Obrigatória explanação ao público sobre saídas de emergência antes de cada evento.');
+    }
+
+    if (['H-2', 'H-3', 'H-5'].includes(divisao)) {
+        obs.push('Saúde/Institucional: Detectores de incêndio obrigatórios em todos os quartos.');
+    }
+
+    if (possuiSubsolo && areaSubsolo > 500) {
+        obs.push('Subsolo >500m²: Exige chuveiros automáticos, detecção, 2 saídas em lados opostos e controle de fumaça (Tabela 7).');
+    }
+
+    if (grupo === 'L') {
+        obs.push('EXPLOSIVOS: Divisões L-2 e L-3 somente avaliadas mediante Comissão Técnica (Art. 17).');
+    }
+
+    if (area <= 100 && grupo === 'A') {
+        obs.push('Residencial ≤100m²: Pode estar dispensada de vistoria conforme IT de Projeto Técnico Simplificado (Art. 18).');
+    }
+
+    obs.push('AVCB tem validade de 12 meses (Art. 13, §4º).');
+    obs.push('Instalações elétricas e SPDA devem seguir normas técnicas oficiais (Art. 30).');
+
+    return obs;
+}
+
+function limparFormulario() {
+    document.getElementById('scipForm').reset();
+    document.getElementById('resultado').style.display = 'none';
+    document.getElementById('areaSubsoloGroup').style.display = 'none';
+    document.getElementById('nivelSubsoloGroup').style.display = 'none';
+    document.getElementById('divisaoOcupacao').disabled = true;
+    document.getElementById('divisaoOcupacao').innerHTML = '<option value="">Selecione o grupo primeiro...</option>';
+}
+
+function exportarPDF() {
+    window.print();
+}
+</script>
+
+</body>
+</html>
