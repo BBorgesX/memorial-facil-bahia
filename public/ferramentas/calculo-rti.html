@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Seleção Automática - IT 22/2016</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      padding: 20px;
+      max-width: 800px;
+      margin: 0 auto;
+      background-color: #f5f7fa;
+      color: #333;
+    }
+    
+    h2 {
+      color: #2c3e50;
+      border-bottom: 2px solid #3498db;
+      padding-bottom: 10px;
+    }
+    
+    .form-group {
+      margin-bottom: 20px;
+      background: white;
+      padding: 15px;
+      border-radius: 8px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 600;
+      color: #2c3e50;
+    }
+    
+    select, input, button {
+      width: 100%;
+      padding: 10px;
+      margin: 5px 0;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 16px;
+    }
+    
+    select:focus, input:focus {
+      outline: none;
+      border-color: #3498db;
+      box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+    }
+    
+    button {
+      background-color: #3498db;
+      color: white;
+      border: none;
+      cursor: pointer;
+      font-weight: 600;
+      transition: background-color 0.3s;
+      padding: 12px;
+    }
+    
+    button:hover {
+      background-color: #2980b9;
+    }
+    
+    #resultado {
+      margin-top: 20px;
+      padding: 15px;
+      border-radius: 8px;
+      background: white;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      border-left: 4px solid #3498db;
+    }
+    
+    .result-item {
+      margin-bottom: 10px;
+      padding: 8px 0;
+    }
+    
+    .result-value {
+      font-weight: bold;
+      color: #2c3e50;
+    }
+    
+    .info-text {
+      font-size: 14px;
+      color: #7f8c8d;
+      margin-top: 5px;
+    }
+    
+    .error {
+      color: #e74c3c;
+      font-weight: bold;
+    }
+    
+    .success {
+      color: #27ae60;
+    }
+    
+    .warning {
+      color: #f39c12;
+    }
+    
+    .converted {
+      color: #9b59b6;
+      font-weight: bold;
+    }
+    
+    @media (max-width: 600px) {
+      body {
+        padding: 10px;
+      }
+      
+      .form-group {
+        padding: 10px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <h2>Sistema Automático - IT 22/2016</h2>
+
+  <div class="form-group">
+    <label for="divisao">Divisão de Ocupação:</label>
+    <select id="divisao">
+      <option value="">-- Selecione --</option>
+      <optgroup label="Grupo A - Residencial">
+        <option>A-1</option><option>A-2</option><option>A-3</option>
+      </optgroup>
+      <optgroup label="Grupo B - Hospedagem">
+        <option>B-1</option><option>B-2</option>
+      </optgroup>
+      <optgroup label="Grupo C - Comercial">
+        <option>C-1</option><option>C-2</option><option>C-3</option>
+      </optgroup>
+      <optgroup label="Grupo D - Serviço Profissional">
+        <option>D-1</option><option>D-2</option><option>D-3</option><option>D-4</option>
+      </optgroup>
+      <optgroup label="Grupo E - Educacional">
+        <option>E-1</option><option>E-2</option><option>E-3</option><option>E-4</option><option>E-5</option><option>E-6</option>
+      </optgroup>
+      <optgroup label="Grupo F - Reunião de Público">
+        <option>F-1</option><option>F-2</option><option>F-3</option><option>F-4</option>
+        <option>F-5</option><option>F-6</option><option>F-7</option><option>F-8</option>
+        <option>F-9</option><option>F-10</option><option>F-11</option>
+      </optgroup>
+      <optgroup label="Grupo G - Serviço Automotivo">
+        <option>G-1</option><option>G-2</option><option>G-3</option><option>G-4</option><option>G-5</option>
+      </optgroup>
+      <optgroup label="Grupo H - Saúde e Institucional">
+        <option>H-1</option><option>H-2</option><option>H-3</option><option>H-4</option><option>H-5</option><option>H-6</option>
+      </optgroup>
+      <optgroup label="Grupo I - Industrial">
+        <option>I-1</option><option>I-2</option><option>I-3</option>
+      </optgroup>
+      <optgroup label="Grupo J - Depósito">
+        <option>J-1</option><option>J-2</option><option>J-3</option><option>J-4</option>
+      </optgroup>
+      <optgroup label="Grupo L - Explosivos">
+        <option>L-1</option><option>L-2</option><option>L-3</option>
+      </optgroup>
+      <optgroup label="Grupo M - Especial">
+        <option>M-1</option><option>M-2</option><option>M-3</option>
+      </optgroup>
+    </select>
+  </div>
+
+  <div class="form-group">
+    <label for="densidade">Densidade de Carga de Incêndio:</label>
+    <select id="densidade">
+      <option value="baixa">Até 300 MJ/m²</option>
+      <option value="media">Acima de 300 MJ/m²</option>
+    </select>
+    <p class="info-text">Esta informação é necessária para algumas divisões de ocupação</p>
+  </div>
+
+  <div class="form-group">
+    <label for="area">Área construída (m²):</label>
+    <input type="number" id="area" min="1" step="0.01" placeholder="Digite a área em metros quadrados">
+    <p class="info-text">Você também pode selecionar uma faixa pré-definida abaixo:</p>
+    <select id="area-select" onchange="preencherArea(this.value)">
+      <option value="">-- Ou selecione uma faixa --</option>
+      <option value="2500">Até 2.500 m²</option>
+      <option value="5000">Acima de 2.500 até 5.000 m²</option>
+      <option value="10000">Acima de 5.000 até 10.000 m²</option>
+      <option value="20000">Acima de 10.000 até 20.000 m²</option>
+      <option value="50000">Acima de 20.000 até 50.000 m²</option>
+      <option value="50001">Acima de 50.000 m²</option>
+    </select>
+  </div>
+
+  <button onclick="calcular()">Calcular</button>
+
+  <div id="resultado"></div>
+
+  <script>
+    // Mapeamento de divisões -> grupos (corrigido conforme tabela)
+    const mapaDivisoes = {
+      // Coluna 1 - Tipo 1 (RTI mínima)
+      "A-2": {grupo: "g1", densidade: "qualquer"},
+      "A-3": {grupo: "g1", densidade: "qualquer"},
+      "C-1": {grupo: "g1", densidade: "qualquer"},
+      "D-1": {grupo: "g1", densidade: "baixa"}, // até 300 MJ/m²
+      "D-2": {grupo: "g1", densidade: "qualquer"},
+      "D-3": {grupo: "g1", densidade: "baixa"}, // até 300 MJ/m²
+      "D-4": {grupo: "g1", densidade: "baixa"}, // até 300 MJ/m²
+      "E-1": {grupo: "g1", densidade: "qualquer"},
+      "E-2": {grupo: "g1", densidade: "qualquer"},
+      "E-3": {grupo: "g1", densidade: "qualquer"},
+      "E-4": {grupo: "g1", densidade: "qualquer"},
+      "E-5": {grupo: "g1", densidade: "qualquer"},
+      "E-6": {grupo: "g1", densidade: "qualquer"},
+      "F-1": {grupo: "g1", densidade: "baixa"}, // até 300 MJ/m²
+      "F-2": {grupo: "g1", densidade: "qualquer"},
+      "F-3": {grupo: "g1", densidade: "qualquer"},
+      "F-4": {grupo: "g1", densidade: "qualquer"},
+      "F-8": {grupo: "g1", densidade: "qualquer"},
+      "G-1": {grupo: "g1", densidade: "qualquer"},
+      "G-2": {grupo: "g1", densidade: "qualquer"},
+      "G-3": {grupo: "g1", densidade: "qualquer"},
+      "G-4": {grupo: "g1", densidade: "qualquer"},
+      "H-1": {grupo: "g1", densidade: "qualquer"},
+      "H-2": {grupo: "g1", densidade: "qualquer"},
+      "H-3": {grupo: "g1", densidade: "qualquer"},
+      "H-5": {grupo: "g1", densidade: "qualquer"},
+      "H-6": {grupo: "g1", densidade: "qualquer"},
+      "I-1": {grupo: "g1", densidade: "qualquer"},
+      "J-1": {grupo: "g1", densidade: "qualquer"},
+      "J-2": {grupo: "g1", densidade: "qualquer"},
+      "M-3": {grupo: "g1", densidade: "qualquer"},
+      
+      // Coluna 2 - Tipo 2 (RTI média)
+      "D-1": {grupo: "g2", densidade: "media"}, // acima de 300 MJ/m²
+      "D-3": {grupo: "g2", densidade: "media"}, // acima de 300 MJ/m²
+      "D-4": {grupo: "g2", densidade: "media"}, // acima de 300 MJ/m²
+      "B-1": {grupo: "g2", densidade: "qualquer"},
+      "B-2": {grupo: "g2", densidade: "qualquer"},
+      "C-2": {grupo: "g2", densidade: "media"}, // acima de 300 até 1000 MJ/m²
+      "C-3": {grupo: "g2", densidade: "qualquer"},
+      "F-1": {grupo: "g2", densidade: "media"}, // acima de 300 MJ/m²
+      "F-5": {grupo: "g2", densidade: "qualquer"},
+      "F-6": {grupo: "g2", densidade: "qualquer"},
+      "F-7": {grupo: "g2", densidade: "qualquer"},
+      "F-9": {grupo: "g2", densidade: "qualquer"},
+      "F-10": {grupo: "g2", densidade: "qualquer"},
+      "H-4": {grupo: "g2", densidade: "qualquer"},
+      "I-2": {grupo: "g2", densidade: "media"}, // acima de 300 até 800 MJ/m²
+      "J-2": {grupo: "g2", densidade: "qualquer"}, // J-2 aparece em ambas as colunas
+      "J-3": {grupo: "g2", densidade: "media"}, // acima de 300 até 800 MJ/m²
+      
+      // Coluna 3 - Tipo 3 (RTI alta)
+      "C-2": {grupo: "g3", densidade: "alta"}, // acima de 1000 MJ/m²
+      "I-2": {grupo: "g3", densidade: "alta"}, // acima de 800 MJ/m²
+      "J-3": {grupo: "g3", densidade: "alta"}, // acima de 800 MJ/m²
+      "L-1": {grupo: "g3", densidade: "qualquer"},
+      "M-1": {grupo: "g3", densidade: "qualquer"},
+      "M-5": {grupo: "g3", densidade: "qualquer"},
+      
+      // Coluna 4 - Tipo 4 (RTI muito alta)
+      "G-5": {grupo: "g4", densidade: "qualquer"},
+      "I-3": {grupo: "g4", densidade: "qualquer"},
+      "J-4": {grupo: "g4", densidade: "qualquer"},
+      "L-2": {grupo: "g4", densidade: "qualquer"},
+      "L-3": {grupo: "g4", densidade: "qualquer"}
+    };
+
+    // Tabela de resultados (corrigida conforme tabela)
+    const tabela = {
+      g1: { // Tipo 1
+        "até2500": {tipo:"Tipo 1", rti:"5 m³"},
+        "até5000": {tipo:"Tipo 1", rti:"8 m³"},
+        "até10000": {tipo:"Tipo 1", rti:"12 m³"},
+        "até20000": {tipo:"Tipo 1", rti:"18 m³"},
+        "até50000": {tipo:"Tipo 1", rti:"25 m³"},
+        "acima50000": {tipo:"Tipo 1", rti:"35 m³"}
+      },
+      g2: { // Tipo 2
+        "até2500": {tipo:"Tipo 2", rti:"8 m³"},
+        "até5000": {tipo:"Tipo 2", rti:"12 m³"},
+        "até10000": {tipo:"Tipo 2", rti:"18 m³"},
+        "até20000": {tipo:"Tipo 2", rti:"25 m³"},
+        "até50000": {tipo:"Tipo 2", rti:"35 m³"},
+        "acima50000": {tipo:"Tipo 2", rti:"48 m³"}
+      },
+      g3: { // Tipo 3
+        "até2500": {tipo:"Tipo 3", rti:"12 m³"},
+        "até5000": {tipo:"Tipo 3", rti:"18 m³"},
+        "até10000": {tipo:"Tipo 3", rti:"25 m³"},
+        "até20000": {tipo:"Tipo 3", rti:"35 m³"},
+        "até50000": {tipo:"Tipo 3", rti:"48 m³"},
+        "acima50000": {tipo:"Tipo 3", rti:"70 m³"}
+      },
+      g4: { // Tipo 4
+        "até2500": {tipo:"Tipo 4", rti:"28 m³"},
+        "até5000": {tipo:"Tipo 4", rti:"32 m³"},
+        "até10000": {tipo:"Tipo 4", rti:"48 m³"},
+        "até20000": {tipo:"Tipo 4", rti:"70 m³"},
+        "até50000": {tipo:"Tipo 4", rti:"96 m³"},
+        "acima50000": {tipo:"Tipo 4", rti:"120 m³"}
+      },
+      g5: { // Tipo 5
+        "até2500": {tipo:"Tipo 5", rti:"32 m³"},
+        "até5000": {tipo:"Tipo 5", rti:"48 m³"},
+        "até10000": {tipo:"Tipo 5", rti:"64 m³"},
+        "até20000": {tipo:"Tipo 5", rti:"90 m³"},
+        "até50000": {tipo:"Tipo 5", rti:"120 m³"},
+        "acima50000": {tipo:"Tipo 5", rti:"180 m³"}
+      }
+    };
+
+    // Função para preencher o campo de área com base na seleção
+    function preencherArea(valor) {
+      if (valor) {
+        document.getElementById('area').value = valor;
+      }
+    }
+
+    // Função para determinar a faixa de área com base no valor digitado
+    function determinarFaixaArea(area) {
+      if (area <= 2500) return "até2500";
+      if (area <= 5000) return "até5000";
+      if (area <= 10000) return "até10000";
+      if (area <= 20000) return "até20000";
+      if (area <= 50000) return "até50000";
+      return "acima50000";
+    }
+
+    // Função para obter o grupo correto baseado na divisão e densidade
+    function obterGrupo(div, densidade) {
+      // Verificar se a divisão existe no mapeamento
+      if (!mapaDivisoes[div]) return null;
+      
+      const info = mapaDivisoes[div];
+      
+      // Se a densidade não é relevante para esta divisão
+      if (info.densidade === "qualquer") {
+        return info.grupo;
+      }
+      
+      // Verificar se a densidade selecionada corresponde
+      if (info.densidade === densidade) {
+        return info.grupo;
+      }
+      
+      // Para casos onde a mesma divisão pode ter diferentes grupos baseado na densidade
+      // Precisamos verificar se há uma entrada alternativa
+      if (densidade === "media" && info.densidade === "baixa") {
+        // Procurar por uma entrada com densidade "media" para a mesma divisão
+        for (const [key, value] of Object.entries(mapaDivisoes)) {
+          if (key === div && value.densidade === "media") {
+            return value.grupo;
+          }
+        }
+      }
+      
+      if (densidade === "alta" && (info.densidade === "baixa" || info.densidade === "media")) {
+        // Procurar por uma entrada com densidade "alta" para a mesma divisão
+        for (const [key, value] of Object.entries(mapaDivisoes)) {
+          if (key === div && value.densidade === "alta") {
+            return value.grupo;
+          }
+        }
+      }
+      
+      return info.grupo;
+    }
+
+    // Função para converter Tipo 1 para Tipo 2
+    function converterTipo1ParaTipo2(res) {
+      if (res.tipo === "Tipo 1") {
+        // Mapear os valores de RTI do Tipo 1 para o Tipo 2
+        const conversaoRTI = {
+          "5 m³": "8 m³",
+          "8 m³": "12 m³",
+          "12 m³": "18 m³",
+          "18 m³": "25 m³",
+          "25 m³": "35 m³",
+          "35 m³": "48 m³"
+        };
+        
+        return {
+          tipo: "Tipo 2",
+          rti: conversaoRTI[res.rti] || res.rti,
+          convertido: true
+        };
+      }
+      
+      return {
+        ...res,
+        convertido: false
+      };
+    }
+
+    // Função principal de cálculo
+    function calcular() {
+      const div = document.getElementById("divisao").value;
+      const densidade = document.getElementById("densidade").value;
+      const areaInput = document.getElementById("area").value;
+      const area = parseFloat(areaInput);
+      
+      const resultadoDiv = document.getElementById("resultado");
+      
+      // Validações
+      if (!div) {
+        resultadoDiv.innerHTML = '<div class="error">Selecione uma divisão de ocupação.</div>';
+        return;
+      }
+      
+      if (!areaInput || isNaN(area) || area <= 0) {
+        resultadoDiv.innerHTML = '<div class="error">Digite uma área válida em metros quadrados.</div>';
+        return;
+      }
+      
+      // Obter o grupo baseado na divisão e densidade
+      const grupo = obterGrupo(div, densidade);
+      
+      if (!grupo) {
+        resultadoDiv.innerHTML = '<div class="error">Divisão não encontrada no mapeamento.</div>';
+        return;
+      }
+      
+      // Determinar a faixa de área
+      const faixaArea = determinarFaixaArea(area);
+      
+      // Obter resultado da tabela
+      let res = tabela[grupo][faixaArea];
+      
+      // Verificar se é Tipo 1 e converter para Tipo 2
+      res = converterTipo1ParaTipo2(res);
+      
+      // Formatar resultado
+      let resultadoHTML = `
+        <div class="result-item">
+          <span>Divisão de Ocupação:</span>
+          <span class="result-value">${div}</span>
+        </div>
+        <div class="result-item">
+          <span>Densidade de Carga de Incêndio:</span>
+          <span class="result-value">${document.getElementById('densidade').selectedOptions[0].text}</span>
+        </div>
+        <div class="result-item">
+          <span>Área Construída:</span>
+          <span class="result-value">${area.toLocaleString('pt-BR')} m²</span>
+        </div>
+        <div class="result-item">
+          <span>Tipo de Sistema:</span>
+          <span class="result-value ${res.convertido ? 'converted' : ''}">${res.tipo}${res.convertido ? ' (convertido automaticamente)' : ''}</span>
+        </div>
+        <div class="result-item">
+          <span>Reserva Técnica de Incêndio (RTI):</span>
+          <span class="result-value ${res.convertido ? 'converted' : 'success'}">${res.rti}</span>
+        </div>
+      `;
+      
+      // Adicionar nota sobre conversão se aplicável
+      if (res.convertido) {
+        resultadoHTML += `
+          <div class="result-item">
+            <span class="warning">Nota: O sistema Tipo 1 foi convertido automaticamente para Tipo 2 conforme especificação.</span>
+          </div>
+        `;
+      }
+      
+      // Adicionar nota sobre o grupo A
+      if (div.startsWith("A-")) {
+        resultadoHTML += `
+          <div class="result-item">
+            <span class="warning">Nota: Para o grupo A, a área a ser considerada deve ser apenas a do maior bloco, desde que respeitada a distância de isolamento entre os blocos (IT 07).</span>
+          </div>
+        `;
+      }
+      
+      resultadoDiv.innerHTML = resultadoHTML;
+    }
+    
+    // Permitir que o usuário pressione Enter para calcular
+    document.getElementById('area').addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') {
+        calcular();
+      }
+    });
+  </script>
+</body>
+</html>

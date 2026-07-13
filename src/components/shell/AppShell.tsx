@@ -13,7 +13,9 @@ import {
   Flame,
   FolderKanban,
   Home,
+  LayoutDashboard,
   ListChecks,
+  Loader2,
   LogOut,
   MailWarning,
   Menu,
@@ -22,10 +24,11 @@ import {
   ShieldCheck,
   Timer,
   User,
+  Users,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+import { StatusBadge } from '@/components/shell/StatusBadge';
 import {
   Select,
   SelectContent,
@@ -63,6 +66,13 @@ const NAVEGACAO: GrupoNav[] = [
       { rota: '/', rotulo: 'Dashboard', icone: Home, fim: true },
       { rota: '/projetos', rotulo: 'Projetos', icone: FolderKanban },
       { rota: '/classificacao', rotulo: 'Classificação & Enquadramento', icone: ShieldCheck },
+    ],
+  },
+  {
+    titulo: 'Gestão',
+    itens: [
+      { rota: '/painel', rotulo: 'Painel de Gestão', icone: LayoutDashboard },
+      { rota: '/clientes', rotulo: 'Clientes', icone: Users },
     ],
   },
   {
@@ -147,6 +157,7 @@ function Sidebar({ aoNavegar }: { aoNavegar?: () => void }) {
 export default function AppShell() {
   const {
     usuario,
+    carregandoSessao,
     sair,
     projetos,
     projetoAtivo,
@@ -168,6 +179,14 @@ export default function AppShell() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.pathname]);
 
+  if (carregandoSessao) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center gap-3 text-muted-foreground">
+        <Loader2 className="h-8 w-8 animate-spin" />
+        <p className="text-sm">Sincronizando seus dados…</p>
+      </div>
+    );
+  }
   if (!usuario) return <Navigate to="/login" replace />;
 
   return (
@@ -246,9 +265,9 @@ export default function AppShell() {
             </div>
 
             {projetoAtivo?.status && (
-              <Badge variant="secondary" className="hidden md:inline-flex">
-                {projetoAtivo.status}
-              </Badge>
+              <span className="hidden md:inline-flex">
+                <StatusBadge status={projetoAtivo.status} />
+              </span>
             )}
 
             <div className="ml-auto">

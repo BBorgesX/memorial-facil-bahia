@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IT 11/2016 - Distâncias máximas por pavimento</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { padding: 20px; background-color: #f8f9fa; }
+        .container { max-width: 900px; margin: auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        h1 { margin-bottom: 20px; font-size: 1.8rem; }
+        .result-table { margin-top: 30px; }
+        .distance-value { font-size: 2rem; font-weight: bold; color: #0d6efd; }
+        .card-header { background-color: #e9ecef; font-weight: bold; }
+        .note { font-size: 0.9rem; color: #6c757d; margin-top: 10px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="text-center">Consulta de distâncias máximas permitidas<br><small class="text-muted" style="font-size: 1rem;">Instrução Técnica nº 11/2016 - Anexo B (Tabela 2)</small></h1>
+
+        <form id="queryForm">
+            <div class="row g-3">
+                <!-- Divisão de ocupação -->
+                <div class="col-md-6">
+                    <label for="division" class="form-label">Grupo / Divisão de ocupação</label>
+                    <select class="form-select" id="division" required>
+                        <option value="">Selecione...</option>
+                    </select>
+                </div>
+
+                <!-- Sprinklers -->
+                <div class="col-md-6">
+                    <label for="sprinkler" class="form-label">Chuveiros automáticos</label>
+                    <select class="form-select" id="sprinkler" required>
+                        <option value="">Selecione...</option>
+                    </select>
+                </div>
+
+                <!-- Número de saídas -->
+                <div class="col-md-6">
+                    <label for="exit" class="form-label">Saídas</label>
+                    <select class="form-select" id="exit" required>
+                        <option value="">Selecione...</option>
+                    </select>
+                </div>
+
+                <!-- Detecção de fumaça -->
+                <div class="col-md-6">
+                    <label for="smoke" class="form-label">Detecção de fumaça</label>
+                    <select class="form-select" id="smoke" required>
+                        <option value="">Selecione...</option>
+                    </select>
+                </div>
+
+                <!-- Botão de consulta -->
+                <div class="col-12 text-center mt-4">
+                    <button type="button" class="btn btn-primary btn-lg" onclick="consultar()">Consultar distâncias</button>
+                    <button type="button" class="btn btn-outline-secondary btn-lg" onclick="resetForm()">Limpar</button>
+                </div>
+            </div>
+        </form>
+
+        <!-- Área de resultado (agora com dois cartões: térreo e outros andares) -->
+        <div id="resultArea" style="display: none;">
+            <div class="row result-table">
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header text-center">
+                            Piso de descarga (térreo)
+                        </div>
+                        <div class="card-body text-center">
+                            <div id="resultGround" class="distance-value">-</div>
+                            <div id="resultGroundDetails" class="mt-2 small text-muted"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header text-center">
+                            Demais andares
+                        </div>
+                        <div class="card-body text-center">
+                            <div id="resultUpper" class="distance-value">-</div>
+                            <div id="resultUpperDetails" class="mt-2 small text-muted"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div id="resultCategory" class="text-center mt-3 fw-bold"></div>
+            <div id="resultNote" class="note text-center"></div>
+        </div>
+
+        <!-- Notas da regulamentação -->
+        <div class="mt-4 small text-muted">
+            <p><strong>Notas:</strong></p>
+            <ul>
+                <li>Esta tabela se aplica a todas as edificações, exceto para locais destinados à divisão F-3 e F-7 com população superior a 2.500 pessoas (consultar IT 12).</li>
+                <li>Para que as distâncias sejam válidas, é necessário leiaute definido em planta. Caso contrário, reduzir em 30%.</li>
+                <li>Para "mais de uma saída", deve haver distância mínima de 10 m entre elas.</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Dados embutidos (mesmo esquema do banco) -->
+    <script>
+        // ------------------------------------------------------------
+        // Definição das tabelas (lookups e dados factuais)
+        // ------------------------------------------------------------
+
+        const floorTypes = [
+            { id: 1, code: 'GROUND', name: 'Piso de descarga (térreo)' },
+            { id: 2, code: 'UPPER', name: 'Demais andares' }
+        ];
+
+        const sprinklerOptions = [
+            { id: 1, code: 'WITHOUT', name: 'Sem chuveiros automáticos' },
+            { id: 2, code: 'WITH', name: 'Com chuveiros automáticos' }
+        ];
+
+        const exitOptions = [
+            { id: 1, code: 'SINGLE', name: 'Saída única' },
+            { id: 2, code: 'MULTIPLE', name: 'Mais de uma saída' }
+        ];
+
+        const smokeDetectionOptions = [
+            { id: 1, code: 'WITHOUT', name: 'Sem detecção automática de fumaça' },
+            { id: 2, code: 'WITH', name: 'Com detecção automática de fumaça' }
+        ];
+
+        const occupancyCategories = [
+            { id: 1, name: 'A e B' },
+            { id: 2, name: 'C, D, E, F, G-3, G-4, G-5, H, L e M' },
+            { id: 3, name: 'I-1 e J-1' },
+            { id: 4, name: 'G-1, G-2 e J-2' },
+            { id: 5, name: 'I-2, I-3, J-3 e J-4' }
+        ];
+
+        const occupancyDivisions = [
+            { id: 1, code: 'A' }, { id: 2, code: 'B' }, { id: 3, code: 'C' },
+            { id: 4, code: 'D' }, { id: 5, code: 'E' }, { id: 6, code: 'F' },
+            { id: 7, code: 'G-1' }, { id: 8, code: 'G-2' }, { id: 9, code: 'G-3' },
+            { id: 10, code: 'G-4' }, { id: 11, code: 'G-5' }, { id: 12, code: 'H' },
+            { id: 13, code: 'I-1' }, { id: 14, code: 'I-2' }, { id: 15, code: 'I-3' },
+            { id: 16, code: 'J-1' }, { id: 17, code: 'J-2' }, { id: 18, code: 'J-3' },
+            { id: 19, code: 'J-4' }, { id: 20, code: 'L' }, { id: 21, code: 'M' }
+        ];
+
+        const categoryMembers = [
+            { division_id: 1, category_id: 1 }, { division_id: 2, category_id: 1 },
+            { division_id: 3, category_id: 2 }, { division_id: 4, category_id: 2 },
+            { division_id: 5, category_id: 2 }, { division_id: 6, category_id: 2 },
+            { division_id: 9, category_id: 2 }, { division_id: 10, category_id: 2 },
+            { division_id: 11, category_id: 2 }, { division_id: 12, category_id: 2 },
+            { division_id: 20, category_id: 2 }, { division_id: 21, category_id: 2 },
+            { division_id: 13, category_id: 3 }, { division_id: 16, category_id: 3 },
+            { division_id: 7, category_id: 4 }, { division_id: 8, category_id: 4 },
+            { division_id: 17, category_id: 4 }, { division_id: 14, category_id: 5 },
+            { division_id: 15, category_id: 5 }, { division_id: 18, category_id: 5 },
+            { division_id: 19, category_id: 5 }
+        ];
+
+        // Tabela fato: distâncias (copiada do código anterior)
+        const travelDistances = [
+            // Category 1 - GROUND
+            { occ_cat_id: 1, floor_id: 1, sprinkler_id: 1, exit_id: 1, smoke_id: 1, dist: 45 },
+            { occ_cat_id: 1, floor_id: 1, sprinkler_id: 1, exit_id: 1, smoke_id: 2, dist: 55 },
+            { occ_cat_id: 1, floor_id: 1, sprinkler_id: 1, exit_id: 2, smoke_id: 1, dist: 55 },
+            { occ_cat_id: 1, floor_id: 1, sprinkler_id: 1, exit_id: 2, smoke_id: 2, dist: 65 },
+            { occ_cat_id: 1, floor_id: 1, sprinkler_id: 2, exit_id: 1, smoke_id: 1, dist: 60 },
+            { occ_cat_id: 1, floor_id: 1, sprinkler_id: 2, exit_id: 1, smoke_id: 2, dist: 70 },
+            { occ_cat_id: 1, floor_id: 1, sprinkler_id: 2, exit_id: 2, smoke_id: 1, dist: 80 },
+            { occ_cat_id: 1, floor_id: 1, sprinkler_id: 2, exit_id: 2, smoke_id: 2, dist: 95 },
+            // Category 1 - UPPER
+            { occ_cat_id: 1, floor_id: 2, sprinkler_id: 1, exit_id: 1, smoke_id: 1, dist: 40 },
+            { occ_cat_id: 1, floor_id: 2, sprinkler_id: 1, exit_id: 1, smoke_id: 2, dist: 45 },
+            { occ_cat_id: 1, floor_id: 2, sprinkler_id: 1, exit_id: 2, smoke_id: 1, dist: 50 },
+            { occ_cat_id: 1, floor_id: 2, sprinkler_id: 1, exit_id: 2, smoke_id: 2, dist: 60 },
+            { occ_cat_id: 1, floor_id: 2, sprinkler_id: 2, exit_id: 1, smoke_id: 1, dist: 55 },
+            { occ_cat_id: 1, floor_id: 2, sprinkler_id: 2, exit_id: 1, smoke_id: 2, dist: 65 },
+            { occ_cat_id: 1, floor_id: 2, sprinkler_id: 2, exit_id: 2, smoke_id: 1, dist: 75 },
+            { occ_cat_id: 1, floor_id: 2, sprinkler_id: 2, exit_id: 2, smoke_id: 2, dist: 90 },
+            // Category 2 - GROUND
+            { occ_cat_id: 2, floor_id: 1, sprinkler_id: 1, exit_id: 1, smoke_id: 1, dist: 40 },
+            { occ_cat_id: 2, floor_id: 1, sprinkler_id: 1, exit_id: 1, smoke_id: 2, dist: 45 },
+            { occ_cat_id: 2, floor_id: 1, sprinkler_id: 1, exit_id: 2, smoke_id: 1, dist: 50 },
+            { occ_cat_id: 2, floor_id: 1, sprinkler_id: 1, exit_id: 2, smoke_id: 2, dist: 60 },
+            { occ_cat_id: 2, floor_id: 1, sprinkler_id: 2, exit_id: 1, smoke_id: 1, dist: 55 },
+            { occ_cat_id: 2, floor_id: 1, sprinkler_id: 2, exit_id: 1, smoke_id: 2, dist: 65 },
+            { occ_cat_id: 2, floor_id: 1, sprinkler_id: 2, exit_id: 2, smoke_id: 1, dist: 75 },
+            { occ_cat_id: 2, floor_id: 1, sprinkler_id: 2, exit_id: 2, smoke_id: 2, dist: 90 },
+            // Category 2 - UPPER
+            { occ_cat_id: 2, floor_id: 2, sprinkler_id: 1, exit_id: 1, smoke_id: 1, dist: 30 },
+            { occ_cat_id: 2, floor_id: 2, sprinkler_id: 1, exit_id: 1, smoke_id: 2, dist: 35 },
+            { occ_cat_id: 2, floor_id: 2, sprinkler_id: 1, exit_id: 2, smoke_id: 1, dist: 40 },
+            { occ_cat_id: 2, floor_id: 2, sprinkler_id: 1, exit_id: 2, smoke_id: 2, dist: 45 },
+            { occ_cat_id: 2, floor_id: 2, sprinkler_id: 2, exit_id: 1, smoke_id: 1, dist: 45 },
+            { occ_cat_id: 2, floor_id: 2, sprinkler_id: 2, exit_id: 1, smoke_id: 2, dist: 55 },
+            { occ_cat_id: 2, floor_id: 2, sprinkler_id: 2, exit_id: 2, smoke_id: 1, dist: 65 },
+            { occ_cat_id: 2, floor_id: 2, sprinkler_id: 2, exit_id: 2, smoke_id: 2, dist: 75 },
+            // Category 3 - GROUND
+            { occ_cat_id: 3, floor_id: 1, sprinkler_id: 1, exit_id: 1, smoke_id: 1, dist: 80 },
+            { occ_cat_id: 3, floor_id: 1, sprinkler_id: 1, exit_id: 1, smoke_id: 2, dist: 95 },
+            { occ_cat_id: 3, floor_id: 1, sprinkler_id: 1, exit_id: 2, smoke_id: 1, dist: 120 },
+            { occ_cat_id: 3, floor_id: 1, sprinkler_id: 1, exit_id: 2, smoke_id: 2, dist: 140 },
+            { occ_cat_id: 3, floor_id: 1, sprinkler_id: 2, exit_id: 1, smoke_id: 1, dist: null },
+            { occ_cat_id: 3, floor_id: 1, sprinkler_id: 2, exit_id: 1, smoke_id: 2, dist: null },
+            { occ_cat_id: 3, floor_id: 1, sprinkler_id: 2, exit_id: 2, smoke_id: 1, dist: null },
+            { occ_cat_id: 3, floor_id: 1, sprinkler_id: 2, exit_id: 2, smoke_id: 2, dist: null },
+            // Category 3 - UPPER
+            { occ_cat_id: 3, floor_id: 2, sprinkler_id: 1, exit_id: 1, smoke_id: 1, dist: 70 },
+            { occ_cat_id: 3, floor_id: 2, sprinkler_id: 1, exit_id: 1, smoke_id: 2, dist: 80 },
+            { occ_cat_id: 3, floor_id: 2, sprinkler_id: 1, exit_id: 2, smoke_id: 1, dist: 110 },
+            { occ_cat_id: 3, floor_id: 2, sprinkler_id: 1, exit_id: 2, smoke_id: 2, dist: 130 },
+            { occ_cat_id: 3, floor_id: 2, sprinkler_id: 2, exit_id: 1, smoke_id: 1, dist: null },
+            { occ_cat_id: 3, floor_id: 2, sprinkler_id: 2, exit_id: 1, smoke_id: 2, dist: null },
+            { occ_cat_id: 3, floor_id: 2, sprinkler_id: 2, exit_id: 2, smoke_id: 1, dist: null },
+            { occ_cat_id: 3, floor_id: 2, sprinkler_id: 2, exit_id: 2, smoke_id: 2, dist: null },
+            // Category 4 - GROUND
+            { occ_cat_id: 4, floor_id: 1, sprinkler_id: 1, exit_id: 1, smoke_id: 1, dist: 50 },
+            { occ_cat_id: 4, floor_id: 1, sprinkler_id: 1, exit_id: 1, smoke_id: 2, dist: 60 },
+            { occ_cat_id: 4, floor_id: 1, sprinkler_id: 1, exit_id: 2, smoke_id: 1, dist: 60 },
+            { occ_cat_id: 4, floor_id: 1, sprinkler_id: 1, exit_id: 2, smoke_id: 2, dist: 70 },
+            { occ_cat_id: 4, floor_id: 1, sprinkler_id: 2, exit_id: 1, smoke_id: 1, dist: 80 },
+            { occ_cat_id: 4, floor_id: 1, sprinkler_id: 2, exit_id: 1, smoke_id: 2, dist: 95 },
+            { occ_cat_id: 4, floor_id: 1, sprinkler_id: 2, exit_id: 2, smoke_id: 1, dist: 120 },
+            { occ_cat_id: 4, floor_id: 1, sprinkler_id: 2, exit_id: 2, smoke_id: 2, dist: 140 },
+            // Category 4 - UPPER
+            { occ_cat_id: 4, floor_id: 2, sprinkler_id: 1, exit_id: 1, smoke_id: 1, dist: 45 },
+            { occ_cat_id: 4, floor_id: 2, sprinkler_id: 1, exit_id: 1, smoke_id: 2, dist: 55 },
+            { occ_cat_id: 4, floor_id: 2, sprinkler_id: 1, exit_id: 2, smoke_id: 1, dist: 55 },
+            { occ_cat_id: 4, floor_id: 2, sprinkler_id: 1, exit_id: 2, smoke_id: 2, dist: 65 },
+            { occ_cat_id: 4, floor_id: 2, sprinkler_id: 2, exit_id: 1, smoke_id: 1, dist: 70 },
+            { occ_cat_id: 4, floor_id: 2, sprinkler_id: 2, exit_id: 1, smoke_id: 2, dist: 80 },
+            { occ_cat_id: 4, floor_id: 2, sprinkler_id: 2, exit_id: 2, smoke_id: 1, dist: 110 },
+            { occ_cat_id: 4, floor_id: 2, sprinkler_id: 2, exit_id: 2, smoke_id: 2, dist: 130 },
+            // Category 5 - GROUND
+            { occ_cat_id: 5, floor_id: 1, sprinkler_id: 1, exit_id: 1, smoke_id: 1, dist: 40 },
+            { occ_cat_id: 5, floor_id: 1, sprinkler_id: 1, exit_id: 1, smoke_id: 2, dist: 45 },
+            { occ_cat_id: 5, floor_id: 1, sprinkler_id: 1, exit_id: 2, smoke_id: 1, dist: 50 },
+            { occ_cat_id: 5, floor_id: 1, sprinkler_id: 1, exit_id: 2, smoke_id: 2, dist: 60 },
+            { occ_cat_id: 5, floor_id: 1, sprinkler_id: 2, exit_id: 1, smoke_id: 1, dist: 60 },
+            { occ_cat_id: 5, floor_id: 1, sprinkler_id: 2, exit_id: 1, smoke_id: 2, dist: 70 },
+            { occ_cat_id: 5, floor_id: 1, sprinkler_id: 2, exit_id: 2, smoke_id: 1, dist: 100 },
+            { occ_cat_id: 5, floor_id: 1, sprinkler_id: 2, exit_id: 2, smoke_id: 2, dist: 120 },
+            // Category 5 - UPPER
+            { occ_cat_id: 5, floor_id: 2, sprinkler_id: 1, exit_id: 1, smoke_id: 1, dist: 30 },
+            { occ_cat_id: 5, floor_id: 2, sprinkler_id: 1, exit_id: 1, smoke_id: 2, dist: 35 },
+            { occ_cat_id: 5, floor_id: 2, sprinkler_id: 1, exit_id: 2, smoke_id: 1, dist: 40 },
+            { occ_cat_id: 5, floor_id: 2, sprinkler_id: 1, exit_id: 2, smoke_id: 2, dist: 45 },
+            { occ_cat_id: 5, floor_id: 2, sprinkler_id: 2, exit_id: 1, smoke_id: 1, dist: 50 },
+            { occ_cat_id: 5, floor_id: 2, sprinkler_id: 2, exit_id: 1, smoke_id: 2, dist: 65 },
+            { occ_cat_id: 5, floor_id: 2, sprinkler_id: 2, exit_id: 2, smoke_id: 1, dist: 80 },
+            { occ_cat_id: 5, floor_id: 2, sprinkler_id: 2, exit_id: 2, smoke_id: 2, dist: 95 }
+        ];
+
+        // ------------------------------------------------------------
+        // Preenchimento dos selects
+        // ------------------------------------------------------------
+        function populateSelects() {
+            const divSelect = document.getElementById('division');
+            occupancyDivisions.sort((a,b) => a.code.localeCompare(b.code)).forEach(div => {
+                const opt = document.createElement('option');
+                opt.value = div.id;
+                opt.textContent = div.code;
+                divSelect.appendChild(opt);
+            });
+
+            const sprSelect = document.getElementById('sprinkler');
+            sprinklerOptions.forEach(s => {
+                const opt = document.createElement('option');
+                opt.value = s.id;
+                opt.textContent = s.name;
+                sprSelect.appendChild(opt);
+            });
+
+            const exitSelect = document.getElementById('exit');
+            exitOptions.forEach(e => {
+                const opt = document.createElement('option');
+                opt.value = e.id;
+                opt.textContent = e.name;
+                exitSelect.appendChild(opt);
+            });
+
+            const smokeSelect = document.getElementById('smoke');
+            smokeDetectionOptions.forEach(s => {
+                const opt = document.createElement('option');
+                opt.value = s.id;
+                opt.textContent = s.name;
+                smokeSelect.appendChild(opt);
+            });
+        }
+
+        // ------------------------------------------------------------
+        // Função de consulta (agora busca ambos os pavimentos)
+        // ------------------------------------------------------------
+        function consultar() {
+            const divisionId = parseInt(document.getElementById('division').value);
+            const sprinklerId = parseInt(document.getElementById('sprinkler').value);
+            const exitId = parseInt(document.getElementById('exit').value);
+            const smokeId = parseInt(document.getElementById('smoke').value);
+
+            if (!divisionId || !sprinklerId || !exitId || !smokeId) {
+                alert('Por favor, selecione todas as opções.');
+                return;
+            }
+
+            const member = categoryMembers.find(m => m.division_id === divisionId);
+            if (!member) {
+                alert('Divisão não encontrada.');
+                return;
+            }
+            const categoryId = member.category_id;
+            const category = occupancyCategories.find(c => c.id === categoryId);
+
+            // Buscar distância para GROUND (floor_id = 1)
+            const groundRow = travelDistances.find(d =>
+                d.occ_cat_id === categoryId &&
+                d.floor_id === 1 &&
+                d.sprinkler_id === sprinklerId &&
+                d.exit_id === exitId &&
+                d.smoke_id === smokeId
+            );
+
+            // Buscar distância para UPPER (floor_id = 2)
+            const upperRow = travelDistances.find(d =>
+                d.occ_cat_id === categoryId &&
+                d.floor_id === 2 &&
+                d.sprinkler_id === sprinklerId &&
+                d.exit_id === exitId &&
+                d.smoke_id === smokeId
+            );
+
+            // Atualizar elementos
+            document.getElementById('resultGround').textContent = (groundRow && groundRow.dist !== null) ? groundRow.dist + ' m' : (groundRow ? '—' : '?');
+            document.getElementById('resultUpper').textContent = (upperRow && upperRow.dist !== null) ? upperRow.dist + ' m' : (upperRow ? '—' : '?');
+
+            // Detalhes adicionais (opcional)
+            const sprinklerName = sprinklerOptions.find(s => s.id === sprinklerId).name;
+            const exitName = exitOptions.find(e => e.id === exitId).name;
+            const smokeName = smokeDetectionOptions.find(s => s.id === smokeId).name;
+            const details = `${sprinklerName} | ${exitName} | ${smokeName}`;
+            document.getElementById('resultGroundDetails').textContent = details;
+            document.getElementById('resultUpperDetails').textContent = details;
+
+            document.getElementById('resultCategory').textContent = `Categoria: ${category.name}`;
+            document.getElementById('resultNote').textContent = ''; // pode incluir notas se necessário
+            document.getElementById('resultArea').style.display = 'block';
+        }
+
+        function resetForm() {
+            document.getElementById('division').selectedIndex = 0;
+            document.getElementById('sprinkler').selectedIndex = 0;
+            document.getElementById('exit').selectedIndex = 0;
+            document.getElementById('smoke').selectedIndex = 0;
+            document.getElementById('resultArea').style.display = 'none';
+        }
+
+        window.onload = function() {
+            populateSelects();
+        };
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

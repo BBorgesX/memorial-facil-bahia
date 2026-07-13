@@ -1,11 +1,13 @@
 /**
- * Camada de autenticação do FirePro Suite (MVP).
+ * Camada de autenticação do FirePro Suite — Supabase Auth.
  *
- * Implementação MOCK/local: usuários e sessão ficam no localStorage do
- * navegador. A interface pública (cadastrar/entrar/sair/recuperarSenha/
- * usuarioAtual) foi desenhada para ser substituída por Supabase Auth na
- * fase 2 sem alterar os componentes que a consomem.
+ * Substitui a implementação mock/local do MVP mantendo a mesma interface
+ * pública (cadastrar/entrar/sair/recuperarSenha/usuarioAtual). A conta vale
+ * em qualquer dispositivo e os dados sincronizam pela nuvem (lib/sync.ts).
  */
+
+import type { Session } from '@supabase/supabase-js';
+import { supabase } from '@/lib/supabase';
 
 export interface Usuario {
   id: string;
@@ -27,91 +29,69 @@ export function perfilPadrao(): PerfilProfissional {
   return { nome: '', titulo: '', registro: '', contato: '', ufPadrao: 'BA' };
 }
 
-interface UsuarioArmazenado extends Usuario {
-  /** Hash simplificado da senha (mock — NUNCA usar em produção). */
-  senhaHash: string;
-}
-
-const CHAVE_USUARIOS = 'fps:usuarios';
-const CHAVE_SESSAO = 'fps:sessao';
 const CHAVE_PERFIL = (userId: string) => `fps:perfil:${userId}`;
 
-/** Hash mock apenas para não guardar a senha em texto puro no MVP local. */
-function hashMock(senha: string): string {
-  let h = 0;
-  for (let i = 0; i < senha.length; i++) h = (Math.imul(31, h) + senha.charCodeAt(i)) | 0;
-  return `h${h.toString(36)}${senha.length}`;
+const MENSAGENS: Record<string, string> = {
+  'Invalid login credentials': 'E-mail ou senha incorretos.',
+  'Email not confirmed': 'Confirme seu e-mail: enviamos um link de confirmação para sua caixa de entrada.',
+  'User already registered': 'Já existe uma conta com este e-mail.',
+  'Password should be at least 6 characters.': 'A senha deve ter ao menos 6 caracteres.',
+};
+
+function traduzir(err: unknown): Error {
+  const msg = err instanceof Error ? err.message : String(err);
+  return new Error(MENSAGENS[msg] ?? msg);
 }
 
-function lerUsuarios(): UsuarioArmazenado[] {
-  try {
-    return JSON.parse(localStorage.getItem(CHAVE_USUARIOS) ?? '[]');
-  } catch {
-    return [];
-  }
-}
-
-function gravarUsuarios(usuarios: UsuarioArmazenado[]) {
-  localStorage.setItem(CHAVE_USUARIOS, JSON.stringify(usuarios));
-}
-
-function publico(u: UsuarioArmazenado): Usuario {
-  return { id: u.id, nome: u.nome, email: u.email, criadoEm: u.criadoEm };
-}
-
-export function cadastrar(nome: string, email: string, senha: string): Usuario {
-  const usuarios = lerUsuarios();
-  const emailNorm = email.trim().toLowerCase();
-  if (!nome.trim()) throw new Error('Informe o seu nome.');
-  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(emailNorm)) throw new Error('E-mail inválido.');
-  if (senha.length < 6) throw new Error('A senha deve ter ao menos 6 caracteres.');
-  if (usuarios.some((u) => u.email === emailNorm)) throw new Error('Já existe uma conta com este e-mail.');
-
-  const usuario: UsuarioArmazenado = {
-    id: `usr_${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`,
-    nome: nome.trim(),
-    email: emailNorm,
-    criadoEm: new Date().toISOString(),
-    senhaHash: hashMock(senha),
+export function usuarioDaSessao(sessao: Session): Usuario {
+  const u = sessao.user;
+  return {
+    id: u.id,
+    nome: (u.user_metadata?.nome as string) ?? u.email?.split('@')[0] ?? '',
+    email: u.email ?? '',
+    criadoEm: u.created_at,
   };
-  gravarUsuarios([...usuarios, usuario]);
-  localStorage.setItem(CHAVE_SESSAO, usuario.id);
-  return publico(usuario);
-}
-
-export function entrar(email: string, senha: string): Usuario {
-  const emailNorm = email.trim().toLowerCase();
-  const usuario = lerUsuarios().find((u) => u.email === emailNorm);
-  if (!usuario || usuario.senhaHash !== hashMock(senha)) {
-    throw new Error('E-mail ou senha incorretos.');
-  }
-  localStorage.setItem(CHAVE_SESSAO, usuario.id);
-  return publico(usuario);
-}
-
-export function sair() {
-  localStorage.removeItem(CHAVE_SESSAO);
 }
 
 /**
- * Recuperação de senha (mock): redefine a senha diretamente.
- * Na fase 2 será substituído pelo fluxo de e-mail do Supabase Auth.
+ * Cadastro. Retorna o usuário quando a sessão abre na hora, ou null quando o
+ * Supabase exige confirmação do e-mail antes do primeiro login.
  */
-export function recuperarSenha(email: string, novaSenha: string) {
-  const emailNorm = email.trim().toLowerCase();
-  const usuarios = lerUsuarios();
-  const usuario = usuarios.find((u) => u.email === emailNorm);
-  if (!usuario) throw new Error('Nenhuma conta encontrada com este e-mail.');
-  if (novaSenha.length < 6) throw new Error('A nova senha deve ter ao menos 6 caracteres.');
-  usuario.senhaHash = hashMock(novaSenha);
-  gravarUsuarios(usuarios);
+export async function cadastrar(nome: string, email: string, senha: string): Promise<Usuario | null> {
+  if (!nome.trim()) throw new Error('Informe o seu nome.');
+  const { data, error } = await supabase.auth.signUp({
+    email: email.trim().toLowerCase(),
+    password: senha,
+    options: { data: { nome: nome.trim() } },
+  });
+  if (error) throw traduzir(error);
+  return data.session ? usuarioDaSessao(data.session) : null;
 }
 
-export function usuarioAtual(): Usuario | null {
-  const id = localStorage.getItem(CHAVE_SESSAO);
-  if (!id) return null;
-  const usuario = lerUsuarios().find((u) => u.id === id);
-  return usuario ? publico(usuario) : null;
+export async function entrar(email: string, senha: string): Promise<Usuario> {
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email: email.trim().toLowerCase(),
+    password: senha,
+  });
+  if (error) throw traduzir(error);
+  return usuarioDaSessao(data.session);
+}
+
+export function sair() {
+  void supabase.auth.signOut();
+}
+
+/** Envia o e-mail de redefinição de senha do Supabase. */
+export async function recuperarSenha(email: string) {
+  const { error } = await supabase.auth.resetPasswordForEmail(email.trim().toLowerCase(), {
+    redirectTo: window.location.origin + window.location.pathname,
+  });
+  if (error) throw traduzir(error);
+}
+
+export async function usuarioAtual(): Promise<Usuario | null> {
+  const { data } = await supabase.auth.getSession();
+  return data.session ? usuarioDaSessao(data.session) : null;
 }
 
 export function carregarPerfil(userId: string): PerfilProfissional {

@@ -1,6 +1,6 @@
 /**
- * Autenticação (MVP mock/local) — login, cadastro e recuperação de senha.
- * A camada services/auth.ts está isolada para trocar por Supabase Auth.
+ * Autenticação (Supabase Auth) — login, cadastro e recuperação de senha.
+ * A conta vale em qualquer dispositivo; os dados sincronizam pela nuvem.
  */
 
 import { useState } from 'react';
@@ -30,12 +30,11 @@ export default function Login() {
   const [cadSenha, setCadSenha] = useState('');
 
   const [recEmail, setRecEmail] = useState('');
-  const [recSenha, setRecSenha] = useState('');
 
-  const executar = (acao: () => void) => {
+  const executar = async (acao: () => Promise<void>) => {
     setCarregando(true);
     try {
-      acao();
+      await acao();
     } catch (e) {
       toast({
         title: 'Não foi possível continuar',
@@ -78,7 +77,7 @@ export default function Login() {
             </CardTitle>
             <CardTitle className="hidden lg:block">Acesse a sua conta</CardTitle>
             <CardDescription>
-              MVP local: as contas e projetos ficam salvos neste navegador.
+              Sua conta e seus projetos sincronizam na nuvem — acesse de qualquer dispositivo.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -113,8 +112,8 @@ export default function Login() {
                   className="w-full"
                   disabled={carregando}
                   onClick={() =>
-                    executar(() => {
-                      const u = entrar(loginEmail, loginSenha);
+                    executar(async () => {
+                      const u = await entrar(loginEmail, loginSenha);
                       setUsuario(u);
                       toast({ title: `Bem-vindo de volta, ${u.nome.split(' ')[0]}!` });
                       navigate('/');
@@ -152,8 +151,15 @@ export default function Login() {
                   className="w-full"
                   disabled={carregando}
                   onClick={() =>
-                    executar(() => {
-                      const u = cadastrar(cadNome, cadEmail, cadSenha);
+                    executar(async () => {
+                      const u = await cadastrar(cadNome, cadEmail, cadSenha);
+                      if (!u) {
+                        toast({
+                          title: 'Confirme seu e-mail',
+                          description: 'Enviamos um link de confirmação. Depois de clicar nele, volte e entre.',
+                        });
+                        return;
+                      }
                       setUsuario(u);
                       toast({
                         title: 'Conta criada!',
@@ -169,8 +175,7 @@ export default function Login() {
 
               <TabsContent value="recuperar" className="space-y-4 mt-4">
                 <p className="text-xs text-muted-foreground">
-                  MVP local: a redefinição é imediata. Na fase 2 este fluxo passa a ser por e-mail
-                  (Supabase Auth).
+                  Enviaremos um e-mail com o link para redefinir a sua senha.
                 </p>
                 <div className="space-y-1.5">
                   <Label htmlFor="rec-email">E-mail da conta</Label>
@@ -181,27 +186,21 @@ export default function Login() {
                     onChange={(e) => setRecEmail(e.target.value)}
                   />
                 </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="rec-senha">Nova senha</Label>
-                  <Input
-                    id="rec-senha"
-                    type="password"
-                    value={recSenha}
-                    onChange={(e) => setRecSenha(e.target.value)}
-                  />
-                </div>
                 <Button
                   className="w-full"
                   variant="outline"
                   disabled={carregando}
                   onClick={() =>
-                    executar(() => {
-                      recuperarSenha(recEmail, recSenha);
-                      toast({ title: 'Senha redefinida', description: 'Entre com a nova senha.' });
+                    executar(async () => {
+                      await recuperarSenha(recEmail);
+                      toast({
+                        title: 'E-mail enviado',
+                        description: 'Verifique sua caixa de entrada (e o spam) para redefinir a senha.',
+                      });
                     })
                   }
                 >
-                  Redefinir senha
+                  Enviar e-mail de recuperação
                 </Button>
               </TabsContent>
             </Tabs>

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -28,8 +28,9 @@ import { MedidasSeguranca } from '@/components/editor/MedidasSeguranca';
 import { RiscosEspeciais } from '@/components/editor/RiscosEspeciais';
 import { PainelResultados } from '@/components/editor/PainelResultados';
 import { MemorialPreview } from '@/components/editor/MemorialPreview';
+import { GestaoProjeto } from '@/components/editor/GestaoProjeto';
 
-const ABAS = ['dados', 'medidas', 'riscos', 'resultados', 'memorial'] as const;
+const ABAS = ['dados', 'medidas', 'riscos', 'resultados', 'memorial', 'gestao'] as const;
 
 const ProjetoEditor = () => {
   const { id } = useParams<{ id: string }>();
@@ -43,7 +44,11 @@ const ProjetoEditor = () => {
     if (id && carregarProjeto(id)) setProjetoAtivoId(id);
   }, [id, setProjetoAtivoId]);
   const [salvoEm, setSalvoEm] = useState<Date | null>(null);
-  const [aba, setAba] = useState<(typeof ABAS)[number]>('dados');
+  const [searchParams] = useSearchParams();
+  const [aba, setAba] = useState<(typeof ABAS)[number]>(() => {
+    const inicial = searchParams.get('aba') as (typeof ABAS)[number] | null;
+    return inicial && ABAS.includes(inicial) ? inicial : 'dados';
+  });
   const timerRef = useRef<ReturnType<typeof setTimeout>>();
 
   // Resultado técnico recalculado em tempo real a cada alteração
@@ -142,12 +147,13 @@ const ProjetoEditor = () => {
 
       <main className="container mx-auto px-4 py-6 max-w-6xl">
         <Tabs value={aba} onValueChange={(v) => setAba(v as (typeof ABAS)[number])}>
-          <TabsList className="grid w-full grid-cols-2 md:grid-cols-5 h-auto">
+          <TabsList className="grid w-full grid-cols-2 md:grid-cols-6 h-auto">
             <TabsTrigger value="dados">1. Dados e Classificação</TabsTrigger>
             <TabsTrigger value="medidas">2. Medidas de Segurança</TabsTrigger>
             <TabsTrigger value="riscos">3. Riscos Especiais</TabsTrigger>
             <TabsTrigger value="resultados">4. Cálculos</TabsTrigger>
             <TabsTrigger value="memorial">5. Memorial</TabsTrigger>
+            <TabsTrigger value="gestao">6. Gestão</TabsTrigger>
           </TabsList>
 
           <TabsContent value="dados" className="mt-6">
@@ -164,6 +170,9 @@ const ProjetoEditor = () => {
           </TabsContent>
           <TabsContent value="memorial" className="mt-6">
             <MemorialPreview projeto={projeto} resultado={resultado} atualizar={atualizar} />
+          </TabsContent>
+          <TabsContent value="gestao" className="mt-6">
+            <GestaoProjeto projeto={projeto} atualizar={atualizar} />
           </TabsContent>
         </Tabs>
 

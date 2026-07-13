@@ -21,6 +21,10 @@ import MemorialDescritivo from "./pages/modulos/MemorialDescritivo";
 import MemorialBrigada from "./pages/modulos/MemorialBrigada";
 import Checklist from "./pages/modulos/Checklist";
 import Notificacao from "./pages/modulos/Notificacao";
+import Painel from "./pages/Painel";
+import Clientes from "./pages/Clientes";
+import ClienteDetalhe from "./pages/ClienteDetalhe";
+import PortalCliente from "./pages/PortalCliente";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -34,6 +38,9 @@ const App = () => (
         <AppProvider>
           <Routes>
             <Route path="/login" element={<Login />} />
+            {/* Portal do cliente — página pública, sem login */}
+            <Route path="/portal" element={<PortalCliente />} />
+            <Route path="/portal/:token" element={<PortalCliente />} />
             {/* Casca FirePro Suite: sidebar + topbar (Projeto ativo + UF) */}
             <Route element={<AppShell />}>
               <Route path="/" element={<Dashboard />} />
@@ -48,6 +55,9 @@ const App = () => (
               <Route path="/memoriais/brigada" element={<MemorialBrigada />} />
               <Route path="/checklist" element={<Checklist />} />
               <Route path="/notificacao" element={<Notificacao />} />
+              <Route path="/painel" element={<Painel />} />
+              <Route path="/clientes" element={<Clientes />} />
+              <Route path="/clientes/:id" element={<ClienteDetalhe />} />
               <Route path="/configuracoes" element={<Configuracoes />} />
             </Route>
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

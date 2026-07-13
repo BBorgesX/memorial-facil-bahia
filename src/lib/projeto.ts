@@ -2,6 +2,8 @@
  * Modelo de dados do projeto de segurança contra incêndio e pânico.
  */
 
+import { empurrarRegistro, removerRegistro } from './supabase';
+
 export interface DetalhesMedida {
   aplicavel: boolean;
   /** true quando o estado veio da classificação automática (não editado pelo usuário) */
@@ -148,7 +150,8 @@ export type StatusProjeto =
   | 'Protocolado'
   | 'Em análise'
   | 'Aprovado'
-  | 'Comunique-se';
+  | 'Comunique-se'
+  | 'Vencido';
 
 export const STATUS_PROJETO: StatusProjeto[] = [
   'Levantamento',
@@ -157,7 +160,39 @@ export const STATUS_PROJETO: StatusProjeto[] = [
   'Em análise',
   'Aprovado',
   'Comunique-se',
+  'Vencido',
 ];
+
+/** Migra os valores de status usados por versões anteriores do app. */
+const STATUS_LEGADO: Record<string, StatusProjeto> = {
+  rascunho: 'Levantamento',
+  em_analise: 'Em análise',
+  com_exigencia: 'Comunique-se',
+  aprovado: 'Aprovado',
+  vencido: 'Vencido',
+};
+
+export function normalizarStatus(status: string | undefined): StatusProjeto {
+  if (!status) return 'Levantamento';
+  if ((STATUS_PROJETO as string[]).includes(status)) return status as StatusProjeto;
+  return STATUS_LEGADO[status] ?? 'Levantamento';
+}
+
+/** Exigência apontada pelo CBM na análise do projeto/vistoria (comunique-se). */
+export interface Exigencia {
+  id: string;
+  descricao: string;
+  /** Prazo para atendimento (YYYY-MM-DD, vazio = sem prazo) */
+  prazo: string;
+  resolvida: boolean;
+  criadaEm: string;
+}
+
+/** Evento registrado na linha do tempo do projeto (mudança de status, exigência etc.). */
+export interface EventoHistorico {
+  data: string;
+  descricao: string;
+}
 
 /**
  * Entradas do cálculo hidráulico de HIDRANTES — IT 22/2016 (CBMBA),
@@ -259,6 +294,22 @@ export interface DadosProjeto {
   notificacaoTexto: string;
   notificacaoResposta: string;
 
+  // Gestão — acompanhamento do processo no CBM e do AVCB
+  /** Cliente do CRM vinculado ao projeto (id em lib/gestao.ts) */
+  clienteId: string;
+  protocoloCBMBA: string;
+  /** Data de entrada do protocolo (YYYY-MM-DD) */
+  dataProtocolo: string;
+  avcbNumero: string;
+  /** Data de emissão do AVCB/CLCB (YYYY-MM-DD) */
+  avcbEmissao: string;
+  /** Data de validade do AVCB — usada nos alertas de renovação */
+  avcbValidade: string;
+  exigencias: Exigencia[];
+  historico: EventoHistorico[];
+  /** Token de acesso do portal do cliente (vazio = portal não gerado) */
+  tokenPortal: string;
+
   // Identificação
   proprietario: string;
   empresa: string;
@@ -347,6 +398,15 @@ export function novoProjeto(nome = 'Novo Projeto', ownerId = '', uf: UFProjeto =
     hidraulica: hidraulicaPadrao(),
     notificacaoTexto: '',
     notificacaoResposta: '',
+    clienteId: '',
+    protocoloCBMBA: '',
+    dataProtocolo: '',
+    avcbNumero: '',
+    avcbEmissao: '',
+    avcbValidade: '',
+    exigencias: [],
+    historico: [],
+    tokenPortal: '',
     proprietario: '',
     empresa: '',
     cnpj: '',
@@ -408,6 +468,8 @@ export interface ResumoProjeto {
   uf?: UFProjeto;
   status?: StatusProjeto;
   cliente?: string;
+  clienteId?: string;
+  avcbValidade?: string;
 }
 
 function lerIndice(): ResumoProjeto[] {
@@ -441,6 +503,8 @@ export function carregarProjeto(id: string): DadosProjeto | null {
     return {
       ...novoProjeto(),
       ...salvo,
+      // Migra status salvos por versões anteriores (ex.: 'em_analise')
+      status: normalizarStatus(salvo.status as string | undefined),
       // Mescla profunda: entradas hidráulicas ganharam campos novos (IT 22)
       hidraulica: {
         ...hidraulicaPadrao(),
@@ -458,26 +522,35 @@ export function carregarProjeto(id: string): DadosProjeto | null {
 
 export function salvarProjeto(projeto: DadosProjeto): DadosProjeto {
   const atualizado = { ...projeto, atualizadoEm: new Date().toISOString() };
-  localStorage.setItem(`mfb:projeto:${projeto.id}`, JSON.stringify(atualizado));
+  gravarProjetoLocal(atualizado);
+  void empurrarRegistro('projetos', atualizado.id, atualizado);
+  return atualizado;
+}
+
+/** Grava no cache local sem alterar atualizadoEm nem enviar à nuvem (uso interno da sincronização). */
+export function gravarProjetoLocal(projeto: DadosProjeto) {
+  localStorage.setItem(`mfb:projeto:${projeto.id}`, JSON.stringify(projeto));
   const indice = lerIndice().filter((p) => p.id !== projeto.id);
   indice.push({
-    id: atualizado.id,
-    nome: atualizado.nome,
-    municipio: atualizado.municipio,
-    divisao: atualizado.divisao,
-    atualizadoEm: atualizado.atualizadoEm,
-    ownerId: atualizado.ownerId,
-    uf: atualizado.uf,
-    status: atualizado.status,
-    cliente: atualizado.cliente,
+    id: projeto.id,
+    nome: projeto.nome,
+    municipio: projeto.municipio,
+    divisao: projeto.divisao,
+    atualizadoEm: projeto.atualizadoEm,
+    ownerId: projeto.ownerId,
+    uf: projeto.uf,
+    status: projeto.status,
+    cliente: projeto.cliente,
+    clienteId: projeto.clienteId,
+    avcbValidade: projeto.avcbValidade,
   });
   gravarIndice(indice);
-  return atualizado;
 }
 
 export function excluirProjeto(id: string) {
   localStorage.removeItem(`mfb:projeto:${id}`);
   gravarIndice(lerIndice().filter((p) => p.id !== id));
+  void removerRegistro('projetos', id);
 }
 
 export function duplicarProjeto(id: string): DadosProjeto | null {
@@ -488,6 +561,19 @@ export function duplicarProjeto(id: string): DadosProjeto | null {
     id: novoProjeto().id,
     nome: `${original.nome} (cópia)`,
     criadoEm: new Date().toISOString(),
+    // A cópia inicia um novo processo: não herda protocolo, AVCB nem histórico
+    status: 'Levantamento',
+    checklistMarcado: {},
+    notificacaoTexto: '',
+    notificacaoResposta: '',
+    protocoloCBMBA: '',
+    dataProtocolo: '',
+    avcbNumero: '',
+    avcbEmissao: '',
+    avcbValidade: '',
+    exigencias: [],
+    historico: [],
+    tokenPortal: '',
   };
   return salvarProjeto(copia);
 }

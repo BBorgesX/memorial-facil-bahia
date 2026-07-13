@@ -1,7 +1,7 @@
 /** Badge de status do projeto com cor por situação. */
 
 import { Badge } from '@/components/ui/badge';
-import type { StatusProjeto } from '@/lib/projeto';
+import { normalizarStatus, type StatusProjeto } from '@/lib/projeto';
 import { cn } from '@/lib/utils';
 
 const CORES: Record<StatusProjeto, string> = {
@@ -11,12 +11,13 @@ const CORES: Record<StatusProjeto, string> = {
   'Em análise': 'bg-amber-100 text-amber-800 border-amber-200',
   Aprovado: 'bg-emerald-100 text-emerald-800 border-emerald-200',
   'Comunique-se': 'bg-red-100 text-red-800 border-red-200',
+  Vencido: 'bg-red-200 text-red-900 border-red-300',
 };
 
 export function StatusBadge({ status }: { status?: StatusProjeto }) {
-  const s = status ?? 'Levantamento';
+  const s = normalizarStatus(status);
   return (
-    <Badge variant="outline" className={cn('font-medium', CORES[s])}>
+    <Badge variant="outline" className={cn('font-medium whitespace-nowrap', CORES[s])}>
       {s}
     </Badge>
   );

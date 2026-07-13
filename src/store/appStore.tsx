@@ -1,10 +1,10 @@
 /**
- * Store global do FirePro Suite (Context + localStorage).
+ * Store global do FirePro Suite (Context + cache local + Supabase).
  *
- * Mantém: usuário autenticado (mock), perfil do responsável técnico,
- * projeto ativo e lista de projetos do usuário. Toda a persistência é
- * local (MVP); a estrutura foi isolada para trocar por Supabase
- * (Postgres + Auth) na fase 2 sem alterar os módulos.
+ * Mantém: usuário autenticado (Supabase Auth), perfil do responsável
+ * técnico, projeto ativo e lista de projetos do usuário. O localStorage
+ * funciona como cache de leitura; as gravações replicam para a nuvem e a
+ * sincronização completa roda no login (lib/sync.ts).
  */
 
 /* eslint-disable react-refresh/only-export-components */
@@ -36,12 +36,15 @@ import {
   Usuario,
   usuarioAtual,
 } from '@/services/auth';
+import { sincronizarTudo } from '@/lib/sync';
 import { ConfigUF, getNormas } from '@/data/normas';
 
 const CHAVE_ATIVO = (userId: string) => `fps:ativo:${userId}`;
 
 interface AppStore {
   usuario: Usuario | null;
+  /** true enquanto a sessão é restaurada e os dados sincronizam com a nuvem */
+  carregandoSessao: boolean;
   /** Atualiza o usuário após login/cadastro (páginas de auth chamam isto). */
   setUsuario: (u: Usuario | null) => void;
   sair: () => void;
@@ -70,24 +73,17 @@ interface AppStore {
 const AppContext = createContext<AppStore | null>(null);
 
 export function AppProvider({ children }: { children: ReactNode }) {
-  const [usuario, setUsuarioEstado] = useState<Usuario | null>(() => usuarioAtual());
-  const [perfil, setPerfil] = useState<PerfilProfissional>(() =>
-    usuario ? carregarPerfil(usuario.id) : perfilPadrao(),
-  );
-  const [projetos, setProjetos] = useState<ResumoProjeto[]>(() =>
-    listarProjetos(usuario?.id),
-  );
-  const [projetoAtivo, setProjetoAtivo] = useState<DadosProjeto | null>(() => {
-    if (!usuario) return null;
-    const id = localStorage.getItem(CHAVE_ATIVO(usuario.id));
-    return id ? carregarProjeto(id) : null;
-  });
+  const [usuario, setUsuarioEstado] = useState<Usuario | null>(null);
+  const [carregandoSessao, setCarregandoSessao] = useState(true);
+  const [perfil, setPerfil] = useState<PerfilProfissional>(() => perfilPadrao());
+  const [projetos, setProjetos] = useState<ResumoProjeto[]>([]);
+  const [projetoAtivo, setProjetoAtivo] = useState<DadosProjeto | null>(null);
   // UF exibida quando não há projeto ativo (padrão do perfil)
-  const [ufSemProjeto, setUfSemProjeto] = useState<UFProjeto>(perfil.ufPadrao);
+  const [ufSemProjeto, setUfSemProjeto] = useState<UFProjeto>('BA');
 
   const recarregarProjetos = useCallback(() => {
-    setProjetos(listarProjetos(usuarioAtual()?.id));
-  }, []);
+    setProjetos(listarProjetos(usuario?.id));
+  }, [usuario]);
 
   const setUsuario = useCallback((u: Usuario | null) => {
     setUsuarioEstado(u);
@@ -98,12 +94,34 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setProjetos(listarProjetos(u.id));
       const id = localStorage.getItem(CHAVE_ATIVO(u.id));
       setProjetoAtivo(id ? carregarProjeto(id) : null);
+      // Sincroniza com a nuvem em segundo plano e relê o cache ao terminar
+      void sincronizarTudo().then(() => {
+        setProjetos(listarProjetos(u.id));
+        const ativo = localStorage.getItem(CHAVE_ATIVO(u.id));
+        setProjetoAtivo(ativo ? carregarProjeto(ativo) : null);
+      });
     } else {
       setPerfil(perfilPadrao());
       setProjetoAtivo(null);
       setProjetos([]);
     }
   }, []);
+
+  // Restaura a sessão do Supabase ao abrir o app
+  useEffect(() => {
+    let montado = true;
+    usuarioAtual()
+      .then((u) => {
+        if (!montado) return;
+        if (u) setUsuario(u);
+      })
+      .finally(() => {
+        if (montado) setCarregandoSessao(false);
+      });
+    return () => {
+      montado = false;
+    };
+  }, [setUsuario]);
 
   const sair = useCallback(() => {
     authSair();
@@ -185,6 +203,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const valor = useMemo<AppStore>(
     () => ({
       usuario,
+      carregandoSessao,
       setUsuario,
       sair,
       perfil,
@@ -202,6 +221,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }),
     [
       usuario,
+      carregandoSessao,
       setUsuario,
       sair,
       perfil,
