@@ -4,7 +4,7 @@
  */
 
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Navigate, useNavigate } from 'react-router-dom';
 import { Flame } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -19,7 +19,7 @@ import heroImage from '@/assets/fire-safety-hero.jpg';
 export default function Login() {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { setUsuario } = useApp();
+  const { usuario, carregandoSessao, setUsuario } = useApp();
   const [carregando, setCarregando] = useState(false);
 
   const [loginEmail, setLoginEmail] = useState('');
@@ -30,6 +30,9 @@ export default function Login() {
   const [cadSenha, setCadSenha] = useState('');
 
   const [recEmail, setRecEmail] = useState('');
+
+  // Já logado (ex.: sessão restaurada ou volta do link de confirmação)
+  if (!carregandoSessao && usuario) return <Navigate to="/" replace />;
 
   const executar = async (acao: () => Promise<void>) => {
     setCarregando(true);
