@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { FilePlus2, FileText, Copy, Trash2, Upload, Flame } from 'lucide-react';
+import { FilePlus2, FileText, Copy, Trash2, Upload, Flame, LayoutDashboard, Users, AlertTriangle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import {
   listarProjetos,
@@ -13,6 +13,8 @@ import {
   duplicarProjeto,
   importarProjetoJSON,
 } from '@/lib/projeto';
+import { situacaoAvcb } from '@/lib/gestao';
+import { StatusBadge } from '@/components/gestao/StatusBadge';
 import heroImage from '@/assets/fire-safety-hero.jpg';
 
 const Index = () => {
@@ -78,7 +80,13 @@ const Index = () => {
               Os projetos ficam salvos neste navegador e podem ser editados a qualquer momento.
             </p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
+            <Button variant="outline" onClick={() => navigate('/painel')}>
+              <LayoutDashboard className="w-4 h-4 mr-2" /> Painel
+            </Button>
+            <Button variant="outline" onClick={() => navigate('/clientes')}>
+              <Users className="w-4 h-4 mr-2" /> Clientes
+            </Button>
             <input
               ref={inputImportar}
               type="file"
@@ -114,7 +122,9 @@ const Index = () => {
           </Card>
         ) : (
           <div className="grid gap-4 md:grid-cols-2">
-            {projetos.map((projeto) => (
+            {projetos.map((projeto) => {
+              const avcb = situacaoAvcb(projeto.avcbValidade);
+              return (
               <Card key={projeto.id} className="hover:shadow-md transition-shadow">
                 <CardHeader className="pb-2">
                   <CardTitle className="text-lg flex items-center justify-between gap-2">
@@ -125,10 +135,16 @@ const Index = () => {
                       {projeto.nome}
                     </button>
                     {projeto.divisao && <Badge variant="secondary">{projeto.divisao}</Badge>}
+                    {projeto.status && <StatusBadge status={projeto.status} />}
                   </CardTitle>
                   <CardDescription>
                     {projeto.municipio ? `${projeto.municipio} – BA · ` : ''}
                     Atualizado em {new Date(projeto.atualizadoEm).toLocaleString('pt-BR')}
+                    {(avcb.nivel === 'vencido' || avcb.nivel === 'critico' || avcb.nivel === 'atencao') && (
+                      <span className={`flex items-center gap-1 mt-1 text-xs font-medium ${avcb.nivel === 'vencido' ? 'text-red-600' : 'text-amber-600'}`}>
+                        <AlertTriangle className="w-3.5 h-3.5" /> {avcb.rotulo}
+                      </span>
+                    )}
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="flex gap-2 pt-2">
@@ -143,7 +159,8 @@ const Index = () => {
                   </Button>
                 </CardContent>
               </Card>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>

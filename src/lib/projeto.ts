@@ -138,11 +138,46 @@ export function hidrantesPadrao(): ConfiguracaoHidrantes {
   };
 }
 
+/** Situação do projeto no fluxo de aprovação junto ao CBMBA. */
+export type StatusProjeto = 'rascunho' | 'em_analise' | 'aprovado' | 'com_exigencia' | 'vencido';
+
+/** Exigência apontada pelo CBMBA na análise do projeto/vistoria. */
+export interface Exigencia {
+  id: string;
+  descricao: string;
+  /** Prazo para atendimento (YYYY-MM-DD, vazio = sem prazo) */
+  prazo: string;
+  resolvida: boolean;
+  criadaEm: string;
+}
+
+/** Evento registrado na linha do tempo do projeto (mudança de status, exigência etc.). */
+export interface EventoHistorico {
+  data: string;
+  descricao: string;
+}
+
 export interface DadosProjeto {
   id: string;
   nome: string;
   criadoEm: string;
   atualizadoEm: string;
+
+  // Gestão — acompanhamento do processo no CBMBA e do AVCB
+  clienteId: string;
+  status: StatusProjeto;
+  protocoloCBMBA: string;
+  /** Data de entrada do protocolo no CBMBA (YYYY-MM-DD) */
+  dataProtocolo: string;
+  avcbNumero: string;
+  /** Data de emissão do AVCB (YYYY-MM-DD) */
+  avcbEmissao: string;
+  /** Data de validade do AVCB (YYYY-MM-DD) — usada nos alertas de renovação */
+  avcbValidade: string;
+  exigencias: Exigencia[];
+  historico: EventoHistorico[];
+  /** Token de acesso do portal do cliente (vazio = portal não gerado) */
+  tokenPortal: string;
 
   // Identificação
   proprietario: string;
@@ -224,6 +259,16 @@ export function novoProjeto(nome = 'Novo Projeto'): DadosProjeto {
     nome,
     criadoEm: agora,
     atualizadoEm: agora,
+    clienteId: '',
+    status: 'rascunho',
+    protocoloCBMBA: '',
+    dataProtocolo: '',
+    avcbNumero: '',
+    avcbEmissao: '',
+    avcbValidade: '',
+    exigencias: [],
+    historico: [],
+    tokenPortal: '',
     proprietario: '',
     empresa: '',
     cnpj: '',
@@ -275,12 +320,15 @@ export function novoProjeto(nome = 'Novo Projeto'): DadosProjeto {
 
 const CHAVE_INDICE = 'mfb:projetos';
 
-interface ResumoProjeto {
+export interface ResumoProjeto {
   id: string;
   nome: string;
   municipio: string;
   divisao: string;
   atualizadoEm: string;
+  clienteId?: string;
+  status?: StatusProjeto;
+  avcbValidade?: string;
 }
 
 function lerIndice(): ResumoProjeto[] {
@@ -320,6 +368,9 @@ export function salvarProjeto(projeto: DadosProjeto): DadosProjeto {
     municipio: atualizado.municipio,
     divisao: atualizado.divisao,
     atualizadoEm: atualizado.atualizadoEm,
+    clienteId: atualizado.clienteId,
+    status: atualizado.status,
+    avcbValidade: atualizado.avcbValidade,
   });
   gravarIndice(indice);
   return atualizado;
@@ -338,6 +389,16 @@ export function duplicarProjeto(id: string): DadosProjeto | null {
     id: novoProjeto().id,
     nome: `${original.nome} (cópia)`,
     criadoEm: new Date().toISOString(),
+    // A cópia inicia um novo processo: não herda protocolo, AVCB nem histórico
+    status: 'rascunho',
+    protocoloCBMBA: '',
+    dataProtocolo: '',
+    avcbNumero: '',
+    avcbEmissao: '',
+    avcbValidade: '',
+    exigencias: [],
+    historico: [],
+    tokenPortal: '',
   };
   return salvarProjeto(copia);
 }
