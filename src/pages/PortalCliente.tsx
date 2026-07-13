@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useEffect, useState } from 'react';
 import { useLocation, useParams } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -8,6 +8,7 @@ import {
   Circle,
   Flame,
   History,
+  LoaderCircle,
   ShieldCheck,
 } from 'lucide-react';
 import {
@@ -18,28 +19,67 @@ import {
   gerarSnapshotPortal,
   projetoPorToken,
   situacaoAvcb,
+  statusEfetivo,
 } from '@/lib/gestao';
+import { supabase } from '@/lib/supabase';
 import { StatusBadge } from '@/components/gestao/StatusBadge';
 
 /**
  * Página pública, somente leitura, para o cliente acompanhar o andamento do
- * projeto. Os dados vêm codificados no próprio link (hash) e, quando aberta
- * no navegador do responsável, do token salvo localmente (visão ao vivo).
+ * projeto. A visão ao vivo vem da nuvem pelo token do link; se não houver
+ * conexão (ou as tabelas ainda não existirem), cai no retrato codificado no
+ * próprio link e, por fim, nos dados locais deste navegador.
  */
 const PortalCliente = () => {
   const { token } = useParams<{ token: string }>();
   const location = useLocation();
+  const [snapshot, setSnapshot] = useState<SnapshotPortal | null>(null);
+  const [carregando, setCarregando] = useState(true);
 
-  const snapshot: SnapshotPortal | null = useMemo(() => {
-    // 1) Visão ao vivo: o token existe neste navegador (máquina do responsável)
-    if (token) {
-      const projeto = projetoPorToken(token);
-      if (projeto) return gerarSnapshotPortal(projeto);
-    }
-    // 2) Retrato embutido no link (funciona em qualquer dispositivo)
-    const m = location.hash.match(/#d=(.+)/);
-    return m ? decodificarSnapshot(m[1]) : null;
+  useEffect(() => {
+    let ativo = true;
+    (async () => {
+      let resultado: SnapshotPortal | null = null;
+      if (token) {
+        // 1) Visão ao vivo pela nuvem (funciona em qualquer dispositivo)
+        try {
+          const { data } = await supabase.rpc('portal_projeto', { token_busca: token });
+          if (data) {
+            const bruto = data as SnapshotPortal;
+            resultado = { ...bruto, status: statusEfetivo(bruto) };
+          }
+        } catch {
+          // sem conexão ou função ainda não criada — usa os fallbacks abaixo
+        }
+        // 2) Dados locais deste navegador (máquina do responsável)
+        if (!resultado) {
+          const projeto = projetoPorToken(token);
+          if (projeto) resultado = gerarSnapshotPortal(projeto);
+        }
+      }
+      // 3) Retrato embutido no link
+      if (!resultado) {
+        const m = location.hash.match(/#d=(.+)/);
+        resultado = m ? decodificarSnapshot(m[1]) : null;
+      }
+      if (ativo) {
+        setSnapshot(resultado);
+        setCarregando(false);
+      }
+    })();
+    return () => {
+      ativo = false;
+    };
   }, [token, location.hash]);
+
+  if (carregando) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center gap-3 text-muted-foreground">
+        <LoaderCircle className="w-8 h-8 animate-spin" />
+        <p className="text-sm">Carregando andamento do projeto…</p>
+      </div>
+    );
+  }
 
   if (!snapshot) {
     return (

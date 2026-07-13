@@ -11,6 +11,7 @@ import {
   carregarProjeto,
   listarProjetos,
 } from './projeto';
+import { empurrarRegistro, removerRegistro } from './supabase';
 
 // ---------------------------------------------------------------------------
 // Status do projeto
@@ -183,16 +184,23 @@ export function carregarCliente(id: string): Cliente | null {
   return listarClientes().find((c) => c.id === id) ?? null;
 }
 
+/** Grava no cache local sem alterar atualizadoEm nem enviar à nuvem (uso interno da sincronização). */
+export function gravarClienteLocal(cliente: Cliente) {
+  const lista = listarClientes().filter((c) => c.id !== cliente.id);
+  lista.push(cliente);
+  localStorage.setItem(CHAVE_CLIENTES, JSON.stringify(lista));
+}
+
 export function salvarCliente(cliente: Cliente): Cliente {
   const atualizado = { ...cliente, atualizadoEm: new Date().toISOString() };
-  const lista = listarClientes().filter((c) => c.id !== cliente.id);
-  lista.push(atualizado);
-  localStorage.setItem(CHAVE_CLIENTES, JSON.stringify(lista));
+  gravarClienteLocal(atualizado);
+  void empurrarRegistro('clientes', atualizado.id, atualizado);
   return atualizado;
 }
 
 export function excluirCliente(id: string) {
   localStorage.setItem(CHAVE_CLIENTES, JSON.stringify(listarClientes().filter((c) => c.id !== id)));
+  void removerRegistro('clientes', id);
 }
 
 export function novaInteracao(tipo: TipoInteracao, descricao: string): Interacao {

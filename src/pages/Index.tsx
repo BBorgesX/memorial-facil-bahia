@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { FilePlus2, FileText, Copy, Trash2, Upload, Flame, LayoutDashboard, Users, AlertTriangle } from 'lucide-react';
+import { FilePlus2, FileText, Copy, Trash2, Upload, Flame, LayoutDashboard, Users, AlertTriangle, LogOut } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import {
   listarProjetos,
@@ -14,6 +14,7 @@ import {
   importarProjetoJSON,
 } from '@/lib/projeto';
 import { situacaoAvcb } from '@/lib/gestao';
+import { supabase } from '@/lib/supabase';
 import { StatusBadge } from '@/components/gestao/StatusBadge';
 import heroImage from '@/assets/fire-safety-hero.jpg';
 
@@ -103,6 +104,17 @@ const Index = () => {
             </Button>
             <Button onClick={criarProjeto} size="lg">
               <FilePlus2 className="w-4 h-4 mr-2" /> Novo Projeto
+            </Button>
+            <Button
+              variant="ghost"
+              size="lg"
+              title="Sair da conta"
+              onClick={async () => {
+                await supabase.auth.signOut();
+                navigate('/login');
+              }}
+            >
+              <LogOut className="w-4 h-4" />
             </Button>
           </div>
         </div>

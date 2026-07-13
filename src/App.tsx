@@ -9,7 +9,9 @@ import Painel from "./pages/Painel";
 import Clientes from "./pages/Clientes";
 import ClienteDetalhe from "./pages/ClienteDetalhe";
 import PortalCliente from "./pages/PortalCliente";
+import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
+import { AuthGate } from "./components/AuthGate";
 
 const queryClient = new QueryClient();
 
@@ -20,13 +22,16 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/projeto/:id" element={<ProjetoEditor />} />
-          <Route path="/painel" element={<Painel />} />
-          <Route path="/clientes" element={<Clientes />} />
-          <Route path="/clientes/:id" element={<ClienteDetalhe />} />
+          {/* Páginas públicas: login e portal do cliente */}
+          <Route path="/login" element={<Login />} />
           <Route path="/portal" element={<PortalCliente />} />
           <Route path="/portal/:token" element={<PortalCliente />} />
+          {/* Páginas internas (exigem login) */}
+          <Route path="/" element={<AuthGate><Index /></AuthGate>} />
+          <Route path="/projeto/:id" element={<AuthGate><ProjetoEditor /></AuthGate>} />
+          <Route path="/painel" element={<AuthGate><Painel /></AuthGate>} />
+          <Route path="/clientes" element={<AuthGate><Clientes /></AuthGate>} />
+          <Route path="/clientes/:id" element={<AuthGate><ClienteDetalhe /></AuthGate>} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

@@ -314,9 +314,12 @@ export function novoProjeto(nome = 'Novo Projeto'): DadosProjeto {
 }
 
 // ---------------------------------------------------------------------------
-// Persistência local (localStorage) — os projetos ficam salvos no navegador e
-// podem ser reabertos/editados. Estrutura pronta para migração a um backend.
+// Persistência: o localStorage funciona como cache local (leitura instantânea
+// e uso offline) e cada gravação é replicada para a nuvem (Supabase) quando o
+// usuário está logado. A sincronização completa fica em lib/sync.ts.
 // ---------------------------------------------------------------------------
+
+import { empurrarRegistro, removerRegistro } from './supabase';
 
 const CHAVE_INDICE = 'mfb:projetos';
 
@@ -358,27 +361,34 @@ export function carregarProjeto(id: string): DadosProjeto | null {
   }
 }
 
-export function salvarProjeto(projeto: DadosProjeto): DadosProjeto {
-  const atualizado = { ...projeto, atualizadoEm: new Date().toISOString() };
-  localStorage.setItem(`mfb:projeto:${projeto.id}`, JSON.stringify(atualizado));
+/** Grava no cache local sem alterar atualizadoEm nem enviar à nuvem (uso interno da sincronização). */
+export function gravarProjetoLocal(projeto: DadosProjeto) {
+  localStorage.setItem(`mfb:projeto:${projeto.id}`, JSON.stringify(projeto));
   const indice = lerIndice().filter((p) => p.id !== projeto.id);
   indice.push({
-    id: atualizado.id,
-    nome: atualizado.nome,
-    municipio: atualizado.municipio,
-    divisao: atualizado.divisao,
-    atualizadoEm: atualizado.atualizadoEm,
-    clienteId: atualizado.clienteId,
-    status: atualizado.status,
-    avcbValidade: atualizado.avcbValidade,
+    id: projeto.id,
+    nome: projeto.nome,
+    municipio: projeto.municipio,
+    divisao: projeto.divisao,
+    atualizadoEm: projeto.atualizadoEm,
+    clienteId: projeto.clienteId,
+    status: projeto.status,
+    avcbValidade: projeto.avcbValidade,
   });
   gravarIndice(indice);
+}
+
+export function salvarProjeto(projeto: DadosProjeto): DadosProjeto {
+  const atualizado = { ...projeto, atualizadoEm: new Date().toISOString() };
+  gravarProjetoLocal(atualizado);
+  void empurrarRegistro('projetos', atualizado.id, atualizado);
   return atualizado;
 }
 
 export function excluirProjeto(id: string) {
   localStorage.removeItem(`mfb:projeto:${id}`);
   gravarIndice(lerIndice().filter((p) => p.id !== id));
+  void removerRegistro('projetos', id);
 }
 
 export function duplicarProjeto(id: string): DadosProjeto | null {

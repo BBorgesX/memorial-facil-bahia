@@ -339,7 +339,7 @@ export function GestaoProjeto({ projeto, atualizar }: Props) {
           </CardTitle>
           <CardDescription>
             Gere um link somente leitura para o cliente acompanhar o andamento sem precisar ligar.
-            O link leva um retrato do momento — gere um novo após atualizações importantes.
+            O link mostra sempre a situação atual do projeto (sincronizada com a nuvem).
           </CardDescription>
         </CardHeader>
         <CardContent className="flex flex-wrap gap-2">
