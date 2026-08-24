@@ -11,7 +11,7 @@ import { useApp } from '@/store/appStore';
 const Clientes = () => {
   const navigate = useNavigate();
   const { usuario } = useApp();
-  const [clientes, setClientes] = useState<Cliente[]>(() => listarClientes());
+  const [clientes, setClientes] = useState<Cliente[]>(() => listarClientes(usuario?.id));
   const [busca, setBusca] = useState('');
 
   const obrasPorCliente = useMemo(() => {
@@ -31,8 +31,8 @@ const Clientes = () => {
   }, [clientes, busca]);
 
   const criarCliente = () => {
-    const cliente = salvarCliente(novoCliente('Novo cliente'));
-    setClientes(listarClientes());
+    const cliente = salvarCliente(novoCliente('Novo cliente', usuario?.id ?? ''));
+    setClientes(listarClientes(usuario?.id));
     navigate(`/clientes/${cliente.id}`);
   };
 

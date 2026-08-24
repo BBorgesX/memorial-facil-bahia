@@ -23,6 +23,18 @@ create table if not exists public.clientes (
   atualizado_em timestamptz not null default now()
 );
 
+-- Exclusões (tombstones): sem esse registro, um projeto apagado num
+-- dispositivo volta na sincronização seguinte, reenviado pelo outro
+-- dispositivo que ainda tinha a cópia local.
+
+create table if not exists public.exclusoes (
+  user_id uuid not null default auth.uid() references auth.users (id) on delete cascade,
+  tabela text not null check (tabela in ('projetos', 'clientes')),
+  id text not null,
+  excluido_em timestamptz not null default now(),
+  primary key (user_id, tabela, id)
+);
+
 create index if not exists projetos_user_idx on public.projetos (user_id);
 create index if not exists clientes_user_idx on public.clientes (user_id);
 create index if not exists projetos_token_idx on public.projetos ((dados ->> 'tokenPortal'));
@@ -31,6 +43,7 @@ create index if not exists projetos_token_idx on public.projetos ((dados ->> 'to
 
 alter table public.projetos enable row level security;
 alter table public.clientes enable row level security;
+alter table public.exclusoes enable row level security;
 
 drop policy if exists "projetos_proprios" on public.projetos;
 create policy "projetos_proprios" on public.projetos
@@ -40,6 +53,12 @@ create policy "projetos_proprios" on public.projetos
 
 drop policy if exists "clientes_proprios" on public.clientes;
 create policy "clientes_proprios" on public.clientes
+  for all to authenticated
+  using (user_id = auth.uid())
+  with check (user_id = auth.uid());
+
+drop policy if exists "exclusoes_proprias" on public.exclusoes;
+create policy "exclusoes_proprias" on public.exclusoes
   for all to authenticated
   using (user_id = auth.uid())
   with check (user_id = auth.uid());

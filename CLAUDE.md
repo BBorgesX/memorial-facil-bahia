@@ -85,9 +85,11 @@ invente**. Marque `// TODO: VALIDAR`, sinalize na interface e pergunte.
 localStorage (fonte de leitura)          Supabase (fonte de verdade entre dispositivos)
   mfb:projetos        índice               public.projetos  (id, user_id, dados jsonb, atualizado_em)
   mfb:projeto:<id>    documento completo   public.clientes  (id, user_id, dados jsonb, atualizado_em)
-  mfb:clientes        lista de clientes    public.portal_projeto(token) → RPC pública do portal
+  mfb:clientes        lista de clientes    public.exclusoes (user_id, tabela, id, excluido_em)
+  mfb:excluidos       marcas de exclusão   public.portal_projeto(token) → RPC pública do portal
   fps:perfil:<uid>    perfil do RT (SÓ local — não sincroniza)
   fps:ativo:<uid>     id do projeto ativo
+  fps:ultimoUsuario   última conta a usar este navegador
 ```
 
 - **Escrita:** `salvarProjeto` / `salvarCliente` gravam local e disparam
@@ -96,16 +98,35 @@ localStorage (fonte de leitura)          Supabase (fonte de verdade entre dispos
   (`src/lib/sync.ts`), chamado no login e ao restaurar sessão.
 - **Merge:** last-write-wins pelo campo `atualizadoEm` **de dentro do JSON**
   (a coluna `atualizado_em` do Postgres é ignorada pela sincronização).
+- **Exclusões:** apagar deixa uma marca (`lib/exclusoes.ts`), local e na nuvem.
+  Sem ela o registro voltaria, reenviado pelo outro dispositivo que ainda tem a
+  cópia. A edição só vence a exclusão quando é posterior a ela. Ao criar um
+  caminho novo de exclusão, registre a marca — não basta apagar.
+- **Escopo por conta:** `DadosProjeto.ownerId` e `Cliente.ownerId` definem o
+  dono. Toda listagem recebe o `ownerId` da sessão (`listarProjetos(uid)`,
+  `listarClientes(uid)`); registro sem dono é adotado por quem salvar primeiro.
+  **Nunca empurre para a nuvem registro cujo `ownerId` não seja o da sessão** —
+  o localStorage é compartilhado entre as contas do mesmo navegador.
+- **Troca de conta:** `prepararCacheParaUsuario(uid)` (`lib/sessao.ts`) apaga o
+  cache da conta anterior no login; `encerrarSessao()` sincroniza antes de
+  limpar e **preserva o cache se a sincronização falhar**, para não perder
+  trabalho feito offline.
 - O documento inteiro vai como `jsonb` — não há colunas tipadas por campo. Ao
   adicionar um campo em `DadosProjeto`, adicione também o padrão em
   `novoProjeto()`: `carregarProjeto()` faz merge com o modelo vazio, e é isso
   que mantém compatibilidade com projetos salvos por versões antigas.
 
-**Estado atual do banco:** há inconsistências conhecidas e ainda não corrigidas
-(escopo de clientes por usuário, exclusões que ressuscitam, perfil que não
-sincroniza, link do portal que carrega os dados embutidos). Veja
-`docs/revisao-banco.md` antes de mexer em `sync.ts`, `supabase.ts`, `gestao.ts`
-ou `supabase/setup.sql`.
+**Portal do cliente:** o link é `#/portal/<token>` e **só** o token — os dados
+vêm ao vivo da RPC `portal_projeto`. Trocar o token invalida os links já
+enviados. Não volte a embutir o retrato no link (o antigo `?d=`): era o que
+tornava o acesso irrevogável.
+
+**Estado atual do banco:** `docs/revisao-banco.md` tem o levantamento completo.
+Os 4 itens críticos estão corrigidos; os demais (erros de sincronização
+invisíveis na interface, perfil do RT que não sincroniza, importação de JSON que
+preserva `ownerId` alheio, imagens em base64 dentro do JSON) continuam abertos.
+Leia o documento antes de mexer em `sync.ts`, `supabase.ts`, `exclusoes.ts`,
+`sessao.ts`, `gestao.ts` ou `supabase/setup.sql`.
 
 ### Autenticação
 

@@ -4,8 +4,13 @@ Revisão da camada de persistência: `supabase/setup.sql`, `src/lib/supabase.ts`
 `src/lib/sync.ts`, `src/lib/projeto.ts`, `src/lib/gestao.ts`,
 `src/services/auth.ts`, `src/store/appStore.tsx` e `src/pages/PortalCliente.tsx`.
 
-**Nada foi corrigido ainda** — este documento é o levantamento. Vários itens
-mudam o formato dos dados já gravados e precisam de decisão antes.
+**Situação:** os 4 itens **críticos** estão corrigidos (marcados ✅ abaixo). Os
+demais continuam abertos — vários mudam o formato dos dados já gravados e
+precisam de decisão antes.
+
+Para aplicar as correções é preciso rodar `supabase/setup.sql` de novo no SQL
+Editor do painel: ele agora cria a tabela `public.exclusoes`. Enquanto isso não
+for feito, as exclusões continuam valendo só neste navegador.
 
 ## Como o modelo funciona hoje
 
@@ -23,7 +28,7 @@ abaixo são de escopo por usuário, de exclusão e de visibilidade de erro.
 
 ## Críticos
 
-### 1. Clientes não têm dono — vazam entre contas e são apropriados na sincronização
+### 1. ✅ CORRIGIDO — Clientes não têm dono, vazam entre contas e são apropriados na sincronização
 
 `Cliente` (`gestao.ts:132`) não tem `ownerId`, e `listarClientes()`
 (`gestao.ts:169`) lê a chave global `mfb:clientes` sem filtrar por usuário.
@@ -38,20 +43,30 @@ Consequências, num navegador usado por mais de uma conta:
 Projetos não têm esse problema porque `DadosProjeto.ownerId` existe e
 `listarProjetos(ownerId)` filtra (`projeto.ts:502`).
 
-**Correção:** dar `ownerId` a `Cliente`, filtrar em `listarClientes(ownerId)`
-e nunca empurrar registro cujo `ownerId` não seja o da sessão. Exige migração
-dos clientes já salvos (adoção pelo primeiro usuário que logar, igual ao que
-`sync.ts:43-46` faz com projetos sem dono).
+**Corrigido em:** `Cliente` ganhou `ownerId`; `listarClientes(ownerId)` e
+`carregarCliente(id, ownerId)` filtram; `Clientes.tsx`, `ClienteDetalhe.tsx`,
+`Painel.tsx` e `GestaoProjeto.tsx` passam o dono. Na sincronização o push
+percorre `listarClientes(uid)` — cliente de outra conta nunca sobe sob este
+`user_id`. Clientes antigos sem dono são adotados pela conta que logar, como já
+acontecia com projetos.
 
-### 2. Sair da conta não limpa o cache local
+### 2. ✅ CORRIGIDO — Sair da conta não limpa o cache local
 
-`sair()` (`appStore.tsx:126`, `auth.ts:80`) encerra a sessão do Supabase e zera
-o estado do React, mas não toca no localStorage. Ficam no navegador:
-`mfb:clientes` (global), `mfb:projeto:<id>` de todos, `fps:perfil:<uid>` e o
-índice `mfb:projetos`. Somado ao item 1, a próxima conta a logar naquele
-computador enxerga os clientes da anterior.
+`sair()` (`appStore.tsx:126`, `auth.ts:80`) encerrava a sessão do Supabase e
+zerava o estado do React, mas não tocava no localStorage. Ficavam no navegador:
+`mfb:clientes` (global), `mfb:projeto:<id>` de todos e o índice `mfb:projetos`.
+Somado ao item 1, a próxima conta a logar naquele computador enxergava os
+clientes da anterior.
 
-### 3. Exclusões ressuscitam na sincronização seguinte
+**Corrigido em:** `src/lib/sessao.ts`. `encerrarSessao()` sincroniza primeiro e
+só apaga o cache se a sincronização **confirmou** — offline, o cache é
+preservado para não perder trabalho, e sai na próxima troca de conta.
+`prepararCacheParaUsuario(uid)` roda no login e apaga o cache da conta anterior
+quando o `uid` muda (`fps:ultimoUsuario`). O perfil do RT (`fps:perfil:<uid>`)
+é preservado de propósito: já é isolado por conta e, enquanto o item 6 não for
+resolvido, é a única cópia que existe.
+
+### 3. ✅ CORRIGIDO — Exclusões ressuscitam na sincronização seguinte
 
 Não existe tombstone. `excluirProjeto` (`projeto.ts:561`) e `excluirCliente`
 (`gestao.ts:198`) apagam local e chamam `removerRegistro`, mas:
@@ -63,10 +78,17 @@ Não existe tombstone. `excluirProjeto` (`projeto.ts:561`) e `excluirCliente`
   local e, tendo `atualizadoEm` mais recente ou não existindo na nuvem, o
   **reenvia** (`sync.ts:47-50`, `62-65`).
 
-Resultado prático: projeto/cliente apagado reaparece. Precisa de uma tabela (ou
-coluna) de exclusões com a data, respeitada nos dois sentidos do merge.
+Resultado prático: projeto/cliente apagado reaparecia.
 
-### 4. O link do portal carrega os dados embutidos — revogar o token não revoga o acesso
+**Corrigido em:** `src/lib/exclusoes.ts` + tabela `public.exclusoes`
+(`user_id, tabela, id, excluido_em`). `excluirProjeto`/`excluirCliente` marcam
+a exclusão local e a publicam na nuvem; `sincronizarTudo` baixa as marcas
+remotas, mescla com as locais e as respeita nos dois sentidos — não grava
+localmente o que foi apagado, apaga da nuvem o que sobrou e propaga a exclusão
+para o dispositivo que ainda tinha a cópia. A edição vence a exclusão quando é
+posterior a ela; nesse caso a marca é revogada.
+
+### 4. ✅ CORRIGIDO — O link do portal carrega os dados embutidos, revogar o token não revoga o acesso
 
 `urlPortal()` (`gestao.ts:284`) monta
 `#/portal/<token>?d=<base64 do snapshot inteiro>`, e `PortalCliente.tsx:61-64`
@@ -79,8 +101,15 @@ próprio link. Isso contradiz o modelo do RPC, que foi feito justamente para ser
 revogável. Além disso, com histórico longo a URL passa dos limites práticos de
 navegador/WhatsApp.
 
-**Sugestão:** o link padrão deve ser só `#/portal/<token>`; o `?d=` viraria uma
-opção explícita de "retrato offline", com aviso de que não expira.
+**Corrigido em:** `urlPortal()` gera apenas `#/portal/<token>` e
+`codificarSnapshot`/`decodificarSnapshot` foram removidos; `PortalCliente.tsx`
+lê só a RPC, com fallback nos dados locais (que só existem na máquina do RT).
+Trocar o token agora invalida de fato os links já enviados. Links antigos
+continuam funcionando, porque sempre traziam o token junto do `?d=`.
+
+Junto veio o item 11: `gerarTokenPortal()` passou a usar
+`crypto.getRandomValues` (128 bits) no lugar de `Math.random()` — um link
+revogável não vale nada se for adivinhável.
 
 ---
 
@@ -100,6 +129,12 @@ O código nunca lê `error`:
 
 Nenhuma tela informa o usuário de que os dados não subiram. Mínimo: checar
 `error`, logar, e expor um indicador de "não sincronizado" na interface.
+
+**Parcialmente corrigido** (o necessário para o item 2 funcionar com segurança):
+`empurrarRegistro`/`removerRegistro` passaram a devolver `boolean` e
+`sincronizarTudo` devolve `true` só quando completou — um SELECT que falhou
+**aborta** em vez de ser lido como "a nuvem está vazia". **Falta** a parte da
+interface: nada avisa o usuário quando a sincronização não acontece.
 
 ### 6. O perfil do responsável técnico não sincroniza, mas a documentação diz que sim
 
@@ -153,12 +188,14 @@ Não há constraint. O `limit 1` do `portal_projeto` esconde a duplicidade em ve
 de sinalizá-la. Com o item 7, duplicar token é fácil. Cabe um índice único
 parcial em `(dados->>'tokenPortal')` para valores não vazios.
 
-### 11. Token do portal usa `Math.random()`
+### 11. ✅ CORRIGIDO — Token do portal usa `Math.random()`
 
 `gerarTokenPortal` (`gestao.ts:275`) monta `pt_ + timestamp + 8 chars`. Não é
 gerador criptográfico e o timestamp é adivinhável, então a entropia real é
 menor do que parece. Para um endpoint público e não autenticado (`anon` tem
 `execute`), o correto é `crypto.getRandomValues` com 128 bits.
+
+**Corrigido junto com o item 4.**
 
 ### 12. O portal devolve mais campo do que declara
 
@@ -227,12 +264,19 @@ primeira conta a logar leva os projetos antigos de outra pessoa.
 
 ---
 
-## Sugestão de ordem
+## O que falta
 
-1. Itens 1, 2 e 5 — vazamento entre contas e erro invisível; são os que causam
-   dano real e não mudam formato de dado.
-2. Itens 3 e 7 — corrupção de dados (ressurreição e importação).
-3. Item 4 e 11 — exposição do portal.
-4. Itens 6, 8, 9, 10, 13, 14 — mudanças de schema, melhor agrupadas numa única
-   revisão do `setup.sql`.
-5. Item 15 — migração das imagens para Storage; é a maior obra da lista.
+Feito: **1, 2, 3, 4, 11** e a metade do **5** que dava suporte ao item 2.
+
+Ordem sugerida para o resto:
+
+1. Resto do item **5** — indicador de "não sincronizado" na interface. Hoje a
+   falha é detectada mas não é mostrada a ninguém.
+2. Item **7** — importação de JSON preservando `ownerId`/`tokenPortal` alheios.
+   É um bug de corrupção e a correção é pequena.
+3. Itens **6, 8, 9, 10, 13, 14** — mudanças de schema, melhor agrupadas numa
+   única revisão do `setup.sql`.
+4. Itens **16 e 17** — decisões de produto (edição concorrente, adoção de
+   registros sem dono), não corrigíveis sem definir o comportamento desejado.
+5. Item **15** — migração das imagens para o Supabase Storage; é a maior obra
+   da lista e a que mais alivia o localStorage.
