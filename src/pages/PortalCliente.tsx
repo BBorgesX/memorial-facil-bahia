@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useParams, useSearchParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import {
@@ -14,7 +14,6 @@ import {
 import {
   STATUS_INFO,
   SnapshotPortal,
-  decodificarSnapshot,
   formatarData,
   gerarSnapshotPortal,
   projetoPorToken,
@@ -26,14 +25,16 @@ import { StatusBadge } from '@/components/shell/StatusBadge';
 
 /**
  * Página pública, somente leitura, para o cliente acompanhar o andamento do
- * projeto. A visão ao vivo vem da nuvem pelo token do link; se não houver
- * conexão (ou as tabelas ainda não existirem), cai no retrato codificado no
- * próprio link e, por fim, nos dados locais deste navegador.
+ * projeto. A visão vem da nuvem pelo token do link (public.portal_projeto).
+ * O único fallback é o dado local deste navegador — que só existe na máquina
+ * do responsável técnico.
+ *
+ * O link NÃO carrega mais os dados embutidos (o antigo parâmetro ?d=): era o
+ * que impedia a revogação, porque quem tivesse o link continuava vendo o
+ * retrato mesmo depois de o token ser trocado.
  */
 const PortalCliente = () => {
   const { token } = useParams<{ token: string }>();
-  const [searchParams] = useSearchParams();
-  const codigoSnapshot = searchParams.get('d');
   const [snapshot, setSnapshot] = useState<SnapshotPortal | null>(null);
   const [carregando, setCarregando] = useState(true);
 
@@ -43,24 +44,16 @@ const PortalCliente = () => {
       let resultado: SnapshotPortal | null = null;
       if (token) {
         // 1) Visão ao vivo pela nuvem (funciona em qualquer dispositivo)
-        try {
-          const { data } = await supabase.rpc('portal_projeto', { token_busca: token });
-          if (data) {
-            const bruto = data as SnapshotPortal;
-            resultado = { ...bruto, status: statusEfetivo(bruto) };
-          }
-        } catch {
-          // sem conexão ou função ainda não criada — usa os fallbacks abaixo
+        const { data } = await supabase.rpc('portal_projeto', { token_busca: token });
+        if (data) {
+          const bruto = data as SnapshotPortal;
+          resultado = { ...bruto, status: statusEfetivo(bruto) };
         }
-        // 2) Dados locais deste navegador (máquina do responsável)
+        // 2) Dados locais deste navegador (máquina do responsável técnico)
         if (!resultado) {
           const projeto = projetoPorToken(token);
           if (projeto) resultado = gerarSnapshotPortal(projeto);
         }
-      }
-      // 3) Retrato embutido no link (parâmetro ?d=)
-      if (!resultado && codigoSnapshot) {
-        resultado = decodificarSnapshot(codigoSnapshot);
       }
       if (ativo) {
         setSnapshot(resultado);
@@ -70,7 +63,7 @@ const PortalCliente = () => {
     return () => {
       ativo = false;
     };
-  }, [token, codigoSnapshot]);
+  }, [token]);
 
   if (carregando) {
     return (

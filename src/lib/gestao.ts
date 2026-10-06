@@ -14,6 +14,7 @@ import {
   normalizarStatus,
 } from './projeto';
 import { empurrarRegistro, removerRegistro } from './supabase';
+import { empurrarExclusao, registrarExclusao } from './exclusoes';
 
 // ---------------------------------------------------------------------------
 // Status do projeto (fluxo de aprovação do FirePro Suite)
@@ -131,6 +132,8 @@ export interface Interacao {
 
 export interface Cliente {
   id: string;
+  /** Dono do cliente (mesma regra multi-tenant de DadosProjeto.ownerId) */
+  ownerId: string;
   nome: string;
   tipoPessoa: 'PF' | 'PJ';
   cpfCnpj: string;
@@ -147,10 +150,11 @@ export interface Cliente {
 
 const CHAVE_CLIENTES = 'mfb:clientes';
 
-export function novoCliente(nome = ''): Cliente {
+export function novoCliente(nome = '', ownerId = ''): Cliente {
   const agora = new Date().toISOString();
   return {
     id: `cli_${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`,
+    ownerId,
     nome,
     tipoPessoa: 'PJ',
     cpfCnpj: '',
@@ -166,23 +170,30 @@ export function novoCliente(nome = ''): Cliente {
   };
 }
 
-export function listarClientes(): Cliente[] {
+/**
+ * Lista os clientes do usuário. Clientes antigos (sem ownerId) continuam
+ * visíveis até serem salvos de novo — mesma regra de adoção de listarProjetos.
+ */
+export function listarClientes(ownerId?: string): Cliente[] {
   try {
     const lista = JSON.parse(localStorage.getItem(CHAVE_CLIENTES) ?? '[]') as Cliente[];
     return lista
       .map((c) => ({ ...novoCliente(), ...c }))
+      .filter((c) => !ownerId || !c.ownerId || c.ownerId === ownerId)
       .sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'));
   } catch {
     return [];
   }
 }
 
-export function carregarCliente(id: string): Cliente | null {
-  return listarClientes().find((c) => c.id === id) ?? null;
+export function carregarCliente(id: string, ownerId?: string): Cliente | null {
+  return listarClientes(ownerId).find((c) => c.id === id) ?? null;
 }
 
 /** Grava no cache local sem alterar atualizadoEm nem enviar à nuvem (uso interno da sincronização). */
 export function gravarClienteLocal(cliente: Cliente) {
+  // Sem escopo de propósito: a gravação precisa preservar os clientes de
+  // outras contas que ainda estejam no cache deste navegador.
   const lista = listarClientes().filter((c) => c.id !== cliente.id);
   lista.push(cliente);
   localStorage.setItem(CHAVE_CLIENTES, JSON.stringify(lista));
@@ -197,7 +208,20 @@ export function salvarCliente(cliente: Cliente): Cliente {
 
 export function excluirCliente(id: string) {
   localStorage.setItem(CHAVE_CLIENTES, JSON.stringify(listarClientes().filter((c) => c.id !== id)));
+  // Marca a exclusão para que o cliente não volte na próxima sincronização
+  const marca = registrarExclusao('clientes', id);
   void removerRegistro('clientes', id);
+  void empurrarExclusao('clientes', id, marca.excluidoEm);
+}
+
+/** Remove só a cópia local, sem marcar exclusão nem tocar na nuvem (uso da sincronização). */
+export function removerClienteLocal(id: string) {
+  localStorage.setItem(CHAVE_CLIENTES, JSON.stringify(listarClientes().filter((c) => c.id !== id)));
+}
+
+/** Apaga o cache local de clientes (troca de conta / logout). Não toca na nuvem. */
+export function limparClientesLocais() {
+  localStorage.removeItem(CHAVE_CLIENTES);
 }
 
 export function novaInteracao(tipo: TipoInteracao, descricao: string): Interacao {
@@ -215,9 +239,13 @@ export function projetosDoCliente(clienteId: string, ownerId?: string): DadosPro
 }
 
 // ---------------------------------------------------------------------------
-// Portal do cliente — link somente leitura com um retrato do andamento.
-// O retrato vai codificado no próprio link (hash da URL), portanto funciona
-// em qualquer dispositivo, sem depender dos dados deste navegador.
+// Portal do cliente — link somente leitura com o andamento do projeto.
+//
+// O link carrega APENAS o token; os dados vêm ao vivo da nuvem pela função
+// public.portal_projeto. Versões anteriores embutiam o retrato inteiro no
+// próprio link (parâmetro ?d=), o que tornava o acesso irrevogável: quem
+// recebesse o link continuava vendo os dados mesmo depois de o token ser
+// trocado. Trocar o token agora invalida de fato os links já enviados.
 // ---------------------------------------------------------------------------
 
 export interface SnapshotPortal {
@@ -254,36 +282,25 @@ export function gerarSnapshotPortal(p: DadosProjeto): SnapshotPortal {
   };
 }
 
-export function codificarSnapshot(s: SnapshotPortal): string {
-  const json = JSON.stringify(s);
-  return btoa(String.fromCharCode(...new TextEncoder().encode(json)))
-    .replace(/\+/g, '-')
-    .replace(/\//g, '_')
-    .replace(/=+$/, '');
-}
-
-export function decodificarSnapshot(codigo: string): SnapshotPortal | null {
-  try {
-    const base64 = codigo.replace(/-/g, '+').replace(/_/g, '/');
-    const bytes = Uint8Array.from(atob(base64), (c) => c.charCodeAt(0));
-    return JSON.parse(new TextDecoder().decode(bytes)) as SnapshotPortal;
-  } catch {
-    return null;
-  }
-}
-
+/**
+ * Token do portal — 128 bits de gerador criptográfico. O endpoint é público
+ * (anon tem execute em portal_projeto), então o token é a única barreira e
+ * não pode ser adivinhável a partir do horário de criação.
+ */
 export function gerarTokenPortal(): string {
-  return `pt_${Date.now().toString(36)}${Math.random().toString(36).slice(2, 10)}`;
+  const bytes = new Uint8Array(16);
+  crypto.getRandomValues(bytes);
+  const hex = [...bytes].map((b) => b.toString(16).padStart(2, '0')).join('');
+  return `pt_${hex}`;
 }
 
 /** Localiza (neste navegador) o projeto associado a um token do portal. */
-export function projetoPorToken(token: string): DadosProjeto | null {
-  return carregarTodosProjetos().find((p) => p.tokenPortal === token) ?? null;
+export function projetoPorToken(token: string, ownerId?: string): DadosProjeto | null {
+  return carregarTodosProjetos(ownerId).find((p) => p.tokenPortal === token) ?? null;
 }
 
+/** Link do portal. Exige token — sem ele não há o que compartilhar. */
 export function urlPortal(p: DadosProjeto): string {
-  const snapshot = codificarSnapshot(gerarSnapshotPortal(p));
-  const token = p.tokenPortal ? `/${p.tokenPortal}` : '';
-  // Rotas ficam após o "#" (HashRouter); o retrato vai como parâmetro ?d=
-  return `${window.location.origin}${window.location.pathname}#/portal${token}?d=${snapshot}`;
+  // Rotas ficam após o "#" (HashRouter)
+  return `${window.location.origin}${window.location.pathname}#/portal/${p.tokenPortal}`;
 }

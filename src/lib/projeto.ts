@@ -3,6 +3,7 @@
  */
 
 import { empurrarRegistro, removerRegistro } from './supabase';
+import { empurrarExclusao, registrarExclusao } from './exclusoes';
 
 export interface DetalhesMedida {
   aplicavel: boolean;
@@ -561,7 +562,26 @@ export function gravarProjetoLocal(projeto: DadosProjeto) {
 export function excluirProjeto(id: string) {
   localStorage.removeItem(`mfb:projeto:${id}`);
   gravarIndice(lerIndice().filter((p) => p.id !== id));
+  // Marca a exclusão para que o registro não volte na próxima sincronização
+  const marca = registrarExclusao('projetos', id);
   void removerRegistro('projetos', id);
+  void empurrarExclusao('projetos', id, marca.excluidoEm);
+}
+
+/** Remove só a cópia local, sem marcar exclusão nem tocar na nuvem (uso da sincronização). */
+export function removerProjetoLocal(id: string) {
+  localStorage.removeItem(`mfb:projeto:${id}`);
+  gravarIndice(lerIndice().filter((p) => p.id !== id));
+}
+
+/** Apaga o cache local de projetos (troca de conta / logout). Não toca na nuvem. */
+export function limparProjetosLocais() {
+  for (const resumo of lerIndice()) localStorage.removeItem(`mfb:projeto:${resumo.id}`);
+  localStorage.removeItem(CHAVE_INDICE);
+  // Varredura de segurança: documentos órfãos, fora do índice
+  for (const chave of Object.keys(localStorage)) {
+    if (chave.startsWith('mfb:projeto:')) localStorage.removeItem(chave);
+  }
 }
 
 export function duplicarProjeto(id: string): DadosProjeto | null {

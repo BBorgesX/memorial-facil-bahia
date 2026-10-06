@@ -35,7 +35,7 @@ const ClienteDetalhe = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { usuario } = useApp();
-  const [cliente, setCliente] = useState<Cliente | null>(() => (id ? carregarCliente(id) : null));
+  const [cliente, setCliente] = useState<Cliente | null>(() => (id ? carregarCliente(id, usuario?.id) : null));
   const [tipoInteracao, setTipoInteracao] = useState<TipoInteracao>('ligacao');
   const [textoInteracao, setTextoInteracao] = useState('');
   const timerRef = useRef<ReturnType<typeof setTimeout>>();

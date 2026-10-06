@@ -40,7 +40,8 @@ interface Props {
 
 export function GestaoProjeto({ projeto, atualizar }: Props) {
   const { toast } = useToast();
-  const clientes = useMemo(() => listarClientes(), []);
+  // Escopo pelo dono do projeto: a lista nunca mostra clientes de outra conta
+  const clientes = useMemo(() => listarClientes(projeto.ownerId || undefined), [projeto.ownerId]);
   const [novaExigencia, setNovaExigencia] = useState('');
   const [prazoExigencia, setPrazoExigencia] = useState('');
 

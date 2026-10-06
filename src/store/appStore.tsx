@@ -32,11 +32,11 @@ import {
   PerfilProfissional,
   perfilPadrao,
   salvarPerfil as persistirPerfil,
-  sair as authSair,
   Usuario,
   usuarioAtual,
 } from '@/services/auth';
 import { sincronizarTudo } from '@/lib/sync';
+import { encerrarSessao, prepararCacheParaUsuario } from '@/lib/sessao';
 import { ConfigUF, getNormas } from '@/data/normas';
 
 const CHAVE_ATIVO = (userId: string) => `fps:ativo:${userId}`;
@@ -88,6 +88,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const setUsuario = useCallback((u: Usuario | null) => {
     setUsuarioEstado(u);
     if (u) {
+      // Se outra conta usou este navegador, o cache dela sai antes da leitura
+      prepararCacheParaUsuario(u.id);
       const p = carregarPerfil(u.id);
       setPerfil(p);
       setUfSemProjeto(p.ufPadrao);
@@ -124,8 +126,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, [setUsuario]);
 
   const sair = useCallback(() => {
-    authSair();
+    // Limpa a tela na hora; a sincronização final e a limpeza do cache
+    // acontecem em segundo plano (encerrarSessao).
     setUsuario(null);
+    void encerrarSessao();
   }, [setUsuario]);
 
   const salvarPerfil = useCallback(

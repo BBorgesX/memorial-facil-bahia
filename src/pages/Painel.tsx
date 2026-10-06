@@ -35,9 +35,9 @@ const Painel = () => {
 
   const clientes = useMemo(() => {
     const mapa = new Map<string, string>();
-    listarClientes().forEach((c) => mapa.set(c.id, c.nome));
+    listarClientes(usuario?.id).forEach((c) => mapa.set(c.id, c.nome));
     return mapa;
-  }, []);
+  }, [usuario]);
 
   const contagem = useMemo(() => {
     const c = Object.fromEntries(STATUS_PROJETO.map((s) => [s, 0])) as Record<StatusProjeto, number>;
